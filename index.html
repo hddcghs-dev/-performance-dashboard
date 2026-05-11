@@ -77,7 +77,7 @@ tr:hover td { background: #f8f9fa; }
       <div class="chart-box" id="rankingChart"></div>
     </div>
     <div class="panel">
-      <h3>核销构成（美团 vs 抖音）</h3>
+      <h3>营收构成（美团 / 抖音 / 微矩）</h3>
       <div class="chart-box" id="pieChart"></div>
     </div>
   </div>
@@ -105,7 +105,8 @@ tr:hover td { background: #f8f9fa; }
             <th>排名</th><th>门店名称</th>
             <th>美团核销</th><th>环比</th>
             <th>抖音核销</th><th>环比</th>
-            <th>总核销</th>
+            <th>微矩营收</th><th>环比</th>
+            <th>总营收</th>
             <th>美团评分</th><th>环比</th>
             <th>抖音评分</th><th>环比</th>
             <th>经营评分</th><th>新增好评</th><th>新增差评</th>
@@ -235,7 +236,9 @@ function renderAll() {
 function renderKPI(day, prev) {
   const totalMt = day.reduce((s, r) => s + (r.美团核销金额 || 0), 0);
   const totalDy = day.reduce((s, r) => s + (r.抖音核销金额 || 0), 0);
-  const totalSales = totalMt + totalDy;
+  const totalWj = day.reduce((s, r) => s + (r.微矩营收 || 0), 0);
+  const totalOnline = totalMt + totalDy;
+  const totalSales = totalOnline + totalWj;
   const totalGood = day.reduce((s, r) => s + (r.新增好评 || 0), 0);
   const totalBad = day.reduce((s, r) => s + (r.新增差评 || 0), 0);
   const avgMtScore = day.reduce((s, r) => s + (r.美团评分 || 0), 0) / day.length;
@@ -246,13 +249,18 @@ function renderKPI(day, prev) {
   // 环比
   const prevTotalMt = prev.reduce((s, r) => s + (r.美团核销金额 || 0), 0);
   const prevTotalDy = prev.reduce((s, r) => s + (r.抖音核销金额 || 0), 0);
+  const prevTotalWj = prev.reduce((s, r) => s + (r.微矩营收 || 0), 0);
 
   const cards = [
-    { label: '总核销额', value: '¥' + totalSales.toLocaleString('zh-CN', {maximumFractionDigits: 0}) },
+    { label: '总营收', value: '¥' + totalSales.toLocaleString('zh-CN', {maximumFractionDigits: 0}) },
+    { label: '线上核销', value: '¥' + totalOnline.toLocaleString('zh-CN', {maximumFractionDigits: 0}),
+      delta: prev.length ? totalOnline - prevTotalMt - prevTotalDy : null, unit: '¥' },
     { label: '美团核销', value: '¥' + totalMt.toLocaleString('zh-CN', {maximumFractionDigits: 0}),
       delta: prev.length ? totalMt - prevTotalMt : null, unit: '¥' },
     { label: '抖音核销', value: '¥' + totalDy.toLocaleString('zh-CN', {maximumFractionDigits: 0}),
       delta: prev.length ? totalDy - prevTotalDy : null, unit: '¥' },
+    { label: '微矩营收', value: '¥' + totalWj.toLocaleString('zh-CN', {maximumFractionDigits: 0}),
+      delta: prev.length ? totalWj - prevTotalWj : null, unit: '¥' },
     { label: '新增好评', value: totalGood,
       delta: prev.length ? totalGood - prev.reduce((s,r)=>s+(r.新增好评||0),0) : null },
     { label: '新增差评', value: totalBad,
@@ -282,17 +290,18 @@ function renderRankingChart(day) {
   const container = document.getElementById('rankingChart');
   if (!rankingChartInst) rankingChartInst = echarts.init(container);
 
-  // 计算总核销并排序
+  // 计算总营收并排序（线上+微矩）
   const stores = day.map(r => ({
     name: (r.门店名称 || '').substring(0, 6),
     mt: r.美团核销金额 || 0,
     dy: r.抖音核销金额 || 0,
-    total: (r.美团核销金额 || 0) + (r.抖音核销金额 || 0)
+    wj: r.微矩营收 || 0,
+    total: (r.美团核销金额 || 0) + (r.抖音核销金额 || 0) + (r.微矩营收 || 0)
   })).sort((a, b) => b.total - a.total).slice(0, 15).reverse();
 
   rankingChartInst.setOption({
     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-    legend: { data: ['美团核销', '抖音核销'], bottom: 0 },
+    legend: { data: ['美团核销', '抖音核销', '微矩营收'], bottom: 0 },
     grid: { left: 80, right: 20, top: 10, bottom: 30 },
     xAxis: { type: 'value', axisLabel: { formatter: v => '¥' + (v/10000).toFixed(1) + 'w' } },
     yAxis: { type: 'category', data: stores.map(s => s.name), inverse: true, axisLabel: { fontSize: 11 } },
@@ -300,7 +309,9 @@ function renderRankingChart(day) {
       { name: '美团核销', type: 'bar', stack: 'total', data: stores.map(s => s.mt),
         itemStyle: { color: '#FF6B35' }, emphasis: { focus: 'series' } },
       { name: '抖音核销', type: 'bar', stack: 'total', data: stores.map(s => s.dy),
-        itemStyle: { color: '#4472C4' }, emphasis: { focus: 'series' } }
+        itemStyle: { color: '#4472C4' }, emphasis: { focus: 'series' } },
+      { name: '微矩营收', type: 'bar', stack: 'total', data: stores.map(s => s.wj),
+        itemStyle: { color: '#00B050' }, emphasis: { focus: 'series' } }
     ]
   }, true);
 }
@@ -313,6 +324,14 @@ function renderPieChart(day) {
 
   const totalMt = day.reduce((s, r) => s + (r.美团核销金额 || 0), 0);
   const totalDy = day.reduce((s, r) => s + (r.抖音核销金额 || 0), 0);
+  const totalWj = day.reduce((s, r) => s + (r.微矩营收 || 0), 0);
+  const pieData = [
+    { value: totalMt, name: '美团核销', itemStyle: { color: '#FF6B35' } },
+    { value: totalDy, name: '抖音核销', itemStyle: { color: '#4472C4' } }
+  ];
+  if (totalWj > 0) {
+    pieData.push({ value: totalWj, name: '微矩营收', itemStyle: { color: '#00B050' } });
+  }
 
   pieChartInst.setOption({
     tooltip: { trigger: 'item', formatter: '{b}: ¥{c:,.0f} ({d}%)' },
@@ -322,10 +341,7 @@ function renderPieChart(day) {
       avoidLabelOverlap: false,
       itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 3 },
       label: { show: true, formatter: '{b}\n{d}%' },
-      data: [
-        { value: totalMt, name: '美团核销', itemStyle: { color: '#FF6B35' } },
-        { value: totalDy, name: '抖音核销', itemStyle: { color: '#4472C4' } }
-      ]
+      data: pieData
     }]
   }, true);
 }
@@ -391,14 +407,18 @@ function renderDetailTable(day, prev) {
 
   let stores = [...day].map(r => {
     const p = prevMap[r.门店名称] || {};
-    const total = (r.美团核销金额 || 0) + (r.抖音核销金额 || 0);
-    const prevTotal = (p.美团核销金额 || 0) + (p.抖音核销金额 || 0);
+    const online = (r.美团核销金额 || 0) + (r.抖音核销金额 || 0);
+    const prevOnline = (p.美团核销金额 || 0) + (p.抖音核销金额 || 0);
+    const total = online + (r.微矩营收 || 0);
+    const prevTotal = prevOnline + (p.微矩营收 || 0);
     return {
       name: r.门店名称 || '',
       mt: r.美团核销金额 || 0,
       mtDelta: p.门店名称 ? (r.美团核销金额 || 0) - (p.美团核销金额 || 0) : null,
       dy: r.抖音核销金额 || 0,
       dyDelta: p.门店名称 ? (r.抖音核销金额 || 0) - (p.抖音核销金额 || 0) : null,
+      wj: r.微矩营收 || 0,
+      wjDelta: p.门店名称 ? (r.微矩营收 || 0) - (p.微矩营收 || 0) : null,
       total,
       totalDelta: p.门店名称 ? total - prevTotal : null,
       mtScore: r.美团评分 || 0,
@@ -445,6 +465,8 @@ function renderDetailTable(day, prev) {
       <td style="${deltaClass(s.mtDelta)}">${fmtDelta(s.mtDelta)}</td>
       <td>¥${s.dy.toLocaleString('zh-CN', {maximumFractionDigits: 0})}</td>
       <td style="${deltaClass(s.dyDelta)}">${fmtDelta(s.dyDelta)}</td>
+      <td>¥${s.wj.toLocaleString('zh-CN', {maximumFractionDigits: 0})}</td>
+      <td style="${deltaClass(s.wjDelta)}">${fmtDelta(s.wjDelta)}</td>
       <td style="font-weight:700">¥${s.total.toLocaleString('zh-CN', {maximumFractionDigits: 0})}</td>
       <td>${s.mtScore.toFixed(1)}</td>
       <td style="${deltaClass(parseFloat(s.mtScoreDelta))}">${fmtScoreDelta(s.mtScoreDelta)}</td>
