@@ -3,13 +3,473 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="refresh" content="0; url=./dashboard.html">
-<title>民德搓澡堂 · 经营数据看板</title>
-<script>
-  window.location.replace('./dashboard.html');
-</script>
+<title>民德搓澡堂 · 日报看板</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Microsoft YaHei', sans-serif; background: #f0f2f5; color: #1a1a2e; }
+.header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); color: #fff; padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+.header h1 { font-size: 22px; font-weight: 600; }
+.date-nav { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.date-nav button { background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; padding: 6px 14px; cursor: pointer; font-size: 13px; transition: all 0.2s; }
+.date-nav button:hover { background: rgba(255,255,255,0.25); }
+.date-nav input[type="date"] { padding: 6px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; font-size: 13px; }
+.date-nav input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); }
+.date-nav select { padding: 6px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; font-size: 13px; }
+.date-nav select option { background: #1a1a2e; color: #fff; }
+.container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+.summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 20px; }
+.kpi-card { background: #fff; border-radius: 10px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); text-align: center; }
+.kpi-card .label { font-size: 12px; color: #888; margin-bottom: 6px; }
+.kpi-card .value { font-size: 26px; font-weight: 700; color: #1a1a2e; }
+.kpi-card .delta { font-size: 12px; margin-top: 4px; }
+.kpi-card .delta.up { color: #00B050; }
+.kpi-card .delta.down { color: #FF0000; }
+.kpi-card .delta.flat { color: #888; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+@media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
+.panel { background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.panel h3 { font-size: 16px; font-weight: 600; margin-bottom: 12px; color: #1a1a2e; }
+.chart-box { width: 100%; height: 380px; }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { background: #f8f9fa; padding: 10px 12px; text-align: left; font-weight: 600; color: #555; border-bottom: 2px solid #dee2e6; white-space: nowrap; }
+td { padding: 8px 12px; border-bottom: 1px solid #f0f0f0; }
+tr:hover td { background: #f8f9fa; }
+.store-name { font-weight: 600; color: #1a1a2e; }
+.rank-badge { display: inline-block; width: 24px; height: 24px; line-height: 24px; text-align: center; border-radius: 50%; font-size: 12px; font-weight: 700; color: #fff; }
+.rank-1 { background: #FF6B35; }
+.rank-2 { background: #FF8C42; }
+.rank-3 { background: #FFA94D; }
+.rank-other { background: #A0A0A0; }
+.empty-state { text-align: center; padding: 60px 20px; color: #999; }
+.empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+.updated { font-size: 11px; color: #999; text-align: right; padding: 10px 0; }
+.store-filter { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.store-filter .tag { padding: 4px 10px; border-radius: 14px; font-size: 12px; cursor: pointer; border: 1px solid #dee2e6; background: #fff; color: #555; transition: all 0.2s; }
+.store-filter .tag.active { background: #4472C4; color: #fff; border-color: #4472C4; }
+.note { font-size: 12px; color: #adb5bd; margin-top: 12px; }
+</style>
 </head>
 <body>
-  <a href="./dashboard.html">打开经营数据看板</a>
+
+<div class="header">
+  <h1>民德搓澡堂 · 日报看板</h1>
+  <div class="date-nav">
+    <button onclick="navDate(-1)">◀ 前一天</button>
+    <input type="date" id="datePicker" onchange="onDateChange(this.value)">
+    <button onclick="navDate(1)">后一天 ▶</button>
+    <button onclick="resetDate()">最新日期</button>
+    <select id="storeSelect" onchange="onStoreChange(this.value)">
+      <option value="">全部门店</option>
+    </select>
+  </div>
+</div>
+
+<div class="container">
+  <!-- KPI 摘要卡片 -->
+  <div class="summary" id="kpiCards"></div>
+
+  <!-- 门店排名图 + 核销构成 -->
+  <div class="grid-2">
+    <div class="panel">
+      <h3>门店核销排名</h3>
+      <div class="chart-box" id="rankingChart"></div>
+    </div>
+    <div class="panel">
+      <h3>核销构成（美团 vs 抖音）</h3>
+      <div class="chart-box" id="pieChart"></div>
+    </div>
+  </div>
+
+  <!-- 评价概览 + 评分对比 -->
+  <div class="grid-2">
+    <div class="panel">
+      <h3>评价概览</h3>
+      <div class="chart-box" id="reviewChart"></div>
+    </div>
+    <div class="panel">
+      <h3>评分对比</h3>
+      <div class="chart-box" id="scoreChart"></div>
+    </div>
+  </div>
+
+  <!-- 门店数据明细表 -->
+  <div class="panel" style="margin-bottom:20px;">
+    <h3>门店明细</h3>
+    <div class="store-filter" id="storeTags"></div>
+    <div class="table-wrap">
+      <table id="detailTable">
+        <thead>
+          <tr>
+            <th>排名</th><th>门店名称</th>
+            <th>美团核销</th><th>环比</th>
+            <th>抖音核销</th><th>环比</th>
+            <th>总核销</th>
+            <th>美团评分</th><th>环比</th>
+            <th>抖音评分</th><th>环比</th>
+            <th>经营评分</th><th>新增好评</th><th>新增差评</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="note">💡 环比 = 较前一天的变化量。红色背景 = 环比下降，绿色 = 环比上升。</div>
+  </div>
+
+  <div class="updated" id="updateTime"></div>
+</div>
+
+<script>
+// ── 全局状态 ──────────────────────────────────────────
+let allData = [];
+let currentDate = '';
+let availableDates = [];
+let currentStore = '';
+
+// ── 加载数据 ──────────────────────────────────────────
+async function loadData() {
+  try {
+    const resp = await fetch('dashboard_data.json');
+    allData = await resp.json();
+    initApp();
+  } catch (e) {
+    document.getElementById('kpiCards').innerHTML =
+      '<div class="empty-state"><div class="icon">📂</div><p>暂无数据</p><p style="font-size:12px;color:#bbb;">请先运行数据聚合脚本生成 dashboard_data.json</p></div>';
+  }
+}
+
+function initApp() {
+  if (!allData.length) return;
+
+  // 收集所有日期
+  const dateSet = new Set(allData.map(r => r.日期).filter(d => d));
+  availableDates = [...dateSet].sort().reverse();
+
+  // 收集所有门店
+  const storeSet = new Set(allData.map(r => r.门店名称).filter(s => s));
+  const storeSelect = document.getElementById('storeSelect');
+  [...storeSet].sort().forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s;
+    opt.textContent = s;
+    storeSelect.appendChild(opt);
+  });
+
+  // 设置日期选择器范围
+  if (availableDates.length) {
+    const dp = document.getElementById('datePicker');
+    dp.min = availableDates[availableDates.length - 1];
+    dp.max = availableDates[0];
+  }
+
+  // 默认显示最新日期
+  currentDate = availableDates[0] || '';
+  document.getElementById('datePicker').value = currentDate;
+  renderAll();
+}
+
+// ── 日期导航 ──────────────────────────────────────────
+function navDate(delta) {
+  const idx = availableDates.indexOf(currentDate);
+  if (idx === -1) return;
+  const newIdx = idx + delta;
+  if (newIdx < 0 || newIdx >= availableDates.length) return;
+  currentDate = availableDates[newIdx];
+  document.getElementById('datePicker').value = currentDate;
+  renderAll();
+}
+
+function onDateChange(val) {
+  currentDate = val;
+  renderAll();
+}
+
+function resetDate() {
+  currentDate = availableDates[0] || '';
+  document.getElementById('datePicker').value = currentDate;
+  document.getElementById('storeSelect').value = '';
+  currentStore = '';
+  renderAll();
+}
+
+function onStoreChange(val) {
+  currentStore = val;
+  renderAll();
+}
+
+// ── 数据筛选 ──────────────────────────────────────────
+function getDayData() {
+  return allData.filter(r => r.日期 === currentDate);
+}
+
+function getPrevDayData() {
+  const idx = availableDates.indexOf(currentDate);
+  if (idx === -1 || idx >= availableDates.length - 1) return [];
+  const prevDate = availableDates[idx + 1];
+  return allData.filter(r => r.日期 === prevDate);
+}
+
+// ── 渲染全部 ──────────────────────────────────────────
+function renderAll() {
+  const dayData = getDayData();
+  const prevData = getPrevDayData();
+
+  if (!dayData.length) {
+    document.getElementById('kpiCards').innerHTML =
+      '<div class="empty-state" style="grid-column:1/-1"><div class="icon">📅</div><p>该日期暂无数据</p></div>';
+    return;
+  }
+
+  renderKPI(dayData, prevData);
+  renderRankingChart(dayData);
+  renderPieChart(dayData);
+  renderReviewChart(dayData, prevData);
+  renderScoreChart(dayData);
+  renderDetailTable(dayData, prevData);
+  document.getElementById('updateTime').textContent =
+    `数据更新: ${currentDate} | 共 ${new Set(dayData.map(r=>r.门店名称)).size} 家门店`;
+}
+
+// ── KPI卡片 ─────────────────────────────────────────
+function renderKPI(day, prev) {
+  const totalMt = day.reduce((s, r) => s + (r.美团核销金额 || 0), 0);
+  const totalDy = day.reduce((s, r) => s + (r.抖音核销金额 || 0), 0);
+  const totalSales = totalMt + totalDy;
+  const totalGood = day.reduce((s, r) => s + (r.新增好评 || 0), 0);
+  const totalBad = day.reduce((s, r) => s + (r.新增差评 || 0), 0);
+  const avgMtScore = day.reduce((s, r) => s + (r.美团评分 || 0), 0) / day.length;
+  const avgDyScore = day.reduce((s, r) => s + (r.抖音评分 || 0), 0) / day.length;
+  const avgBizScore = day.reduce((s, r) => s + (r.经营评分 || 0), 0) / day.length;
+  const goodRate = (totalGood + totalBad) > 0 ? (totalGood / (totalGood + totalBad) * 100) : 0;
+
+  // 环比
+  const prevTotalMt = prev.reduce((s, r) => s + (r.美团核销金额 || 0), 0);
+  const prevTotalDy = prev.reduce((s, r) => s + (r.抖音核销金额 || 0), 0);
+
+  const cards = [
+    { label: '总核销额', value: '¥' + totalSales.toLocaleString('zh-CN', {maximumFractionDigits: 0}) },
+    { label: '美团核销', value: '¥' + totalMt.toLocaleString('zh-CN', {maximumFractionDigits: 0}),
+      delta: prev.length ? totalMt - prevTotalMt : null, unit: '¥' },
+    { label: '抖音核销', value: '¥' + totalDy.toLocaleString('zh-CN', {maximumFractionDigits: 0}),
+      delta: prev.length ? totalDy - prevTotalDy : null, unit: '¥' },
+    { label: '新增好评', value: totalGood,
+      delta: prev.length ? totalGood - prev.reduce((s,r)=>s+(r.新增好评||0),0) : null },
+    { label: '新增差评', value: totalBad,
+      delta: prev.length ? totalBad - prev.reduce((s,r)=>s+(r.新增差评||0),0) : null, reverse: true },
+    { label: '好评率', value: goodRate.toFixed(1) + '%' },
+    { label: '美团评分', value: avgMtScore.toFixed(2) },
+    { label: '经营评分', value: avgBizScore.toFixed(1) },
+  ];
+
+  document.getElementById('kpiCards').innerHTML = cards.map(c => {
+    let deltaHtml = '';
+    if (c.delta != null && c.delta !== 0) {
+      const isUp = c.reverse ? c.delta < 0 : c.delta > 0;
+      const cls = isUp ? 'up' : 'down';
+      const sign = c.delta > 0 ? '+' : '';
+      deltaHtml = `<div class="delta ${cls}">环比 ${sign}${c.unit||''}${c.delta.toLocaleString('zh-CN', {maximumFractionDigits: 0})}</div>`;
+    } else if (c.delta === 0) {
+      deltaHtml = '<div class="delta flat">环比 持平</div>';
+    }
+    return `<div class="kpi-card"><div class="label">${c.label}</div><div class="value">${c.value}</div>${deltaHtml}</div>`;
+  }).join('');
+}
+
+// ── 排名图 ──────────────────────────────────────────
+let rankingChartInst;
+function renderRankingChart(day) {
+  const container = document.getElementById('rankingChart');
+  if (!rankingChartInst) rankingChartInst = echarts.init(container);
+
+  // 计算总核销并排序
+  const stores = day.map(r => ({
+    name: (r.门店名称 || '').substring(0, 6),
+    mt: r.美团核销金额 || 0,
+    dy: r.抖音核销金额 || 0,
+    total: (r.美团核销金额 || 0) + (r.抖音核销金额 || 0)
+  })).sort((a, b) => b.total - a.total).slice(0, 15).reverse();
+
+  rankingChartInst.setOption({
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    legend: { data: ['美团核销', '抖音核销'], bottom: 0 },
+    grid: { left: 80, right: 20, top: 10, bottom: 30 },
+    xAxis: { type: 'value', axisLabel: { formatter: v => '¥' + (v/10000).toFixed(1) + 'w' } },
+    yAxis: { type: 'category', data: stores.map(s => s.name), inverse: true, axisLabel: { fontSize: 11 } },
+    series: [
+      { name: '美团核销', type: 'bar', stack: 'total', data: stores.map(s => s.mt),
+        itemStyle: { color: '#FF6B35' }, emphasis: { focus: 'series' } },
+      { name: '抖音核销', type: 'bar', stack: 'total', data: stores.map(s => s.dy),
+        itemStyle: { color: '#4472C4' }, emphasis: { focus: 'series' } }
+    ]
+  }, true);
+}
+
+// ── 核销构成饼图 ────────────────────────────────────
+let pieChartInst;
+function renderPieChart(day) {
+  const container = document.getElementById('pieChart');
+  if (!pieChartInst) pieChartInst = echarts.init(container);
+
+  const totalMt = day.reduce((s, r) => s + (r.美团核销金额 || 0), 0);
+  const totalDy = day.reduce((s, r) => s + (r.抖音核销金额 || 0), 0);
+
+  pieChartInst.setOption({
+    tooltip: { trigger: 'item', formatter: '{b}: ¥{c:,.0f} ({d}%)' },
+    legend: { bottom: 0 },
+    series: [{
+      type: 'pie', radius: ['45%', '70%'], center: ['50%', '45%'],
+      avoidLabelOverlap: false,
+      itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 3 },
+      label: { show: true, formatter: '{b}\n{d}%' },
+      data: [
+        { value: totalMt, name: '美团核销', itemStyle: { color: '#FF6B35' } },
+        { value: totalDy, name: '抖音核销', itemStyle: { color: '#4472C4' } }
+      ]
+    }]
+  }, true);
+}
+
+// ── 评价概览柱状图 ──────────────────────────────────
+let reviewChartInst;
+function renderReviewChart(day) {
+  const container = document.getElementById('reviewChart');
+  if (!reviewChartInst) reviewChartInst = echarts.init(container);
+
+  const totalGood = day.reduce((s, r) => s + (r.新增好评 || 0), 0);
+  const totalBad = day.reduce((s, r) => s + (r.新增差评 || 0), 0);
+
+  reviewChartInst.setOption({
+    tooltip: { trigger: 'axis' },
+    grid: { left: 50, right: 20, top: 20, bottom: 30 },
+    xAxis: { type: 'category', data: ['新增好评', '新增差评'] },
+    yAxis: { type: 'value' },
+    series: [{
+      type: 'bar', data: [
+        { value: totalGood, itemStyle: { color: '#00B050' } },
+        { value: totalBad, itemStyle: { color: '#FF0000' } }
+      ], barWidth: '50%',
+      label: { show: true, position: 'top', fontSize: 16, fontWeight: 'bold' }
+    }]
+  }, true);
+}
+
+// ── 评分对比图 ──────────────────────────────────────
+let scoreChartInst;
+function renderScoreChart(day) {
+  const container = document.getElementById('scoreChart');
+  if (!scoreChartInst) scoreChartInst = echarts.init(container);
+
+  const top10 = [...day]
+    .map(r => ({
+      name: (r.门店名称 || '').substring(0, 6),
+      mt: r.美团评分 || 0,
+      dy: r.抖音评分 || 0,
+      biz: r.经营评分 || 0
+    }))
+    .sort((a, b) => (b.mt + b.dy) - (a.mt + a.dy))
+    .slice(0, 12);
+
+  scoreChartInst.setOption({
+    tooltip: { trigger: 'axis' },
+    legend: { data: ['美团评分', '抖音评分', '经营评分'], bottom: 0 },
+    grid: { left: 60, right: 20, top: 10, bottom: 35 },
+    xAxis: { type: 'category', data: top10.map(s => s.name), axisLabel: { rotate: 30, fontSize: 10 } },
+    yAxis: { type: 'value', min: 3, max: 5 },
+    series: [
+      { name: '美团评分', type: 'line', data: top10.map(s => s.mt), color: '#FF6B35', symbol: 'circle' },
+      { name: '抖音评分', type: 'line', data: top10.map(s => s.dy), color: '#4472C4', symbol: 'diamond' },
+      { name: '经营评分', type: 'line', data: top10.map(s => s.biz), color: '#00B050', symbol: 'triangle' }
+    ]
+  }, true);
+}
+
+// ── 明细表 ──────────────────────────────────────────
+function renderDetailTable(day, prev) {
+  const prevMap = {};
+  prev.forEach(r => { prevMap[r.门店名称] = r; });
+
+  let stores = [...day].map(r => {
+    const p = prevMap[r.门店名称] || {};
+    const total = (r.美团核销金额 || 0) + (r.抖音核销金额 || 0);
+    const prevTotal = (p.美团核销金额 || 0) + (p.抖音核销金额 || 0);
+    return {
+      name: r.门店名称 || '',
+      mt: r.美团核销金额 || 0,
+      mtDelta: p.门店名称 ? (r.美团核销金额 || 0) - (p.美团核销金额 || 0) : null,
+      dy: r.抖音核销金额 || 0,
+      dyDelta: p.门店名称 ? (r.抖音核销金额 || 0) - (p.抖音核销金额 || 0) : null,
+      total,
+      totalDelta: p.门店名称 ? total - prevTotal : null,
+      mtScore: r.美团评分 || 0,
+      mtScoreDelta: p.门店名称 ? ((r.美团评分 || 0) - (p.美团评分 || 0)).toFixed(1) : null,
+      dyScore: r.抖音评分 || 0,
+      dyScoreDelta: p.门店名称 ? ((r.抖音评分 || 0) - (p.抖音评分 || 0)).toFixed(1) : null,
+      bizScore: r.经营评分 || 0,
+      good: r.新增好评 || 0,
+      bad: r.新增差评 || 0
+    };
+  });
+
+  // 过滤
+  if (currentStore) {
+    stores = stores.filter(s => s.name === currentStore);
+  }
+
+  // 排序
+  stores.sort((a, b) => b.total - a.total);
+
+  const tbody = document.querySelector('#detailTable tbody');
+  tbody.innerHTML = stores.map((s, i) => {
+    const rank = i + 1;
+    const rankCls = rank <= 3 ? `rank-${rank}` : 'rank-other';
+    const deltaClass = (v) => {
+      if (v == null) return '';
+      return v > 0 ? 'color:#00B050' : v < 0 ? 'color:#FF0000' : '';
+    };
+    const fmtDelta = (v) => {
+      if (v == null) return '-';
+      const sign = v > 0 ? '+' : '';
+      return `${sign}${v.toLocaleString('zh-CN', {maximumFractionDigits: 0})}`;
+    };
+    const fmtScoreDelta = (v) => {
+      if (v == null) return '-';
+      const sign = v > 0 ? '+' : '';
+      return `${sign}${v}`;
+    };
+
+    return `<tr>
+      <td><span class="rank-badge ${rankCls}">${rank}</span></td>
+      <td class="store-name">${s.name}</td>
+      <td>¥${s.mt.toLocaleString('zh-CN', {maximumFractionDigits: 0})}</td>
+      <td style="${deltaClass(s.mtDelta)}">${fmtDelta(s.mtDelta)}</td>
+      <td>¥${s.dy.toLocaleString('zh-CN', {maximumFractionDigits: 0})}</td>
+      <td style="${deltaClass(s.dyDelta)}">${fmtDelta(s.dyDelta)}</td>
+      <td style="font-weight:700">¥${s.total.toLocaleString('zh-CN', {maximumFractionDigits: 0})}</td>
+      <td>${s.mtScore.toFixed(1)}</td>
+      <td style="${deltaClass(parseFloat(s.mtScoreDelta))}">${fmtScoreDelta(s.mtScoreDelta)}</td>
+      <td>${s.dyScore.toFixed(1)}</td>
+      <td style="${deltaClass(parseFloat(s.dyScoreDelta))}">${fmtScoreDelta(s.dyScoreDelta)}</td>
+      <td>${s.bizScore.toFixed(1)}</td>
+      <td style="color:#00B050">${s.good}</td>
+      <td style="color:#FF0000">${s.bad}</td>
+    </tr>`;
+  }).join('');
+
+  // 门店筛选标签
+  const allStores = [...new Set(day.map(r => r.门店名称).filter(s => s))].sort();
+  document.getElementById('storeTags').innerHTML = allStores.map(s =>
+    `<span class="tag ${currentStore === s ? 'active' : ''}" onclick="onStoreChange('${s.replace(/'/g, "\\'")}')">${s}</span>`
+  ).join('');
+}
+
+// ── 响应式 ──────────────────────────────────────────
+window.addEventListener('resize', () => {
+  [rankingChartInst, pieChartInst, reviewChartInst, scoreChartInst].forEach(c => c && c.resize());
+});
+
+// ── 启动 ────────────────────────────────────────────
+loadData();
+</script>
 </body>
 </html>
