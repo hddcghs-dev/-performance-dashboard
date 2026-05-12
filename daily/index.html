@@ -54,10 +54,11 @@ tr:hover td { background: #f8f9fa; }
         <thead>
           <tr>
             <th>排名</th><th>门店名称</th>
-            <th>美团核销</th><th>抖音核销</th>
-            <th>美团线下</th><th>抖音线下</th>
-            <th>美团差额</th><th>抖音差额</th>
-            <th>微矩总业绩</th><th>微矩开卡</th>
+            <th>总业绩</th>
+            <th>美团核销</th><th>美团线下</th><th>美团差额</th>
+            <th>抖音核销</th><th>抖音线下</th><th>抖音差额</th>
+            <th>开卡</th><th>续充</th>
+            <th>美团访问</th><th>抖音访问</th>
             <th>美团评分</th><th>抖音评分</th><th>经营评分</th>
             <th>好评</th><th>差评</th>
           </tr>
@@ -83,7 +84,7 @@ async function loadData() {
     initApp();
   } catch (e) {
     document.querySelector('#detailTable tbody').innerHTML =
-      '<tr><td colspan="15" class="empty-state"><div style="font-size:48px;margin-bottom:16px;">📂</div><p>暂无数据</p><p style="font-size:12px;color:#bbb;">请先运行数据聚合脚本生成 daily_data.json</p></td></tr>';
+      '<tr><td colspan="19" class="empty-state"><div style="font-size:48px;margin-bottom:16px;">📂</div><p>暂无数据</p><p style="font-size:12px;color:#bbb;">请先运行数据聚合脚本生成 daily_data.json</p></td></tr>';
   }
 }
 
@@ -126,7 +127,7 @@ function renderAll() {
   const dayData = allData.filter(r => r.日期 === currentDate);
   if (!dayData.length) {
     document.querySelector('#detailTable tbody').innerHTML =
-      '<tr><td colspan="15" class="empty-state"><div style="font-size:48px;margin-bottom:16px;">📅</div><p>该日期暂无数据</p></td></tr>';
+      '<tr><td colspan="19" class="empty-state"><div style="font-size:48px;margin-bottom:16px;">📅</div><p>该日期暂无数据</p></td></tr>';
     return;
   }
   renderDetailTable(dayData);
@@ -137,14 +138,17 @@ function renderAll() {
 function renderDetailTable(day) {
   const stores = [...day].map(r => ({
     name: r.门店名称 || '',
-    mtReport: r.美团核销金额 || 0,
-    dyReport: r.抖音核销金额 || 0,
-    mtOffline: r.美团线下金额 || 0,
-    dyOffline: r.抖音线下金额 || 0,
-    mtGap: r.美团核销差额 != null ? r.美团核销差额 : (r.美团核销金额 || 0) - (r.美团线下金额 || 0),
-    dyGap: r.抖音核销差额 != null ? r.抖音核销差额 : (r.抖音核销金额 || 0) - (r.抖音线下金额 || 0),
     total: r.微矩总业绩 || 0,
+    mtReport: r.美团核销金额 || 0,
+    mtOffline: r.美团线下金额 || 0,
+    mtGap: r.美团核销差额 != null ? r.美团核销差额 : (r.美团核销金额 || 0) - (r.美团线下金额 || 0),
+    dyReport: r.抖音核销金额 || 0,
+    dyOffline: r.抖音线下金额 || 0,
+    dyGap: r.抖音核销差额 != null ? r.抖音核销差额 : (r.抖音核销金额 || 0) - (r.抖音线下金额 || 0),
     wjCard: r.微矩开卡 || 0,
+    wjRecharge: r.微矩续充 || 0,
+    mtVisit: r.美团访问量 || 0,
+    dyVisit: r.抖音访问量 || 0,
     mtScore: r.美团评分 || 0,
     dyScore: r.抖音评分 || 0,
     bizScore: r.经营评分 || 0,
@@ -172,14 +176,17 @@ function renderDetailTable(day) {
     return `<tr>
       <td><span class="rank-badge ${rkCls}">${rank}</span></td>
       <td class="store-name">${s.name}</td>
-      <td>¥${fmt(s.mtReport)}</td>
-      <td>¥${fmt(s.dyReport)}</td>
-      <td>¥${fmt(s.mtOffline)}</td>
-      <td>¥${fmt(s.dyOffline)}</td>
-      <td class="${gapClass(s.mtGap)}">${fmtGap(s.mtGap)}</td>
-      <td class="${gapClass(s.dyGap)}">${fmtGap(s.dyGap)}</td>
       <td style="font-weight:700">¥${fmt(s.total)}</td>
+      <td>¥${fmt(s.mtReport)}</td>
+      <td>¥${fmt(s.mtOffline)}</td>
+      <td class="${gapClass(s.mtGap)}">${fmtGap(s.mtGap)}</td>
+      <td>¥${fmt(s.dyReport)}</td>
+      <td>¥${fmt(s.dyOffline)}</td>
+      <td class="${gapClass(s.dyGap)}">${fmtGap(s.dyGap)}</td>
       <td>¥${fmt(s.wjCard)}</td>
+      <td>¥${fmt(s.wjRecharge)}</td>
+      <td>${fmt(s.mtVisit)}</td>
+      <td>${fmt(s.dyVisit)}</td>
       <td>${s.mtScore.toFixed(1)}</td>
       <td>${s.dyScore.toFixed(1)}</td>
       <td>${s.bizScore.toFixed(1)}</td>
