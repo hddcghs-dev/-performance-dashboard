@@ -62,8 +62,8 @@ tr:hover td { background: #f8f9fa; }
           <tr>
             <th>排名</th><th>门店名称</th>
             <th>总业绩</th>
-            <th>美团核销</th><th>美团线下</th><th>美团差额</th>
-            <th>抖音核销</th><th>抖音线下</th><th>抖音差额</th>
+            <th>美团核销</th><th>美团线下</th>
+            <th>抖音核销</th><th>抖音线下</th>
             <th>开卡</th><th>续充</th>
             <th>美团访问</th><th>抖音访问</th><th>抖音转化</th>
             <th>美团评分</th><th>抖音评分</th><th>经营评分</th>
@@ -73,7 +73,7 @@ tr:hover td { background: #f8f9fa; }
         <tbody></tbody>
       </table>
     </div>
-    <div class="note">差额 = 日报核销 - 微矩线下入账。正数=日报多于入账（可能漏录），负数=日报少于入账。红色=差额较大（>300），黄色=有小额差额。</div>
+    <div class="note">核销金额来自美团/抖音日报。线下金额来自微矩POS营业汇总。</div>
   </div>
 
   <div class="updated" id="updateTime"></div>
@@ -91,7 +91,7 @@ async function loadData() {
     initApp();
   } catch (e) {
     document.querySelector('#detailTable tbody').innerHTML =
-      '<tr><td colspan="20" class="empty-state"><div style="font-size:48px;margin-bottom:16px;">📂</div><p>暂无数据</p><p style="font-size:12px;color:#bbb;">请先运行数据聚合脚本生成 daily_data.json</p></td></tr>';
+      '<tr><td colspan="18" class="empty-state"><div style="font-size:48px;margin-bottom:16px;">📂</div><p>暂无数据</p><p style="font-size:12px;color:#bbb;">请先运行数据聚合脚本生成 daily_data.json</p></td></tr>';
   }
 }
 
@@ -134,7 +134,7 @@ function renderAll() {
   const dayData = allData.filter(r => r.日期 === currentDate);
   if (!dayData.length) {
     document.querySelector('#detailTable tbody').innerHTML =
-      '<tr><td colspan="20" class="empty-state"><div style="font-size:48px;margin-bottom:16px;">📅</div><p>该日期暂无数据</p></td></tr>';
+      '<tr><td colspan="18" class="empty-state"><div style="font-size:48px;margin-bottom:16px;">📅</div><p>该日期暂无数据</p></td></tr>';
     return;
   }
   renderDetailTable(dayData);
@@ -199,16 +199,7 @@ function renderDetailTable(day) {
     anomalyBar.style.display = 'none';
   }
 
-  const gapClass = (v) => {
-    if (v == null || v === 0) return 'gap-none';
-    return Math.abs(v) > GAP_THRESHOLD ? 'gap-big' : Math.abs(v) > 300 ? 'gap-small' : 'gap-none';
-  };
   const fmt = (v) => v != null ? v.toLocaleString('zh-CN', {maximumFractionDigits: 0}) : '0';
-  const fmtGap = (v) => {
-    if (v == null) return '0';
-    const sign = v > 0 ? '+' : '';
-    return sign + v.toLocaleString('zh-CN', {maximumFractionDigits: 0});
-  };
   const fmtConv = (v) => {
     if (v == null || v === 0) return '-';
     return (v * 100).toFixed(1) + '%';
@@ -228,10 +219,8 @@ function renderDetailTable(day) {
       <td style="font-weight:700">¥${fmt(s.total)}</td>
       <td>¥${fmt(s.mtReport)}</td>
       <td>¥${fmt(s.mtOffline)}</td>
-      <td class="${gapClass(s.mtGap)}">${fmtGap(s.mtGap)}</td>
       <td>¥${fmt(s.dyReport)}</td>
       <td>¥${fmt(s.dyOffline)}</td>
-      <td class="${gapClass(s.dyGap)}">${fmtGap(s.dyGap)}</td>
       <td>¥${fmt(s.wjCard)}</td>
       <td>¥${fmt(s.wjRecharge)}</td>
       <td>${fmt(s.mtVisit)}</td>
