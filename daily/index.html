@@ -38,6 +38,9 @@ tr:hover td { background: #f8f9fa; }
 .anomaly-tag.gap { background: #FF4D4F; color: #fff; }
 .anomaly-tag.conv { background: #FA8C16; color: #fff; }
 .conv-low { background: #FFF7E6; color: #D48806; font-weight: 600; }
+.bad-yes { background: #FFF2F0; color: #CF1322; font-weight: 700; }
+.bad-row { background: #FFF2F0 !important; }
+.anomaly-tag.bad { background: #CF1322; color: #fff; }
 </style>
 </head>
 <body>
@@ -62,8 +65,8 @@ tr:hover td { background: #f8f9fa; }
           <tr>
             <th>排名</th><th>门店名称</th>
             <th>总业绩</th>
-            <th>美团核销</th><th>美团线下</th>
-            <th>抖音核销</th><th>抖音线下</th>
+            <th>美团核销</th>
+            <th>抖音核销</th>
             <th>开卡</th><th>续充</th>
             <th>美团访问</th><th>抖音访问</th><th>抖音转化</th>
             <th>美团评分</th><th>抖音评分</th><th>经营评分</th>
@@ -73,7 +76,7 @@ tr:hover td { background: #f8f9fa; }
         <tbody></tbody>
       </table>
     </div>
-    <div class="note">核销金额来自美团/抖音日报。线下金额来自微矩POS营业汇总。</div>
+    <div class="note">核销金额来自美团/抖音日报。总业绩/开卡/续充来自微矩POS。红色行 = 有差评。</div>
   </div>
 
   <div class="updated" id="updateTime"></div>
@@ -110,7 +113,7 @@ async function loadData() {
   // Show helpful error with local server command
   const isFile = location.protocol === 'file:';
   document.querySelector('#detailTable tbody').innerHTML =
-    '<tr><td colspan="18" class="empty-state"><div style="font-size:48px;margin-bottom:16px;">📂</div><p>暂无数据</p>' +
+    '<tr><td colspan="15" class="empty-state"><div style="font-size:48px;margin-bottom:16px;">📂</div><p>暂无数据</p>' +
     '<p style="font-size:12px;color:#bbb;">' +
     (isFile
       ? '浏览器禁止本地文件 fetch。请在此目录运行：<code style="background:#f0f0f0;padding:2px 6px;border-radius:4px;">python -m http.server 8080</code> 然后用 <code style="background:#f0f0f0;padding:2px 6px;border-radius:4px;">http://localhost:8080</code> 打开'
@@ -157,7 +160,7 @@ function renderAll() {
   const dayData = allData.filter(r => r.日期 === currentDate);
   if (!dayData.length) {
     document.querySelector('#detailTable tbody').innerHTML =
-      '<tr><td colspan="18" class="empty-state"><div style="font-size:48px;margin-bottom:16px;">📅</div><p>该日期暂无数据</p></td></tr>';
+      '<tr><td colspan="15" class="empty-state"><div style="font-size:48px;margin-bottom:16px;">📅</div><p>该日期暂无数据</p></td></tr>';
     return;
   }
   renderDetailTable(dayData);
@@ -173,11 +176,7 @@ function renderDetailTable(day) {
       name: r.门店名称 || '',
       total: r.微矩总业绩 || 0,
       mtReport: r.美团核销金额 || 0,
-      mtOffline: r.美团线下金额 || 0,
-      mtGap: r.美团核销差额 != null ? r.美团核销差额 : (r.美团核销金额 || 0) - (r.美团线下金额 || 0),
-      dyReport,
-      dyOffline: r.抖音线下金额 || 0,
-      dyGap: r.抖音核销差额 != null ? r.抖音核销差额 : dyReport - (r.抖音线下金额 || 0),
+      dyReport: r.抖音核销金额 || 0,
       wjCard: r.微矩开卡 || 0,
       wjRecharge: r.微矩续充 || 0,
       mtVisit: r.美团访问量 || 0,
@@ -194,17 +193,13 @@ function renderDetailTable(day) {
   stores.sort((a, b) => b.total - a.total);
 
   // ── 异常检测 ──────────────────────────────────────
-  const GAP_THRESHOLD = 500;       // 核销差额 > 500 触发告警
   const CONV_THRESHOLD = 0.3;      // 抖音转化率 < 0.3 触发告警
   const CONV_MIN_VISIT = 500;      // 抖音访问 > 500 才检查转化率
 
   const anomalies = [];
   stores.forEach(s => {
-    if (Math.abs(s.mtGap) > GAP_THRESHOLD) {
-      anomalies.push({ name: s.name, type: 'gap', msg: `美团差额 ${s.mtGap > 0 ? '+' : ''}${s.mtGap.toLocaleString('zh-CN', {maximumFractionDigits: 0})}` });
-    }
-    if (Math.abs(s.dyGap) > GAP_THRESHOLD) {
-      anomalies.push({ name: s.name, type: 'gap', msg: `抖音差额 ${s.dyGap > 0 ? '+' : ''}${s.dyGap.toLocaleString('zh-CN', {maximumFractionDigits: 0})}` });
+    if (s.bad > 0) {
+      anomalies.push({ name: s.name, type: 'bad', msg: `差评 ${s.bad} 条` });
     }
     if (s.dyConv < CONV_THRESHOLD && s.dyVisit > CONV_MIN_VISIT) {
       anomalies.push({ name: s.name, type: 'conv', msg: `抖音转化率 ${(s.dyConv * 100).toFixed(1)}% (访问${s.dyVisit.toLocaleString('zh-CN')}→核销¥${s.dyReport.toLocaleString('zh-CN')})` });
@@ -213,8 +208,8 @@ function renderDetailTable(day) {
 
   const anomalyBar = document.getElementById('anomalyBar');
   if (anomalies.length > 0) {
-    const hasGap = anomalies.some(a => a.type === 'gap');
-    anomalyBar.className = 'anomaly-bar' + (hasGap ? ' has-critical' : '');
+    const hasBad = anomalies.some(a => a.type === 'bad');
+    anomalyBar.className = 'anomaly-bar' + (hasBad ? ' has-critical' : '');
     anomalyBar.innerHTML = '<strong style="margin-right:8px;">⚠ 异常提醒</strong>' +
       anomalies.map(a => `<span class="anomaly-tag ${a.type}">${a.name}: ${a.msg}</span>`).join('');
     anomalyBar.style.display = 'block';
@@ -236,14 +231,13 @@ function renderDetailTable(day) {
   tbody.innerHTML = stores.map((s, i) => {
     const rank = i + 1;
     const rkCls = rank <= 3 ? `rank-${rank}` : 'rank-other';
-    return `<tr>
+    const badCls = s.bad > 0 ? 'bad-row' : '';
+    return `<tr class="${badCls}">
       <td><span class="rank-badge ${rkCls}">${rank}</span></td>
       <td class="store-name">${s.name}</td>
       <td style="font-weight:700">¥${fmt(s.total)}</td>
       <td>¥${fmt(s.mtReport)}</td>
-      <td>¥${fmt(s.mtOffline)}</td>
       <td>¥${fmt(s.dyReport)}</td>
-      <td>¥${fmt(s.dyOffline)}</td>
       <td>¥${fmt(s.wjCard)}</td>
       <td>¥${fmt(s.wjRecharge)}</td>
       <td>${fmt(s.mtVisit)}</td>
@@ -253,7 +247,7 @@ function renderDetailTable(day) {
       <td>${s.dyScore.toFixed(1)}</td>
       <td>${s.bizScore.toFixed(1)}</td>
       <td style="color:#00B050">${s.good}</td>
-      <td style="color:#FF0000">${s.bad}</td>
+      <td class="${s.bad > 0 ? 'bad-yes' : ''}">${s.bad}</td>
     </tr>`;
   }).join('');
 }
