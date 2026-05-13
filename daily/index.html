@@ -49,6 +49,7 @@ tr:hover td { background: #f8f9fa; }
 .kpi-card .kpi-value.dy { color: #1DA1F2; }
 .kpi-card .kpi-value.good { color: #00B050; }
 .kpi-card .kpi-value.bad { color: #CF1322; }
+.kpi-card.has-bad { background: #FFF2F0; border: 2px solid #FF4D4F; }
 </style>
 </head>
 <body>
@@ -69,7 +70,7 @@ tr:hover td { background: #f8f9fa; }
     <div class="kpi-card"><div class="kpi-label">美团核销</div><div class="kpi-value mt" id="kpiMt">-</div></div>
     <div class="kpi-card"><div class="kpi-label">抖音核销</div><div class="kpi-value dy" id="kpiDy">-</div></div>
     <div class="kpi-card"><div class="kpi-label">好评</div><div class="kpi-value good" id="kpiGood">-</div></div>
-    <div class="kpi-card"><div class="kpi-label">差评</div><div class="kpi-value bad" id="kpiBad">-</div></div>
+    <div class="kpi-card" id="kpiBadCard"><div class="kpi-label">差评</div><div class="kpi-value bad" id="kpiBad">-</div></div>
   </div>
 
   <div class="panel">
@@ -186,7 +187,9 @@ function renderAll() {
   document.getElementById('kpiMt').textContent = '¥' + fmtKpi(dayData.reduce((s, r) => s + (r.美团核销金额 || 0), 0));
   document.getElementById('kpiDy').textContent = '¥' + fmtKpi(dayData.reduce((s, r) => s + (r.抖音核销金额 || 0), 0));
   document.getElementById('kpiGood').textContent = fmtKpi(dayData.reduce((s, r) => s + (r.新增好评 || 0), 0));
-  document.getElementById('kpiBad').textContent = fmtKpi(dayData.reduce((s, r) => s + (r.新增差评 || 0), 0));
+  const totalBad = dayData.reduce((s, r) => s + (r.新增差评 || 0), 0);
+  document.getElementById('kpiBad').textContent = fmtKpi(totalBad);
+  document.getElementById('kpiBadCard').classList.toggle('has-bad', totalBad > 0);
 
   renderDetailTable(dayData);
   document.getElementById('updateTime').textContent =
