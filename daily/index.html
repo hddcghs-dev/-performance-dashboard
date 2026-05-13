@@ -41,6 +41,14 @@ tr:hover td { background: #f8f9fa; }
 .bad-yes { background: #FFF2F0; color: #CF1322; font-weight: 700; }
 .bad-row { background: #FFF2F0 !important; }
 .anomaly-tag.bad { background: #CF1322; color: #fff; }
+.kpi-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 20px; }
+.kpi-card { background: #fff; border-radius: 10px; padding: 18px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); text-align: center; }
+.kpi-card .kpi-label { font-size: 13px; color: #888; margin-bottom: 6px; }
+.kpi-card .kpi-value { font-size: 26px; font-weight: 700; color: #1a1a2e; }
+.kpi-card .kpi-value.mt { color: #FF6B35; }
+.kpi-card .kpi-value.dy { color: #1DA1F2; }
+.kpi-card .kpi-value.good { color: #00B050; }
+.kpi-card .kpi-value.bad { color: #CF1322; }
 </style>
 </head>
 <body>
@@ -56,6 +64,14 @@ tr:hover td { background: #f8f9fa; }
 </div>
 
 <div class="container">
+  <div class="kpi-cards" id="kpiCards">
+    <div class="kpi-card"><div class="kpi-label">总业绩</div><div class="kpi-value" id="kpiTotal">-</div></div>
+    <div class="kpi-card"><div class="kpi-label">美团核销</div><div class="kpi-value mt" id="kpiMt">-</div></div>
+    <div class="kpi-card"><div class="kpi-label">抖音核销</div><div class="kpi-value dy" id="kpiDy">-</div></div>
+    <div class="kpi-card"><div class="kpi-label">好评</div><div class="kpi-value good" id="kpiGood">-</div></div>
+    <div class="kpi-card"><div class="kpi-label">差评</div><div class="kpi-value bad" id="kpiBad">-</div></div>
+  </div>
+
   <div class="panel">
     <h3>全部门店业绩明细</h3>
     <div id="anomalyBar"></div>
@@ -163,6 +179,15 @@ function renderAll() {
       '<tr><td colspan="15" class="empty-state"><div style="font-size:48px;margin-bottom:16px;">📅</div><p>该日期暂无数据</p></td></tr>';
     return;
   }
+
+  // ── KPI 卡片 ──────────────────────────────────────
+  const fmtKpi = (v) => v != null ? v.toLocaleString('zh-CN', {maximumFractionDigits: 0}) : '-';
+  document.getElementById('kpiTotal').textContent = '¥' + fmtKpi(dayData.reduce((s, r) => s + (r.微矩总业绩 || 0), 0));
+  document.getElementById('kpiMt').textContent = '¥' + fmtKpi(dayData.reduce((s, r) => s + (r.美团核销金额 || 0), 0));
+  document.getElementById('kpiDy').textContent = '¥' + fmtKpi(dayData.reduce((s, r) => s + (r.抖音核销金额 || 0), 0));
+  document.getElementById('kpiGood').textContent = fmtKpi(dayData.reduce((s, r) => s + (r.新增好评 || 0), 0));
+  document.getElementById('kpiBad').textContent = fmtKpi(dayData.reduce((s, r) => s + (r.新增差评 || 0), 0));
+
   renderDetailTable(dayData);
   document.getElementById('updateTime').textContent =
     `数据更新: ${currentDate} | 共 ${new Set(dayData.map(r => r.门店名称)).size} 家门店`;
