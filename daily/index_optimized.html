@@ -38,6 +38,27 @@ tr:hover td { background: #f8f9fa; }
 .anomaly-tag.gap { background: #FF4D4F; color: #fff; }
 .anomaly-tag.conv { background: #FA8C16; color: #fff; }
 .conv-low { background: #FFF7E6; color: #D48806; font-weight: 600; }
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.kpi-card { background: #fff; border: 1px solid #edf0f5; border-radius: 8px; padding: 14px 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+.kpi-label { font-size: 12px; color: #667085; margin-bottom: 6px; }
+.kpi-value { font-size: 22px; line-height: 1.2; font-weight: 700; color: #1a1a2e; }
+.kpi-value.warn { color: #D48806; }
+.kpi-value.bad { color: #CF1322; }
+.kpi-value.good { color: #00A870; }
+.kpi-sub { margin-top: 4px; font-size: 11px; color: #98a2b3; }
+.toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+.toolbar input[type="search"] { width: 260px; max-width: 100%; padding: 8px 10px; border: 1px solid #d0d5dd; border-radius: 6px; font-size: 13px; outline: none; }
+.toolbar input[type="search"]:focus { border-color: #1677ff; box-shadow: 0 0 0 3px rgba(22,119,255,0.12); }
+.toolbar label { display: inline-flex; align-items: center; gap: 6px; color: #475467; font-size: 13px; white-space: nowrap; }
+.toolbar select { padding: 8px 10px; border: 1px solid #d0d5dd; border-radius: 6px; font-size: 13px; background: #fff; }
+.muted { color: #98a2b3; }
+.missing { color: #b7bdc8; }
+.row-alert td { background: #fff8f6; }
+@media (max-width: 700px) {
+  .container { padding: 12px; }
+  .toolbar { align-items: stretch; }
+  .toolbar input[type="search"], .toolbar select { width: 100%; }
+}
 </style>
 </head>
 <body>
@@ -53,8 +74,19 @@ tr:hover td { background: #f8f9fa; }
 </div>
 
 <div class="container">
+  <div class="kpi-grid" id="dailyKpis"></div>
   <div class="panel">
-    <h3>全部门店业绩明细</h3>
+    <div class="toolbar">
+      <h3 style="margin-bottom:0;">全部门店业绩明细</h3>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <input type="search" id="storeSearch" placeholder="搜索门店" oninput="renderAll()">
+        <select id="riskFilter" onchange="renderAll()">
+          <option value="all">全部门店</option>
+          <option value="alert">只看异常</option>
+          <option value="missing">只看缺失数据</option>
+        </select>
+      </div>
+    </div>
     <div id="anomalyBar"></div>
     <div class="table-wrap">
       <table id="detailTable">
@@ -65,7 +97,7 @@ tr:hover td { background: #f8f9fa; }
             <th>美团核销</th><th>美团线下</th>
             <th>抖音核销</th><th>抖音线下</th>
             <th>开卡</th><th>续充</th>
-            <th>美团访问</th><th>抖音访问</th><th>抖音转化</th>
+            <th>美团访问</th><th>抖音访问</th><th>抖音访问核销</th>
             <th>美团评分</th><th>抖音评分</th><th>经营评分</th>
             <th>好评</th><th>差评</th>
           </tr>
@@ -83,39 +115,43 @@ tr:hover td { background: #f8f9fa; }
 let allData = [];
 let currentDate = '';
 let availableDates = [];
+const DAILY_RULES = {
+  gapWarn: 500,
+  gapCritical: 1000,
+  convWarn: 0.3,
+  convMinVisit: 500
+};
+
+function n(v) {
+  const num = Number(v);
+  return Number.isFinite(num) ? num : 0;
+}
+
+function hasValue(v) {
+  return v !== null && v !== undefined && v !== '';
+}
+
+function money(v) {
+  return hasValue(v) ? '¥' + n(v).toLocaleString('zh-CN', { maximumFractionDigits: 0 }) : '<span class="missing">—</span>';
+}
+
+function count(v) {
+  return hasValue(v) ? n(v).toLocaleString('zh-CN', { maximumFractionDigits: 0 }) : '<span class="missing">—</span>';
+}
+
+function score(v) {
+  return hasValue(v) && n(v) > 0 ? n(v).toFixed(1) : '<span class="missing">—</span>';
+}
 
 async function loadData() {
-  // Try fetch first (works when served via HTTP/HTTPS)
   try {
     const resp = await fetch('daily_data.json');
     allData = await resp.json();
     initApp();
-    return;
-  } catch (e) {}
-
-  // Fallback for file:// protocol (local opening)
-  if (location.protocol === 'file:') {
-    try {
-      const xhr = new XMLHttpRequest();
-      xhr.open('GET', 'daily_data.json', false);
-      xhr.send(null);
-      if (xhr.status === 0 || xhr.status === 200) {
-        allData = JSON.parse(xhr.responseText);
-        initApp();
-        return;
-      }
-    } catch (e) {}
+  } catch (e) {
+    document.querySelector('#detailTable tbody').innerHTML =
+      '<tr><td colspan="18" class="empty-state"><div style="font-size:48px;margin-bottom:16px;">📂</div><p>暂无数据</p><p style="font-size:12px;color:#bbb;">请先运行数据聚合脚本生成 daily_data.json</p></td></tr>';
   }
-
-  // Show helpful error with local server command
-  const isFile = location.protocol === 'file:';
-  document.querySelector('#detailTable tbody').innerHTML =
-    '<tr><td colspan="18" class="empty-state"><div style="font-size:48px;margin-bottom:16px;">📂</div><p>暂无数据</p>' +
-    '<p style="font-size:12px;color:#bbb;">' +
-    (isFile
-      ? '浏览器禁止本地文件 fetch。请在此目录运行：<code style="background:#f0f0f0;padding:2px 6px;border-radius:4px;">python -m http.server 8080</code> 然后用 <code style="background:#f0f0f0;padding:2px 6px;border-radius:4px;">http://localhost:8080</code> 打开'
-      : '请先运行数据聚合脚本生成 daily_data.json') +
-    '</p></td></tr>';
 }
 
 function initApp() {
@@ -256,6 +292,117 @@ function renderDetailTable(day) {
       <td style="color:#FF0000">${s.bad}</td>
     </tr>`;
   }).join('');
+}
+
+function toStoreRows(day) {
+  return [...day].map(r => {
+    const mtReport = hasValue(r.美团核销金额) ? n(r.美团核销金额) : null;
+    const mtOffline = hasValue(r.美团线下金额) ? n(r.美团线下金额) : null;
+    const dyReport = hasValue(r.抖音核销金额) ? n(r.抖音核销金额) : null;
+    const dyOffline = hasValue(r.抖音线下金额) ? n(r.抖音线下金额) : null;
+    const mtGap = hasValue(r.美团核销差额) ? n(r.美团核销差额) : n(mtReport) - n(mtOffline);
+    const dyGap = hasValue(r.抖音核销差额) ? n(r.抖音核销差额) : n(dyReport) - n(dyOffline);
+    const dyVisit = hasValue(r.抖音访问量) ? n(r.抖音访问量) : null;
+    const dyConv = dyVisit > 0 ? n(dyReport) / dyVisit : null;
+    const missing = ['微矩总业绩','美团核销金额','抖音核销金额','美团访问量','抖音访问量'].filter(k => !hasValue(r[k]));
+    const gapAlert = Math.abs(mtGap) > DAILY_RULES.gapWarn || Math.abs(dyGap) > DAILY_RULES.gapWarn;
+    const convAlert = dyConv !== null && dyConv < DAILY_RULES.convWarn && dyVisit > DAILY_RULES.convMinVisit;
+    return {
+      raw: r,
+      name: r.门店名称 || '',
+      total: hasValue(r.微矩总业绩) ? n(r.微矩总业绩) : null,
+      mtReport, mtOffline, dyReport, dyOffline, mtGap, dyGap, dyVisit, dyConv,
+      mtVisit: hasValue(r.美团访问量) ? n(r.美团访问量) : null,
+      card: hasValue(r.开卡金额) ? n(r.开卡金额) : null,
+      recharge: hasValue(r.续充金额) ? n(r.续充金额) : null,
+      mtScore: r.美团评分,
+      dyScore: r.抖音评分,
+      opScore: r.经营评分,
+      good: r.新增好评数,
+      bad: r.新增差评数,
+      missing,
+      gapAlert,
+      convAlert,
+      hasAlert: gapAlert || convAlert
+    };
+  }).sort((a, b) => n(b.total) - n(a.total));
+}
+
+function renderDailyKpis(stores) {
+  const total = stores.reduce((sum, s) => sum + n(s.total), 0);
+  const card = stores.reduce((sum, s) => sum + n(s.card), 0);
+  const recharge = stores.reduce((sum, s) => sum + n(s.recharge), 0);
+  const alertCount = stores.filter(s => s.hasAlert).length;
+  const missingCount = stores.filter(s => s.missing.length).length;
+  const badCount = stores.reduce((sum, s) => sum + n(s.bad), 0);
+  document.getElementById('dailyKpis').innerHTML = `
+    <div class="kpi-card"><div class="kpi-label">总业绩</div><div class="kpi-value">${money(total)}</div><div class="kpi-sub">${stores.length} 家门店</div></div>
+    <div class="kpi-card"><div class="kpi-label">开卡金额</div><div class="kpi-value good">${money(card)}</div><div class="kpi-sub">续充 ${money(recharge)}</div></div>
+    <div class="kpi-card"><div class="kpi-label">异常门店</div><div class="kpi-value ${alertCount ? 'bad' : 'good'}">${alertCount}</div><div class="kpi-sub">差额或访问核销偏低</div></div>
+    <div class="kpi-card"><div class="kpi-label">数据缺失</div><div class="kpi-value ${missingCount ? 'warn' : 'good'}">${missingCount}</div><div class="kpi-sub">差评 ${count(badCount)}</div></div>
+  `;
+}
+
+function renderAll() {
+  const dayData = allData.filter(r => r.日期 === currentDate);
+  if (!dayData.length) {
+    document.getElementById('dailyKpis').innerHTML = '';
+    document.getElementById('anomalyBar').innerHTML = '';
+    document.getElementById('detailBody').innerHTML = '<tr><td colspan="15">无数据</td></tr>';
+    document.getElementById('updateTime').textContent = `数据更新: ${currentDate} | 无数据`;
+    return;
+  }
+  const stores = toStoreRows(dayData);
+  renderDailyKpis(stores);
+  const visibleCount = renderDetailTable(stores);
+  document.getElementById('updateTime').textContent =
+    `数据更新: ${currentDate} | 共 ${stores.length} 家门店 | 当前显示 ${visibleCount} 家`;
+}
+
+function renderDetailTable(stores) {
+  const query = (document.getElementById('storeSearch')?.value || '').trim().toLowerCase();
+  const risk = document.getElementById('riskFilter')?.value || 'all';
+  const alertStores = stores.filter(s => s.hasAlert || s.missing.length);
+  const topAlerts = alertStores.slice(0, 6).map(s => {
+    const reasons = [];
+    if (s.gapAlert) reasons.push('核销差额');
+    if (s.convAlert) reasons.push('抖音访问核销偏低');
+    if (s.missing.length) reasons.push(`缺失 ${s.missing.length} 项`);
+    return `${escapeHtml(s.name)}：${reasons.join('、')}`;
+  });
+  document.getElementById('anomalyBar').innerHTML = alertStores.length
+    ? `<div style="background:#fff1f0;border:1px solid #ffccc7;color:#a8071a;padding:10px 12px;border-radius:8px;margin-bottom:12px;">需关注 ${alertStores.length} 家：${topAlerts.join('；')}${alertStores.length > topAlerts.length ? '；...' : ''}</div>`
+    : `<div style="background:#f6ffed;border:1px solid #b7eb8f;color:#237804;padding:10px 12px;border-radius:8px;margin-bottom:12px;">今日未发现明显核销差额或关键字段缺失。</div>`;
+
+  let rows = stores.filter(s => !query || s.name.toLowerCase().includes(query));
+  if (risk === 'alert') rows = rows.filter(s => s.hasAlert);
+  if (risk === 'missing') rows = rows.filter(s => s.missing.length);
+
+  if (!rows.length) {
+    document.getElementById('detailBody').innerHTML = '<tr><td colspan="15">没有符合条件的门店</td></tr>';
+    return 0;
+  }
+
+  document.getElementById('detailBody').innerHTML = rows.map(s => `
+    <tr class="${s.hasAlert || s.missing.length ? 'row-alert' : ''}">
+      <td>${escapeHtml(s.name)}${s.missing.length ? `<div class="kpi-sub">缺失：${s.missing.map(escapeHtml).join('、')}</div>` : ''}</td>
+      <td><b>${money(s.total)}</b></td>
+      <td>${money(s.mtReport)}${Math.abs(s.mtGap) > DAILY_RULES.gapWarn ? `<div class="kpi-sub bad">差额 ${money(s.mtGap)}</div>` : ''}</td>
+      <td>${money(s.mtOffline)}</td>
+      <td>${money(s.dyReport)}${Math.abs(s.dyGap) > DAILY_RULES.gapWarn ? `<div class="kpi-sub bad">差额 ${money(s.dyGap)}</div>` : ''}</td>
+      <td>${money(s.dyOffline)}</td>
+      <td>${money(s.card)}</td>
+      <td>${money(s.recharge)}</td>
+      <td>${count(s.mtVisit)}</td>
+      <td>${count(s.dyVisit)}</td>
+      <td>${s.dyConv === null ? '<span class="missing">—</span>' : (s.dyConv * 100).toFixed(1) + '%'}</td>
+      <td>${score(s.mtScore)}</td>
+      <td>${score(s.dyScore)}</td>
+      <td>${score(s.opScore)}</td>
+      <td>${count(s.good)} / ${count(s.bad)}</td>
+    </tr>
+  `).join('');
+  return rows.length;
 }
 
 window.addEventListener('resize', () => {});
