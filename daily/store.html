@@ -24,6 +24,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Microsoft YaHei', sans-s
 .kpi-card .value.mt { color: #FF6B35; }
 .kpi-card .value.dy { color: #1DA1F2; }
 .kpi-card .value.good { color: #00B050; }
+.kpi-card .value.bad { color: #CF1322; }
 .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 .chart-panel { background: #fff; border-radius: 10px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
 .chart-panel.full { grid-column: 1 / -1; }
@@ -55,6 +56,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Microsoft YaHei', sans-s
     <div class="kpi-card"><div class="label">美团核销</div><div class="value mt" id="kpiMt">-</div></div>
     <div class="kpi-card"><div class="label">抖音核销</div><div class="value dy" id="kpiDy">-</div></div>
     <div class="kpi-card"><div class="label">当月好评</div><div class="value good" id="kpiGood">-</div></div>
+    <div class="kpi-card"><div class="label">当月差评</div><div class="value bad" id="kpiBad">-</div></div>
   </div>
 
   <div class="charts" id="chartsContainer">
@@ -145,6 +147,7 @@ function renderAll() {
     document.getElementById('kpiMt').textContent = '-';
     document.getElementById('kpiDy').textContent = '-';
     document.getElementById('kpiGood').textContent = '-';
+    document.getElementById('kpiBad').textContent = '-';
     return;
   }
 
@@ -153,6 +156,7 @@ function renderAll() {
   document.getElementById('kpiMt').textContent = '¥' + fmt(monthData.reduce((s, r) => s + (r.美团核销金额 || 0), 0));
   document.getElementById('kpiDy').textContent = '¥' + fmt(monthData.reduce((s, r) => s + (r.抖音核销金额 || 0), 0));
   document.getElementById('kpiGood').textContent = fmt(monthData.reduce((s, r) => s + (r.新增好评 || 0), 0));
+  document.getElementById('kpiBad').textContent = fmt(monthData.reduce((s, r) => s + (r.新增差评 || 0), 0));
 
   // Restore charts container
   document.getElementById('chartsContainer').innerHTML = `
@@ -173,7 +177,25 @@ function renderAll() {
   const commonOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 12, font: { size: 11 } } } },
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { position: 'bottom', labels: { boxWidth: 12, padding: 12, font: { size: 11 } } },
+      tooltip: {
+        callbacks: {
+          label: function(ctx) {
+            let val = ctx.parsed.y;
+            if (val == null || isNaN(val)) return ctx.dataset.label + ': -';
+            // Money fields get ¥ prefix
+            const moneyFields = ['总业绩', '美团核销', '美团', '抖音核销', '抖音', '开卡', '续充'];
+            const isMoney = moneyFields.some(k => ctx.dataset.label && ctx.dataset.label.includes(k));
+            if (isMoney) return ctx.dataset.label + ': ¥' + val.toLocaleString('zh-CN');
+            // Score fields
+            if (ctx.dataset.label && ctx.dataset.label.includes('评分')) return ctx.dataset.label + ': ' + val.toFixed(1);
+            return ctx.dataset.label + ': ' + val.toLocaleString('zh-CN');
+          }
+        }
+      }
+    },
     scales: { x: { ticks: { font: { size: 10 } } }, y: { ticks: { font: { size: 10 } } } }
   };
 
