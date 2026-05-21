@@ -183,7 +183,7 @@ function renderAll() {
 
   // ── KPI 卡片 ──────────────────────────────────────
   const fmtKpi = (v) => v != null ? v.toLocaleString('zh-CN', {maximumFractionDigits: 0}) : '-';
-  document.getElementById('kpiTotal').textContent = '¥' + fmtKpi(dayData.reduce((s, r) => s + (r.微矩总业绩 || 0), 0));
+  document.getElementById('kpiTotal').textContent = '¥' + fmtKpi(dayData.reduce((s, r) => s + (r.微矩总业绩 || r.总营业额 || 0), 0));
   document.getElementById('kpiMt').textContent = '¥' + fmtKpi(dayData.reduce((s, r) => s + (r.美团核销金额 || 0), 0));
   document.getElementById('kpiDy').textContent = '¥' + fmtKpi(dayData.reduce((s, r) => s + (r.抖音核销金额 || 0), 0));
   document.getElementById('kpiGood').textContent = fmtKpi(dayData.reduce((s, r) => s + (r.新增好评 || 0), 0));
@@ -202,11 +202,11 @@ function renderDetailTable(day) {
     const dyReport = r.抖音核销金额 || 0;
     return {
       name: r.门店名称 || '',
-      total: r.微矩总业绩 || 0,
+      total: r.微矩总业绩 || r.总营业额 || 0,
       mtReport: r.美团核销金额 || 0,
       dyReport: r.抖音核销金额 || 0,
-      wjCard: r.微矩开卡 || 0,
-      wjRecharge: r.微矩续充 || 0,
+      wjCard: r.微矩开卡 || r.开卡金额 || 0,
+      wjRecharge: r.微矩续充 || r.续充金额 || 0,
       mtVisit: r.美团访问量 || 0,
       dyVisit,
       dyConv: dyVisit > 0 ? (dyReport / dyVisit) : 0,
