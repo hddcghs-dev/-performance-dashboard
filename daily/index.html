@@ -262,7 +262,7 @@ function renderDetailTable(day) {
     const badCls = s.bad > 0 ? 'bad-row' : '';
     return `<tr class="${badCls}">
       <td><span class="rank-badge ${rkCls}">${rank}</span></td>
-      <td class="store-name">${s.name}</td>
+      <td class="store-name"><a href="store.html?store=${encodeURIComponent(s.name)}&month=${currentDate.slice(0,7)}" style="color:#1a1a2e;text-decoration:none;" onmouseenter="this.style.color='#FF6B35'" onmouseleave="this.style.color='#1a1a2e'">${s.name}</a></td>
       <td style="font-weight:700">¥${fmt(s.total)}</td>
       <td>¥${fmt(s.mtReport)}</td>
       <td>¥${fmt(s.dyReport)}</td>

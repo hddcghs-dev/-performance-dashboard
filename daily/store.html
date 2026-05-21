@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>门店趋势 · 民德搓澡堂</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Microsoft YaHei', sans-serif; background: #f0f2f5; color: #1a1a2e; }
+.header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); color: #fff; padding: 14px 32px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+.header h1 { font-size: 20px; font-weight: 600; }
+.header a { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 14px; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; padding: 6px 14px; transition: all 0.2s; }
+.header a:hover { background: rgba(255,255,255,0.15); color: #fff; }
+.month-nav { display: flex; align-items: center; gap: 12px; }
+.month-nav button { background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; padding: 6px 14px; cursor: pointer; font-size: 14px; }
+.month-nav button:hover { background: rgba(255,255,255,0.25); }
+.month-nav .month-label { font-size: 16px; font-weight: 600; min-width: 100px; text-align: center; }
+.container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+.kpi-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 20px; }
+.kpi-card { background: #fff; border-radius: 10px; padding: 16px 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); text-align: center; }
+.kpi-card .label { font-size: 12px; color: #888; margin-bottom: 4px; }
+.kpi-card .value { font-size: 22px; font-weight: 700; }
+.kpi-card .value.mt { color: #FF6B35; }
+.kpi-card .value.dy { color: #1DA1F2; }
+.kpi-card .value.good { color: #00B050; }
+.charts { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.chart-panel { background: #fff; border-radius: 10px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.chart-panel.full { grid-column: 1 / -1; }
+.chart-panel h3 { font-size: 14px; font-weight: 600; color: #555; margin-bottom: 10px; }
+.chart-wrap { position: relative; height: 260px; }
+.chart-wrap.short { height: 200px; }
+.empty-state { text-align: center; padding: 80px 20px; color: #999; }
+.updated { font-size: 11px; color: #999; text-align: right; padding: 10px 0; }
+@media (max-width: 768px) { .charts { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div style="display:flex;align-items:center;gap:16px;">
+    <a href="index.html">← 返回看板</a>
+    <h1 id="storeTitle">门店趋势</h1>
+  </div>
+  <div class="month-nav">
+    <button onclick="navMonth(-1)">◀ 上月</button>
+    <span class="month-label" id="monthLabel">2026-05</span>
+    <button onclick="navMonth(1)">下月 ▶</button>
+  </div>
+</div>
+
+<div class="container">
+  <div class="kpi-cards" id="kpiCards">
+    <div class="kpi-card"><div class="label">当月总业绩</div><div class="value" id="kpiTotal">-</div></div>
+    <div class="kpi-card"><div class="label">美团核销</div><div class="value mt" id="kpiMt">-</div></div>
+    <div class="kpi-card"><div class="label">抖音核销</div><div class="value dy" id="kpiDy">-</div></div>
+    <div class="kpi-card"><div class="label">当月好评</div><div class="value good" id="kpiGood">-</div></div>
+  </div>
+
+  <div class="charts" id="chartsContainer">
+    <div class="chart-panel"><h3>总业绩</h3><div class="chart-wrap"><canvas id="chartTotal"></canvas></div></div>
+    <div class="chart-panel"><h3>核销对比（美团 vs 抖音）</h3><div class="chart-wrap"><canvas id="chartRedeem"></canvas></div></div>
+    <div class="chart-panel"><h3>评分趋势</h3><div class="chart-wrap"><canvas id="chartScore"></canvas></div></div>
+    <div class="chart-panel"><h3>访问量</h3><div class="chart-wrap"><canvas id="chartVisit"></canvas></div></div>
+    <div class="chart-panel"><h3>开卡 / 续充</h3><div class="chart-wrap"><canvas id="chartCard"></canvas></div></div>
+    <div class="chart-panel"><h3>好评 / 差评</h3><div class="chart-wrap"><canvas id="chartReview"></canvas></div></div>
+  </div>
+
+  <div class="updated" id="updateTime"></div>
+</div>
+
+<script>
+let allData = [];
+let currentMonth = '';
+let currentStore = '';
+let charts = {};
+
+function getParam(name) {
+  const url = new URL(location.href);
+  return url.searchParams.get(name) || '';
+}
+
+async function loadData() {
+  try {
+    const resp = await fetch('daily_data.json');
+    allData = await resp.json();
+    initApp();
+    return;
+  } catch (e) {}
+  if (location.protocol === 'file:') {
+    try {
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', 'daily_data.json', false);
+      xhr.send(null);
+      if (xhr.status === 0 || xhr.status === 200) {
+        allData = JSON.parse(xhr.responseText);
+        initApp();
+        return;
+      }
+    } catch (e) {}
+  }
+  document.getElementById('chartsContainer').innerHTML =
+    '<div class="chart-panel full"><div class="empty-state"><p>暂无数据</p><p style="font-size:12px;color:#bbb;">请先运行数据聚合脚本</p></div></div>';
+}
+
+function initApp() {
+  currentStore = decodeURIComponent(getParam('store'));
+  const paramMonth = getParam('month');
+  currentMonth = paramMonth || '2026-05';
+
+  if (!currentStore) {
+    document.getElementById('storeTitle').textContent = '未指定门店';
+    document.getElementById('chartsContainer').innerHTML =
+      '<div class="chart-panel full"><div class="empty-state"><p>请从看板页面点击门店名称进入</p></div></div>';
+    return;
+  }
+
+  document.getElementById('storeTitle').textContent = currentStore;
+  document.getElementById('monthLabel').textContent = currentMonth;
+  renderAll();
+}
+
+function navMonth(delta) {
+  const [y, m] = currentMonth.split('-').map(Number);
+  const d = new Date(y, m - 1 + delta, 1);
+  currentMonth = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  document.getElementById('monthLabel').textContent = currentMonth;
+  renderAll();
+}
+
+function fmt(v) {
+  return v != null ? v.toLocaleString('zh-CN', {maximumFractionDigits: 0}) : '-';
+}
+
+function renderAll() {
+  const monthData = allData.filter(r => {
+    if (!r.日期 || !r.门店名称) return false;
+    return r.门店名称 === currentStore && String(r.日期).startsWith(currentMonth);
+  }).sort((a, b) => String(a.日期).localeCompare(String(b.日期)));
+
+  if (!monthData.length) {
+    document.getElementById('chartsContainer').innerHTML =
+      '<div class="chart-panel full"><div class="empty-state"><p>该月份暂无数据</p></div></div>';
+    document.getElementById('kpiTotal').textContent = '-';
+    document.getElementById('kpiMt').textContent = '-';
+    document.getElementById('kpiDy').textContent = '-';
+    document.getElementById('kpiGood').textContent = '-';
+    return;
+  }
+
+  // KPI cards
+  document.getElementById('kpiTotal').textContent = '¥' + fmt(monthData.reduce((s, r) => s + (r.微矩总业绩 || r.总营业额 || 0), 0));
+  document.getElementById('kpiMt').textContent = '¥' + fmt(monthData.reduce((s, r) => s + (r.美团核销金额 || 0), 0));
+  document.getElementById('kpiDy').textContent = '¥' + fmt(monthData.reduce((s, r) => s + (r.抖音核销金额 || 0), 0));
+  document.getElementById('kpiGood').textContent = fmt(monthData.reduce((s, r) => s + (r.新增好评 || 0), 0));
+
+  // Restore charts container
+  document.getElementById('chartsContainer').innerHTML = `
+    <div class="chart-panel"><h3>总业绩</h3><div class="chart-wrap"><canvas id="chartTotal"></canvas></div></div>
+    <div class="chart-panel"><h3>核销对比（美团 vs 抖音）</h3><div class="chart-wrap"><canvas id="chartRedeem"></canvas></div></div>
+    <div class="chart-panel"><h3>评分趋势</h3><div class="chart-wrap"><canvas id="chartScore"></canvas></div></div>
+    <div class="chart-panel"><h3>访问量</h3><div class="chart-wrap"><canvas id="chartVisit"></canvas></div></div>
+    <div class="chart-panel"><h3>开卡 / 续充</h3><div class="chart-wrap"><canvas id="chartCard"></canvas></div></div>
+    <div class="chart-panel"><h3>好评 / 差评</h3><div class="chart-wrap"><canvas id="chartReview"></canvas></div></div>
+  `;
+
+  const labels = monthData.map(r => String(r.日期).slice(8));
+
+  // Destroy old charts
+  Object.values(charts).forEach(c => c.destroy());
+  charts = {};
+
+  const commonOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 12, font: { size: 11 } } } },
+    scales: { x: { ticks: { font: { size: 10 } } }, y: { ticks: { font: { size: 10 } } } }
+  };
+
+  // 1. Total revenue
+  charts.total = new Chart(document.getElementById('chartTotal'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: '总业绩', data: monthData.map(r => r.微矩总业绩 || r.总营业额 || 0),
+        borderColor: '#1a1a2e', backgroundColor: 'rgba(26,26,46,0.1)', fill: true, tension: 0.3, pointRadius: 4
+      }]
+    },
+    options: { ...commonOptions, scales: { ...commonOptions.scales, y: { ticks: { font: { size: 10 }, callback: v => '¥' + fmt(v) } } } }
+  });
+
+  // 2. Redeem comparison
+  charts.redeem = new Chart(document.getElementById('chartRedeem'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: '美团核销', data: monthData.map(r => r.美团核销金额 || 0), borderColor: '#FF6B35', tension: 0.3, pointRadius: 3 },
+        { label: '抖音核销', data: monthData.map(r => r.抖音核销金额 || 0), borderColor: '#1DA1F2', tension: 0.3, pointRadius: 3 }
+      ]
+    },
+    options: { ...commonOptions, scales: { ...commonOptions.scales, y: { ticks: { font: { size: 10 }, callback: v => '¥' + fmt(v) } } } }
+  });
+
+  // 3. Score trends
+  const scoreDatasets = [];
+  if (monthData.some(r => r.美团评分)) scoreDatasets.push({ label: '美团评分', data: monthData.map(r => r.美团评分 || null), borderColor: '#FF6B35', tension: 0.3, pointRadius: 3, spanGaps: true });
+  if (monthData.some(r => r.抖音评分)) scoreDatasets.push({ label: '抖音评分', data: monthData.map(r => r.抖音评分 || null), borderColor: '#1DA1F2', tension: 0.3, pointRadius: 3, spanGaps: true });
+  if (monthData.some(r => r.经营评分)) scoreDatasets.push({ label: '经营评分', data: monthData.map(r => r.经营评分 || null), borderColor: '#00B050', tension: 0.3, pointRadius: 3, spanGaps: true });
+  charts.score = new Chart(document.getElementById('chartScore'), {
+    type: 'line', data: { labels, datasets: scoreDatasets },
+    options: { ...commonOptions, scales: { ...commonOptions.scales, y: { min: 3, max: 5, ticks: { font: { size: 10 }, stepSize: 0.5 } } } }
+  });
+
+  // 4. Visits
+  charts.visit = new Chart(document.getElementById('chartVisit'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: '美团访问', data: monthData.map(r => r.美团访问量 || 0), borderColor: '#FF6B35', tension: 0.3, pointRadius: 3 },
+        { label: '抖音访问', data: monthData.map(r => r.抖音访问量 || 0), borderColor: '#1DA1F2', tension: 0.3, pointRadius: 3 }
+      ]
+    },
+    options: commonOptions
+  });
+
+  // 5. Cards
+  charts.card = new Chart(document.getElementById('chartCard'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: '开卡', data: monthData.map(r => r.微矩开卡 || r.开卡金额 || 0), backgroundColor: '#1a1a2e' },
+        { label: '续充', data: monthData.map(r => r.微矩续充 || r.续充金额 || 0), backgroundColor: '#adb5bd' }
+      ]
+    },
+    options: { ...commonOptions, scales: { ...commonOptions.scales, y: { stacked: true, ticks: { font: { size: 10 }, callback: v => '¥' + fmt(v) } }, x: { stacked: true, ticks: { font: { size: 10 } } } } }
+  });
+
+  // 6. Reviews
+  charts.review = new Chart(document.getElementById('chartReview'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: '好评', data: monthData.map(r => r.新增好评 || 0), backgroundColor: '#00B050' },
+        { label: '差评', data: monthData.map(r => r.新增差评 || 0), backgroundColor: '#CF1322' }
+      ]
+    },
+    options: commonOptions
+  });
+
+  document.getElementById('updateTime').textContent =
+    `数据范围: ${currentMonth} | ${monthData.length} 天数据`;
+}
+
+window.addEventListener('resize', () => Object.values(charts).forEach(c => c.resize()));
+loadData();
+</script>
+</body>
+</html>
