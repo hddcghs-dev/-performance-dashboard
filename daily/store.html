@@ -209,23 +209,24 @@ function render() {
 
   // ── Aggregates ──
   const sum = (arr, key) => arr.reduce((s,r) => s + (r[key] || 0), 0);
+  const sumValue = (arr, getter) => arr.reduce((s,r) => s + (getter(r) || 0), 0);
   const avg = (arr, key) => { const v = arr.filter(r => r[key] != null).map(r => r[key]); return v.length ? v.reduce((a,b)=>a+b,0)/v.length : 0; };
 
-  const totalRev = sum(data, '微矩总业绩') || sum(data, '总营业额');
+  const totalRev = sumValue(data, r => r.微矩总业绩 || r.总营业额 || 0);
   const totalMt = sum(data, '美团核销金额');
   const totalDy = sum(data, '抖音核销金额');
-  const totalCard = sum(data, '微矩开卡') || sum(data, '开卡金额');
-  const totalRecharge = sum(data, '微矩续充') || sum(data, '续充金额');
+  const totalCard = sumValue(data, r => r.微矩开卡 || r.开卡金额 || 0);
+  const totalRecharge = sumValue(data, r => r.微矩续充 || r.续充金额 || 0);
   const totalGood = sum(data, '新增好评');
   const totalBad = sum(data, '新增差评');
   const totalMtVisit = sum(data, '美团访问量');
   const totalDyVisit = sum(data, '抖音访问量');
 
-  const prevRev = sum(prev, '微矩总业绩') || sum(prev, '总营业额');
+  const prevRev = sumValue(prev, r => r.微矩总业绩 || r.总营业额 || 0);
   const prevMt = sum(prev, '美团核销金额');
   const prevDy = sum(prev, '抖音核销金额');
-  const prevCard = sum(prev, '微矩开卡') || sum(prev, '开卡金额');
-  const prevRecharge = sum(prev, '微矩续充') || sum(prev, '续充金额');
+  const prevCard = sumValue(prev, r => r.微矩开卡 || r.开卡金额 || 0);
+  const prevRecharge = sumValue(prev, r => r.微矩续充 || r.续充金额 || 0);
   const prevGood = sum(prev, '新增好评');
   const prevBad = sum(prev, '新增差评');
   const prevMtVisit = sum(prev, '美团访问量');
