@@ -4,43 +4,96 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>门店趋势 · 民德搓澡堂</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Microsoft YaHei', sans-serif; background: #f0f2f5; color: #1a1a2e; }
-.header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); color: #fff; padding: 14px 32px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
-.header h1 { font-size: 20px; font-weight: 600; }
-.header a { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 14px; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; padding: 6px 14px; transition: all 0.2s; }
-.header a:hover { background: rgba(255,255,255,0.15); color: #fff; }
-.month-nav { display: flex; align-items: center; gap: 12px; }
-.month-nav button { background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; padding: 6px 14px; cursor: pointer; font-size: 14px; }
-.month-nav button:hover { background: rgba(255,255,255,0.25); }
-.month-nav .month-label { font-size: 16px; font-weight: 600; min-width: 100px; text-align: center; }
-.container { max-width: 1400px; margin: 0 auto; padding: 20px; }
-.kpi-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 20px; }
-.kpi-card { background: #fff; border-radius: 10px; padding: 16px 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); text-align: center; }
-.kpi-card .label { font-size: 12px; color: #888; margin-bottom: 4px; }
-.kpi-card .value { font-size: 22px; font-weight: 700; }
-.kpi-card .value.mt { color: #FF6B35; }
-.kpi-card .value.dy { color: #1DA1F2; }
-.kpi-card .value.good { color: #00B050; }
-.kpi-card .value.bad { color: #CF1322; }
-.charts { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-.chart-panel { background: #fff; border-radius: 10px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-.chart-panel.full { grid-column: 1 / -1; }
-.chart-panel h3 { font-size: 14px; font-weight: 600; color: #555; margin-bottom: 10px; }
-.chart-wrap { position: relative; height: 260px; }
-.chart-wrap.short { height: 200px; }
-.empty-state { text-align: center; padding: 80px 20px; color: #999; }
-.updated { font-size: 11px; color: #999; text-align: right; padding: 10px 0; }
-@media (max-width: 768px) { .charts { grid-template-columns: 1fr; } }
+:root {
+  --bg: #f5f6fa;
+  --card: #fff;
+  --text: #1e293b;
+  --text2: #64748b;
+  --text3: #94a3b8;
+  --accent: #6366f1;
+  --accent2: #818cf8;
+  --mt: #f97316;
+  --dy: #06b6d4;
+  --green: #10b981;
+  --red: #ef4444;
+  --border: #e2e8f0;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-lg: 0 4px 6px rgba(0,0,0,0.05), 0 10px 15px rgba(0,0,0,0.03);
+  --radius: 14px;
+  --radius-sm: 10px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
+
+/* Header */
+.header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #fff; padding: 16px 28px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; position:sticky; top:0; z-index:10; }
+.header-left { display:flex; align-items:center; gap:16px; }
+.header a { color: rgba(255,255,255,0.75); text-decoration:none; font-size:13px; border:1px solid rgba(255,255,255,0.2); border-radius:8px; padding:6px 14px; transition:all 0.2s; }
+.header a:hover { background:rgba(255,255,255,0.12); color:#fff; }
+.header h1 { font-size:20px; font-weight:600; letter-spacing:-0.3px; }
+.month-nav { display:flex; align-items:center; gap:10px; }
+.month-nav button { background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:8px; padding:7px 16px; cursor:pointer; font-size:13px; font-weight:500; transition:all 0.2s; }
+.month-nav button:hover { background:rgba(255,255,255,0.2); }
+.month-nav .month-label { font-size:16px; font-weight:600; min-width:90px; text-align:center; letter-spacing:-0.3px; }
+
+.container { max-width:1440px; margin:0 auto; padding:20px 24px; }
+
+/* KPI Cards */
+.kpi-row { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:14px; margin-bottom:20px; }
+.kpi-card { background:var(--card); border-radius:var(--radius); padding:18px 22px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:4px; transition:box-shadow 0.2s; }
+.kpi-card:hover { box-shadow: var(--shadow-lg); }
+.kpi-label { font-size:12px; color:var(--text2); font-weight:500; text-transform:uppercase; letter-spacing:0.5px; }
+.kpi-main { display:flex; align-items:baseline; gap:8px; }
+.kpi-value { font-size:26px; font-weight:700; letter-spacing:-0.5px; }
+.kpi-value.mt { color:var(--mt); } .kpi-value.dy { color:var(--dy); }
+.kpi-value.green { color:var(--green); } .kpi-value.red { color:var(--red); }
+.kpi-delta { font-size:12px; font-weight:600; padding:2px 8px; border-radius:12px; display:inline-flex; align-items:center; gap:2px; }
+.kpi-delta.up { background:#ecfdf5; color:#059669; }
+.kpi-delta.down { background:#fef2f2; color:#dc2626; }
+.kpi-spark { height:36px; margin-top:4px; }
+
+/* Chart Grid */
+.chart-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.chart-panel { background:var(--card); border-radius:var(--radius); padding:18px 20px; box-shadow:var(--shadow); }
+.chart-panel.full { grid-column:1 / -1; }
+.chart-panel h3 { font-size:13px; font-weight:600; color:var(--text2); margin-bottom:10px; letter-spacing:-0.2px; }
+.chart-box { height:300px; }
+.chart-box.tall { height:340px; }
+
+/* Data Table */
+.table-wrap { overflow-x:auto; margin-top:4px; }
+.table-wrap table { width:100%; border-collapse:collapse; font-size:12px; }
+.table-wrap th { background:#f8fafc; padding:10px 12px; text-align:left; font-weight:600; color:var(--text2); border-bottom:2px solid var(--border); white-space:nowrap; position:sticky; top:0; font-size:11px; text-transform:uppercase; letter-spacing:0.5px; }
+.table-wrap td { padding:8px 12px; border-bottom:1px solid #f1f5f9; }
+.table-wrap tr:hover td { background:#f8fafc; }
+.bar-cell { display:flex; align-items:center; gap:6px; }
+.bar-cell .bar { height:6px; border-radius:3px; min-width:2px; transition:width 0.3s; }
+.bar-cell .bar.mt { background:var(--mt); } .bar-cell .bar.dy { background:var(--dy); }
+.weekend td { background:#fafafa; }
+
+/* Empty */
+.empty { text-align:center; padding:80px 20px; color:var(--text3); }
+.empty p { margin-top:8px; font-size:13px; }
+
+/* Footer */
+.footer { text-align:right; padding:8px 0; font-size:11px; color:var(--text3); }
+
+@media (max-width:768px) {
+  .chart-grid { grid-template-columns:1fr; }
+  .kpi-row { grid-template-columns:1fr 1fr; }
+  .container { padding:14px; }
+  .chart-box { height:240px; }
+  .chart-box.tall { height:260px; }
+}
 </style>
 </head>
 <body>
 
 <div class="header">
-  <div style="display:flex;align-items:center;gap:16px;">
-    <a href="index.html">← 返回看板</a>
+  <div class="header-left">
+    <a href="index.html">← 看板</a>
     <h1 id="storeTitle">门店趋势</h1>
   </div>
   <div class="month-nav">
@@ -51,231 +104,288 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Microsoft YaHei', sans-s
 </div>
 
 <div class="container">
-  <div class="kpi-cards" id="kpiCards">
-    <div class="kpi-card"><div class="label">当月总业绩</div><div class="value" id="kpiTotal">-</div></div>
-    <div class="kpi-card"><div class="label">美团核销</div><div class="value mt" id="kpiMt">-</div></div>
-    <div class="kpi-card"><div class="label">抖音核销</div><div class="value dy" id="kpiDy">-</div></div>
-    <div class="kpi-card"><div class="label">当月好评</div><div class="value good" id="kpiGood">-</div></div>
-    <div class="kpi-card"><div class="label">当月差评</div><div class="value bad" id="kpiBad">-</div></div>
+  <div class="kpi-row" id="kpiRow"></div>
+
+  <div class="chart-grid" id="charts">
+    <div class="chart-panel full"><h3>营收趋势</h3><div class="chart-box tall" id="cRevenue"></div></div>
+    <div class="chart-panel"><h3>核销对比</h3><div class="chart-box" id="cRedeem"></div></div>
+    <div class="chart-panel"><h3>评分走势</h3><div class="chart-box" id="cScore"></div></div>
+    <div class="chart-panel"><h3>到店访问</h3><div class="chart-box" id="cVisit"></div></div>
+    <div class="chart-panel"><h3>开卡 / 续充</h3><div class="chart-box" id="cCard"></div></div>
+    <div class="chart-panel"><h3>评价分布</h3><div class="chart-box" id="cReview"></div></div>
   </div>
 
-  <div class="charts" id="chartsContainer">
-    <div class="chart-panel"><h3>总业绩</h3><div class="chart-wrap"><canvas id="chartTotal"></canvas></div></div>
-    <div class="chart-panel"><h3>核销对比（美团 vs 抖音）</h3><div class="chart-wrap"><canvas id="chartRedeem"></canvas></div></div>
-    <div class="chart-panel"><h3>评分趋势</h3><div class="chart-wrap"><canvas id="chartScore"></canvas></div></div>
-    <div class="chart-panel"><h3>访问量</h3><div class="chart-wrap"><canvas id="chartVisit"></canvas></div></div>
-    <div class="chart-panel"><h3>开卡 / 续充</h3><div class="chart-wrap"><canvas id="chartCard"></canvas></div></div>
-    <div class="chart-panel"><h3>好评 / 差评</h3><div class="chart-wrap"><canvas id="chartReview"></canvas></div></div>
+  <div class="chart-panel" style="margin-top:16px;">
+    <h3>每日明细</h3>
+    <div class="table-wrap"><table id="detailTable"><thead><tr>
+      <th>日期</th><th>总业绩</th><th>美团核销</th><th>抖音核销</th><th>开卡</th><th>续充</th><th>美团访问</th><th>抖音访问</th><th>美团评分</th><th>抖音评分</th><th>好评</th><th>差评</th>
+    </tr></thead><tbody></tbody></table></div>
   </div>
 
-  <div class="updated" id="updateTime"></div>
+  <div class="footer" id="footer"></div>
 </div>
 
 <script>
-let allData = [];
-let currentMonth = '';
-let currentStore = '';
+// ── State ──
+let allData = [], currentMonth = '', currentStore = '';
 let charts = {};
 
-function getParam(name) {
-  const url = new URL(location.href);
-  return url.searchParams.get(name) || '';
+// ── Helpers ──
+const fmt = v => v != null ? Number(v).toLocaleString('zh-CN', {maximumFractionDigits:0}) : '-';
+const fmtMoney = v => '¥' + fmt(v);
+const fmtPct = (a, b) => b ? ((a - b) / b * 100).toFixed(1) : null;
+const fmtPctUp = (a, b) => b === 0 ? (a > 0 ? '+∞' : '0%') : ((a - b) / b * 100).toFixed(1) + '%';
+
+function getParam(name) { return new URL(location.href).searchParams.get(name) || ''; }
+
+// ── ECharts init ──
+function initChart(domId) {
+  const dom = document.getElementById(domId);
+  if (!dom) return null;
+  const c = echarts.init(dom);
+  charts[domId] = c;
+  return c;
 }
 
+// ── Load data ──
 async function loadData() {
-  try {
-    const resp = await fetch('daily_data.json');
-    allData = await resp.json();
-    initApp();
-    return;
-  } catch (e) {}
+  try { const r = await fetch('daily_data.json'); allData = await r.json(); initApp(); return; } catch(e) {}
   if (location.protocol === 'file:') {
-    try {
-      const xhr = new XMLHttpRequest();
-      xhr.open('GET', 'daily_data.json', false);
-      xhr.send(null);
-      if (xhr.status === 0 || xhr.status === 200) {
-        allData = JSON.parse(xhr.responseText);
-        initApp();
-        return;
-      }
-    } catch (e) {}
+    try { const x = new XMLHttpRequest(); x.open('GET','daily_data.json',false); x.send(null); if (x.status===0||x.status===200) { allData=JSON.parse(x.responseText); initApp(); return; } } catch(e) {}
   }
-  document.getElementById('chartsContainer').innerHTML =
-    '<div class="chart-panel full"><div class="empty-state"><p>暂无数据</p><p style="font-size:12px;color:#bbb;">请先运行数据聚合脚本</p></div></div>';
+  document.getElementById('charts').innerHTML = '<div class="chart-panel full"><div class="empty"><p style="font-size:40px;margin-bottom:12px;">📭</p><p>暂无数据</p></div></div>';
 }
 
 function initApp() {
   currentStore = decodeURIComponent(getParam('store'));
-  const paramMonth = getParam('month');
-  currentMonth = paramMonth || '2026-05';
-
+  currentMonth = getParam('month') || '2026-05';
   if (!currentStore) {
     document.getElementById('storeTitle').textContent = '未指定门店';
-    document.getElementById('chartsContainer').innerHTML =
-      '<div class="chart-panel full"><div class="empty-state"><p>请从看板页面点击门店名称进入</p></div></div>';
     return;
   }
-
   document.getElementById('storeTitle').textContent = currentStore;
   document.getElementById('monthLabel').textContent = currentMonth;
-  renderAll();
+  render();
 }
 
-function navMonth(delta) {
-  const [y, m] = currentMonth.split('-').map(Number);
-  const d = new Date(y, m - 1 + delta, 1);
-  currentMonth = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+function navMonth(d) {
+  const [y,m] = currentMonth.split('-').map(Number);
+  const dt = new Date(y, m-1+d, 1);
+  currentMonth = dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0');
   document.getElementById('monthLabel').textContent = currentMonth;
-  renderAll();
+  render();
 }
 
-function fmt(v) {
-  return v != null ? v.toLocaleString('zh-CN', {maximumFractionDigits: 0}) : '-';
+// ── Data helpers ──
+function storeMonthData(store, month) {
+  return allData.filter(r => r.门店名称 === store && String(r.日期).startsWith(month)).sort((a,b) => String(a.日期).localeCompare(String(b.日期)));
 }
 
-function renderAll() {
-  const monthData = allData.filter(r => {
-    if (!r.日期 || !r.门店名称) return false;
-    return r.门店名称 === currentStore && String(r.日期).startsWith(currentMonth);
-  }).sort((a, b) => String(a.日期).localeCompare(String(b.日期)));
+function prevMonth(month) {
+  const [y,m] = month.split('-').map(Number);
+  const d = new Date(y, m-2, 1);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+}
 
-  if (!monthData.length) {
-    document.getElementById('chartsContainer').innerHTML =
-      '<div class="chart-panel full"><div class="empty-state"><p>该月份暂无数据</p></div></div>';
-    document.getElementById('kpiTotal').textContent = '-';
-    document.getElementById('kpiMt').textContent = '-';
-    document.getElementById('kpiDy').textContent = '-';
-    document.getElementById('kpiGood').textContent = '-';
-    document.getElementById('kpiBad').textContent = '-';
+// ── ECharts theme ──
+const theme = {
+  tooltip: { backgroundColor:'#fff', borderColor:'#e2e8f0', textStyle:{color:'#1e293b',fontSize:12}, extraCssText:'box-shadow:0 4px 12px rgba(0,0,0,0.08);border-radius:8px;padding:10px 14px;' },
+  grid: { left:50, right:18, top:12, bottom:28 },
+  xAxis: { axisLine:{lineStyle:{color:'#e2e8f0'}}, axisTick:{show:false}, axisLabel:{color:'#94a3b8',fontSize:10}, splitLine:{show:false} },
+  yAxis: { axisLine:{show:false}, axisTick:{show:false}, axisLabel:{color:'#94a3b8',fontSize:10}, splitLine:{lineStyle:{color:'#f1f5f9',type:'dashed'}} }
+};
+
+// ── Main render ──
+function render() {
+  const data = storeMonthData(currentStore, currentMonth);
+  const prev = storeMonthData(currentStore, prevMonth(currentMonth));
+  const days = data.map(r => String(r.日期).slice(8));
+  const fullDates = data.map(r => String(r.日期));
+
+  if (!data.length) {
+    document.getElementById('charts').innerHTML = '<div class="chart-panel full"><div class="empty"><p style="font-size:40px;margin-bottom:12px;">📅</p><p>该月份暂无数据</p></div></div>';
+    document.getElementById('kpiRow').innerHTML = '';
     return;
   }
 
-  // KPI cards
-  document.getElementById('kpiTotal').textContent = '¥' + fmt(monthData.reduce((s, r) => s + (r.微矩总业绩 || r.总营业额 || 0), 0));
-  document.getElementById('kpiMt').textContent = '¥' + fmt(monthData.reduce((s, r) => s + (r.美团核销金额 || 0), 0));
-  document.getElementById('kpiDy').textContent = '¥' + fmt(monthData.reduce((s, r) => s + (r.抖音核销金额 || 0), 0));
-  document.getElementById('kpiGood').textContent = fmt(monthData.reduce((s, r) => s + (r.新增好评 || 0), 0));
-  document.getElementById('kpiBad').textContent = fmt(monthData.reduce((s, r) => s + (r.新增差评 || 0), 0));
+  // ── Aggregates ──
+  const sum = (arr, key) => arr.reduce((s,r) => s + (r[key] || 0), 0);
+  const avg = (arr, key) => { const v = arr.filter(r => r[key] != null).map(r => r[key]); return v.length ? v.reduce((a,b)=>a+b,0)/v.length : 0; };
 
-  // Restore charts container
-  document.getElementById('chartsContainer').innerHTML = `
-    <div class="chart-panel"><h3>总业绩</h3><div class="chart-wrap"><canvas id="chartTotal"></canvas></div></div>
-    <div class="chart-panel"><h3>核销对比（美团 vs 抖音）</h3><div class="chart-wrap"><canvas id="chartRedeem"></canvas></div></div>
-    <div class="chart-panel"><h3>评分趋势</h3><div class="chart-wrap"><canvas id="chartScore"></canvas></div></div>
-    <div class="chart-panel"><h3>访问量</h3><div class="chart-wrap"><canvas id="chartVisit"></canvas></div></div>
-    <div class="chart-panel"><h3>开卡 / 续充</h3><div class="chart-wrap"><canvas id="chartCard"></canvas></div></div>
-    <div class="chart-panel"><h3>好评 / 差评</h3><div class="chart-wrap"><canvas id="chartReview"></canvas></div></div>
-  `;
+  const totalRev = sum(data, '微矩总业绩') || sum(data, '总营业额');
+  const totalMt = sum(data, '美团核销金额');
+  const totalDy = sum(data, '抖音核销金额');
+  const totalCard = sum(data, '微矩开卡') || sum(data, '开卡金额');
+  const totalRecharge = sum(data, '微矩续充') || sum(data, '续充金额');
+  const totalGood = sum(data, '新增好评');
+  const totalBad = sum(data, '新增差评');
+  const totalMtVisit = sum(data, '美团访问量');
+  const totalDyVisit = sum(data, '抖音访问量');
 
-  const labels = monthData.map(r => String(r.日期).slice(8));
+  const prevRev = sum(prev, '微矩总业绩') || sum(prev, '总营业额');
+  const prevMt = sum(prev, '美团核销金额');
+  const prevDy = sum(prev, '抖音核销金额');
+  const prevCard = sum(prev, '微矩开卡') || sum(prev, '开卡金额');
+  const prevRecharge = sum(prev, '微矩续充') || sum(prev, '续充金额');
+  const prevGood = sum(prev, '新增好评');
+  const prevBad = sum(prev, '新增差评');
+  const prevMtVisit = sum(prev, '美团访问量');
+  const prevDyVisit = sum(prev, '抖音访问量');
 
-  // Destroy old charts
-  Object.values(charts).forEach(c => c.destroy());
-  charts = {};
+  // ── KPI cards ──
+  const kpiItems = [
+    { label:'总业绩', value:fmtMoney(totalRev), delta:fmtPctUp(totalRev, prevRev), up:totalRev>=prevRev, cls:'' },
+    { label:'美团核销', value:fmtMoney(totalMt), delta:fmtPctUp(totalMt, prevMt), up:totalMt>=prevMt, cls:'mt' },
+    { label:'抖音核销', value:fmtMoney(totalDy), delta:fmtPctUp(totalDy, prevDy), up:totalDy>=prevDy, cls:'dy' },
+    { label:'开卡', value:fmtMoney(totalCard), delta:fmtPctUp(totalCard, prevCard), up:totalCard>=prevCard, cls:'' },
+    { label:'续充', value:fmtMoney(totalRecharge), delta:fmtPctUp(totalRecharge, prevRecharge), up:totalRecharge>=prevRecharge, cls:'' },
+    { label:'好评/差评', value:totalGood+' / '+totalBad, delta:(totalGood-prevGood>=0?'+':'')+(totalGood-prevGood)+' 好评', up:totalGood>=prevGood, cls:totalBad>0?'red':'green' },
+  ];
+  document.getElementById('kpiRow').innerHTML = kpiItems.map(k => `
+    <div class="kpi-card">
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-main">
+        <span class="kpi-value ${k.cls}">${k.value}</span>
+        ${k.delta ? `<span class="kpi-delta ${k.up?'up':'down'}">${k.up?'▲':'▼'} ${k.delta}</span>` : ''}
+      </div>
+    </div>`).join('');
 
-  const commonOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: { mode: 'index', intersect: false },
-    plugins: {
-      legend: { position: 'bottom', labels: { boxWidth: 12, padding: 12, font: { size: 11 } } },
-      tooltip: {
-        callbacks: {
-          label: function(ctx) {
-            let val = ctx.parsed.y;
-            if (val == null || isNaN(val)) return ctx.dataset.label + ': -';
-            // Money fields get ¥ prefix
-            const moneyFields = ['总业绩', '美团核销', '美团', '抖音核销', '抖音', '开卡', '续充'];
-            const isMoney = moneyFields.some(k => ctx.dataset.label && ctx.dataset.label.includes(k));
-            if (isMoney) return ctx.dataset.label + ': ¥' + val.toLocaleString('zh-CN');
-            // Score fields
-            if (ctx.dataset.label && ctx.dataset.label.includes('评分')) return ctx.dataset.label + ': ' + val.toFixed(1);
-            return ctx.dataset.label + ': ' + val.toLocaleString('zh-CN');
-          }
-        }
+  // ── Destroy old charts ──
+  Object.entries(charts).forEach(([id, c]) => { c.dispose(); delete charts[id]; });
+
+  // ── 1. Revenue trend (full width, area) ──
+  const c1 = initChart('cRevenue');
+  if (c1) c1.setOption({
+    ...theme,
+    tooltip: { ...theme.tooltip, trigger:'axis', axisPointer:{type:'cross'} },
+    legend: { bottom:0, itemWidth:10, itemHeight:10, textStyle:{fontSize:11} },
+    xAxis: { ...theme.xAxis, data:days, boundaryGap:false },
+    yAxis: { ...theme.yAxis, axisLabel:{...theme.yAxis.axisLabel, formatter:v=>'¥'+fmt(v)} },
+    series: [
+      { name:'总业绩', type:'line', data:data.map(r=>r.微矩总业绩||r.总营业额||0), smooth:true, symbol:'circle', symbolSize:4,
+        lineStyle:{color:'#6366f1',width:2.5}, itemStyle:{color:'#6366f1'},
+        areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'rgba(99,102,241,0.25)'},{offset:1,color:'rgba(99,102,241,0.02)'}])},
+        markLine:{silent:true, symbol:'none', lineStyle:{color:'#cbd5e1',type:'dashed'}, data:[{yAxis:totalRev/data.length, label:{formatter:'均值 ¥'+fmt(totalRev/data.length),fontSize:10}}]}
+      },
+      { name:'美团核销', type:'line', data:data.map(r=>r.美团核销金额||0), smooth:true, symbol:'none',
+        lineStyle:{color:'#f97316',width:1.5,type:'dashed'}, itemStyle:{color:'#f97316'} },
+      { name:'抖音核销', type:'line', data:data.map(r=>r.抖音核销金额||0), smooth:true, symbol:'none',
+        lineStyle:{color:'#06b6d4',width:1.5,type:'dashed'}, itemStyle:{color:'#06b6d4'} },
+    ]
+  });
+
+  // ── 2. Redeem comparison (bar) ──
+  const c2 = initChart('cRedeem');
+  if (c2) c2.setOption({
+    ...theme,
+    legend: { bottom:0, itemWidth:10, itemHeight:10, textStyle:{fontSize:11} },
+    xAxis: { ...theme.xAxis, data:days },
+    yAxis: { ...theme.yAxis, axisLabel:{...theme.yAxis.axisLabel, formatter:v=>'¥'+fmt(v)} },
+    series: [
+      { name:'美团核销', type:'bar', data:data.map(r=>r.美团核销金额||0), barWidth:'55%',
+        itemStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#fb923c'},{offset:1,color:'#f97316'}]), borderRadius:[4,4,0,0]} },
+      { name:'抖音核销', type:'bar', data:data.map(r=>r.抖音核销金额||0),
+        itemStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#22d3ee'},{offset:1,color:'#06b6d4'}]), borderRadius:[4,4,0,0]} }
+    ]
+  });
+
+  // ── 3. Score ──
+  const c3 = initChart('cScore');
+  const scoreSeries = [];
+  if (data.some(r=>r.美团评分)) scoreSeries.push({ name:'美团评分', type:'line', data:data.map(r=>r.美团评分||null), smooth:true, symbol:'circle', symbolSize:5,
+    lineStyle:{color:'#f97316',width:2}, itemStyle:{color:'#f97316'}, connectNulls:true,
+    markLine:{silent:true, symbol:'none', lineStyle:{color:'#fdba74',type:'dashed'}, data:[{yAxis:avg(data,'美团评分'), label:{formatter:'均 '+avg(data,'美团评分').toFixed(1),fontSize:10}}]}
+  });
+  if (data.some(r=>r.抖音评分)) scoreSeries.push({ name:'抖音评分', type:'line', data:data.map(r=>r.抖音评分||null), smooth:true, symbol:'circle', symbolSize:5,
+    lineStyle:{color:'#06b6d4',width:2}, itemStyle:{color:'#06b6d4'}, connectNulls:true,
+    markLine:{silent:true, symbol:'none', lineStyle:{color:'#67e8f9',type:'dashed'}, data:[{yAxis:avg(data,'抖音评分'), label:{formatter:'均 '+avg(data,'抖音评分').toFixed(1),fontSize:10}}]}
+  });
+  if (data.some(r=>r.经营评分)) scoreSeries.push({ name:'经营评分', type:'line', data:data.map(r=>r.经营评分||null), smooth:true, symbol:'diamond', symbolSize:4,
+    lineStyle:{color:'#10b981',width:1.5}, itemStyle:{color:'#10b981'}, connectNulls:true });
+  if (c3) c3.setOption({
+    ...theme,
+    legend: { bottom:0, itemWidth:10, itemHeight:10, textStyle:{fontSize:11} },
+    xAxis: { ...theme.xAxis, data:days, boundaryGap:false },
+    yAxis: { ...theme.yAxis, min: data.some(r=>r.经营评分) ? 'dataMin' : 3.5, max:5 },
+    series: scoreSeries
+  });
+
+  // ── 4. Visits ──
+  const c4 = initChart('cVisit');
+  if (c4) c4.setOption({
+    ...theme,
+    legend: { bottom:0, itemWidth:10, itemHeight:10, textStyle:{fontSize:11} },
+    xAxis: { ...theme.xAxis, data:days, boundaryGap:false },
+    series: [
+      { name:'美团访问', type:'line', data:data.map(r=>r.美团访问量||0), smooth:true, symbol:'circle', symbolSize:4,
+        lineStyle:{color:'#f97316',width:2}, itemStyle:{color:'#f97316'},
+        areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'rgba(249,115,22,0.18)'},{offset:1,color:'rgba(249,115,22,0)'}])}
+      },
+      { name:'抖音访问', type:'line', data:data.map(r=>r.抖音访问量||0), smooth:true, symbol:'circle', symbolSize:4,
+        lineStyle:{color:'#06b6d4',width:2}, itemStyle:{color:'#06b6d4'},
+        areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'rgba(6,182,212,0.18)'},{offset:1,color:'rgba(6,182,212,0)'}])}
       }
-    },
-    scales: { x: { ticks: { font: { size: 10 } } }, y: { ticks: { font: { size: 10 } } } }
-  };
-
-  // 1. Total revenue
-  charts.total = new Chart(document.getElementById('chartTotal'), {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        label: '总业绩', data: monthData.map(r => r.微矩总业绩 || r.总营业额 || 0),
-        borderColor: '#1a1a2e', backgroundColor: 'rgba(26,26,46,0.1)', fill: true, tension: 0.3, pointRadius: 4
-      }]
-    },
-    options: { ...commonOptions, scales: { ...commonOptions.scales, y: { ticks: { font: { size: 10 }, callback: v => '¥' + fmt(v) } } } }
+    ]
   });
 
-  // 2. Redeem comparison
-  charts.redeem = new Chart(document.getElementById('chartRedeem'), {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [
-        { label: '美团核销', data: monthData.map(r => r.美团核销金额 || 0), borderColor: '#FF6B35', tension: 0.3, pointRadius: 3 },
-        { label: '抖音核销', data: monthData.map(r => r.抖音核销金额 || 0), borderColor: '#1DA1F2', tension: 0.3, pointRadius: 3 }
-      ]
-    },
-    options: { ...commonOptions, scales: { ...commonOptions.scales, y: { ticks: { font: { size: 10 }, callback: v => '¥' + fmt(v) } } } }
+  // ── 5. Card / Recharge ──
+  const c5 = initChart('cCard');
+  if (c5) c5.setOption({
+    ...theme,
+    legend: { bottom:0, itemWidth:10, itemHeight:10, textStyle:{fontSize:11} },
+    xAxis: { ...theme.xAxis, data:days },
+    yAxis: { ...theme.yAxis, axisLabel:{...theme.yAxis.axisLabel, formatter:v=>'¥'+fmt(v)} },
+    series: [
+      { name:'开卡', type:'bar', stack:'card', data:data.map(r=>r.微矩开卡||r.开卡金额||0),
+        itemStyle:{color:'#6366f1', borderRadius:[4,4,0,0]} },
+      { name:'续充', type:'bar', stack:'card', data:data.map(r=>r.微矩续充||r.续充金额||0),
+        itemStyle:{color:'#a5b4fc', borderRadius:[0,0,0,0]} }
+    ]
   });
 
-  // 3. Score trends
-  const scoreDatasets = [];
-  if (monthData.some(r => r.美团评分)) scoreDatasets.push({ label: '美团评分', data: monthData.map(r => r.美团评分 || null), borderColor: '#FF6B35', tension: 0.3, pointRadius: 3, spanGaps: true });
-  if (monthData.some(r => r.抖音评分)) scoreDatasets.push({ label: '抖音评分', data: monthData.map(r => r.抖音评分 || null), borderColor: '#1DA1F2', tension: 0.3, pointRadius: 3, spanGaps: true });
-  if (monthData.some(r => r.经营评分)) scoreDatasets.push({ label: '经营评分', data: monthData.map(r => r.经营评分 || null), borderColor: '#00B050', tension: 0.3, pointRadius: 3, spanGaps: true });
-  charts.score = new Chart(document.getElementById('chartScore'), {
-    type: 'line', data: { labels, datasets: scoreDatasets },
-    options: { ...commonOptions, scales: { ...commonOptions.scales, y: { min: 3, max: 5, ticks: { font: { size: 10 }, stepSize: 0.5 } } } }
+  // ── 6. Reviews ──
+  const c6 = initChart('cReview');
+  if (c6) c6.setOption({
+    ...theme,
+    legend: { bottom:0, itemWidth:10, itemHeight:10, textStyle:{fontSize:11} },
+    xAxis: { ...theme.xAxis, data:days },
+    series: [
+      { name:'好评', type:'bar', data:data.map(r=>r.新增好评||0),
+        itemStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#34d399'},{offset:1,color:'#10b981'}]), borderRadius:[4,4,0,0]} },
+      { name:'差评', type:'bar', data:data.map(r=>r.新增差评||0),
+        itemStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#fca5a5'},{offset:1,color:'#ef4444'}]), borderRadius:[4,4,0,0]} }
+    ]
   });
 
-  // 4. Visits
-  charts.visit = new Chart(document.getElementById('chartVisit'), {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [
-        { label: '美团访问', data: monthData.map(r => r.美团访问量 || 0), borderColor: '#FF6B35', tension: 0.3, pointRadius: 3 },
-        { label: '抖音访问', data: monthData.map(r => r.抖音访问量 || 0), borderColor: '#1DA1F2', tension: 0.3, pointRadius: 3 }
-      ]
-    },
-    options: commonOptions
-  });
+  // ── Detail table ──
+  const maxRev = Math.max(...data.map(r=>r.微矩总业绩||r.总营业额||0), 1);
+  const maxVisit = Math.max(...data.map(r=>Math.max(r.美团访问量||0, r.抖音访问量||0)), 1);
+  document.querySelector('#detailTable tbody').innerHTML = data.map((r,i) => {
+    const rev = r.微矩总业绩 || r.总营业额 || 0;
+    const mt = r.美团核销金额 || 0;
+    const dt = r.抖音核销金额 || 0;
+    const card = r.微矩开卡 || r.开卡金额 || 0;
+    const recharge = r.微矩续充 || r.续充金额 || 0;
+    const mtV = r.美团访问量 || 0;
+    const dyV = r.抖音访问量 || 0;
+    const isWeekend = [0,6].includes(new Date(fullDates[i]).getDay());
+    return `<tr${isWeekend?' class="weekend"':''}>
+      <td style="font-weight:500;">${days[i]}</td>
+      <td style="font-weight:600;">${fmtMoney(rev)}</td>
+      <td><div class="bar-cell"><span>${fmtMoney(mt)}</span><div class="bar mt" style="width:${(mt/maxRev*80)|0}px"></div></div></td>
+      <td><div class="bar-cell"><span>${fmtMoney(dt)}</span><div class="bar dy" style="width:${(dt/maxRev*80)|0}px"></div></div></td>
+      <td>${fmtMoney(card)}</td>
+      <td>${fmtMoney(recharge)}</td>
+      <td>${fmt(mtV)}</td>
+      <td>${fmt(dyV)}</td>
+      <td>${r.美团评分?r.美团评分.toFixed(1):'-'}</td>
+      <td>${r.抖音评分?r.抖音评分.toFixed(1):'-'}</td>
+      <td style="color:#059669;">${r.新增好评||0}</td>
+      <td style="color:${r.新增差评>0?'#dc2626':'#94a3b8'};">${r.新增差评||0}</td>
+    </tr>`;
+  }).join('');
 
-  // 5. Cards
-  charts.card = new Chart(document.getElementById('chartCard'), {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [
-        { label: '开卡', data: monthData.map(r => r.微矩开卡 || r.开卡金额 || 0), backgroundColor: '#1a1a2e' },
-        { label: '续充', data: monthData.map(r => r.微矩续充 || r.续充金额 || 0), backgroundColor: '#adb5bd' }
-      ]
-    },
-    options: { ...commonOptions, scales: { ...commonOptions.scales, y: { stacked: true, ticks: { font: { size: 10 }, callback: v => '¥' + fmt(v) } }, x: { stacked: true, ticks: { font: { size: 10 } } } } }
-  });
-
-  // 6. Reviews
-  charts.review = new Chart(document.getElementById('chartReview'), {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [
-        { label: '好评', data: monthData.map(r => r.新增好评 || 0), backgroundColor: '#00B050' },
-        { label: '差评', data: monthData.map(r => r.新增差评 || 0), backgroundColor: '#CF1322' }
-      ]
-    },
-    options: commonOptions
-  });
-
-  document.getElementById('updateTime').textContent =
-    `数据范围: ${currentMonth} | ${monthData.length} 天数据`;
+  document.getElementById('footer').textContent = `${currentMonth} · ${data.length}天 · 数据更新: ${data[data.length-1].日期}`;
 }
 
 window.addEventListener('resize', () => Object.values(charts).forEach(c => c.resize()));
