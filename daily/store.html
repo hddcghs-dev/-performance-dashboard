@@ -108,7 +108,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft Ya
 
   <div class="chart-grid" id="charts">
     <div class="chart-panel full"><h3>营收趋势</h3><div class="chart-box tall" id="cRevenue"></div></div>
-    <div class="chart-panel"><h3>核销对比</h3><div class="chart-box" id="cRedeem"></div></div>
     <div class="chart-panel"><h3>评分走势</h3><div class="chart-box" id="cScore"></div></div>
     <div class="chart-panel"><h3>到店访问</h3><div class="chart-box" id="cVisit"></div></div>
     <div class="chart-panel"><h3>开卡 / 续充</h3><div class="chart-box" id="cCard"></div></div>
@@ -190,7 +189,7 @@ function prevMonth(month) {
 // ── ECharts theme ──
 const theme = {
   tooltip: { backgroundColor:'#fff', borderColor:'#e2e8f0', textStyle:{color:'#1e293b',fontSize:12}, extraCssText:'box-shadow:0 4px 12px rgba(0,0,0,0.08);border-radius:8px;padding:10px 14px;' },
-  grid: { left:50, right:18, top:12, bottom:28 },
+  grid: { left:52, right:18, top:30, bottom:28 },
   xAxis: { axisLine:{lineStyle:{color:'#e2e8f0'}}, axisTick:{show:false}, axisLabel:{color:'#94a3b8',fontSize:10}, splitLine:{show:false} },
   yAxis: { axisLine:{show:false}, axisTick:{show:false}, axisLabel:{color:'#94a3b8',fontSize:10}, splitLine:{lineStyle:{color:'#f1f5f9',type:'dashed'}} }
 };
@@ -265,7 +264,7 @@ function render() {
       { name:'总业绩', type:'line', data:data.map(r=>r.微矩总业绩||r.总营业额||0), smooth:true, symbol:'circle', symbolSize:4,
         lineStyle:{color:'#6366f1',width:2.5}, itemStyle:{color:'#6366f1'},
         areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'rgba(99,102,241,0.25)'},{offset:1,color:'rgba(99,102,241,0.02)'}])},
-        markLine:{silent:true, symbol:'none', lineStyle:{color:'#cbd5e1',type:'dashed'}, data:[{yAxis:totalRev/data.length, label:{formatter:'均值 ¥'+fmt(totalRev/data.length),fontSize:10}}]}
+        markLine:{silent:true, symbol:'none', lineStyle:{color:'#cbd5e1',type:'dashed'}, data:[{yAxis:totalRev/data.length}]}
       },
       { name:'美团核销', type:'line', data:data.map(r=>r.美团核销金额||0), smooth:true, symbol:'none',
         lineStyle:{color:'#f97316',width:1.5,type:'dashed'}, itemStyle:{color:'#f97316'} },
@@ -274,31 +273,16 @@ function render() {
     ]
   });
 
-  // ── 2. Redeem comparison (bar) ──
-  const c2 = initChart('cRedeem');
-  if (c2) c2.setOption({
-    ...theme,
-    legend: { bottom:0, itemWidth:10, itemHeight:10, textStyle:{fontSize:11} },
-    xAxis: { ...theme.xAxis, data:days },
-    yAxis: { ...theme.yAxis, axisLabel:{...theme.yAxis.axisLabel, formatter:v=>'¥'+fmt(v)} },
-    series: [
-      { name:'美团核销', type:'bar', data:data.map(r=>r.美团核销金额||0), barWidth:'55%',
-        itemStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#fb923c'},{offset:1,color:'#f97316'}]), borderRadius:[4,4,0,0]} },
-      { name:'抖音核销', type:'bar', data:data.map(r=>r.抖音核销金额||0),
-        itemStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#22d3ee'},{offset:1,color:'#06b6d4'}]), borderRadius:[4,4,0,0]} }
-    ]
-  });
-
-  // ── 3. Score ──
+  // ── 2. Score ──
   const c3 = initChart('cScore');
   const scoreSeries = [];
   if (data.some(r=>r.美团评分)) scoreSeries.push({ name:'美团评分', type:'line', data:data.map(r=>r.美团评分||null), smooth:true, symbol:'circle', symbolSize:5,
     lineStyle:{color:'#f97316',width:2}, itemStyle:{color:'#f97316'}, connectNulls:true,
-    markLine:{silent:true, symbol:'none', lineStyle:{color:'#fdba74',type:'dashed'}, data:[{yAxis:avg(data,'美团评分'), label:{formatter:'均 '+avg(data,'美团评分').toFixed(1),fontSize:10}}]}
+    markLine:{silent:true, symbol:'none', lineStyle:{color:'#fdba74',type:'dashed'}, data:[{yAxis:avg(data,'美团评分')}]}
   });
   if (data.some(r=>r.抖音评分)) scoreSeries.push({ name:'抖音评分', type:'line', data:data.map(r=>r.抖音评分||null), smooth:true, symbol:'circle', symbolSize:5,
     lineStyle:{color:'#06b6d4',width:2}, itemStyle:{color:'#06b6d4'}, connectNulls:true,
-    markLine:{silent:true, symbol:'none', lineStyle:{color:'#67e8f9',type:'dashed'}, data:[{yAxis:avg(data,'抖音评分'), label:{formatter:'均 '+avg(data,'抖音评分').toFixed(1),fontSize:10}}]}
+    markLine:{silent:true, symbol:'none', lineStyle:{color:'#67e8f9',type:'dashed'}, data:[{yAxis:avg(data,'抖音评分')}]}
   });
   if (data.some(r=>r.经营评分)) scoreSeries.push({ name:'经营评分', type:'line', data:data.map(r=>r.经营评分||null), smooth:true, symbol:'diamond', symbolSize:4,
     lineStyle:{color:'#10b981',width:1.5}, itemStyle:{color:'#10b981'}, connectNulls:true });
