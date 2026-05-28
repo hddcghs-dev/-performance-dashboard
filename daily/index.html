@@ -225,8 +225,8 @@ tr:hover td { background: #f8fafc; }
             <th>美团核销</th>
             <th>抖音核销</th>
             <th>开卡</th><th>续充</th>
-            <th>美团访问</th><th>抖音访问</th><th>抖音访均核销</th>
-            <th>美团评分</th><th>抖音评分</th><th>经营评分</th>
+            <th>美团访问</th><th>抖音访问</th><th>美团扫码</th><th>抖音访均核销</th>
+            <th>美团评分</th><th>大众评分</th><th>抖音评分</th><th>经营评分</th>
             <th>好评</th><th>差评</th>
           </tr>
         </thead>
@@ -274,7 +274,7 @@ async function loadData() {
   // Show helpful error with local server command
   const isFile = location.protocol === 'file:';
   document.querySelector('#detailTable tbody').innerHTML =
-    '<tr><td colspan="15" class="empty-state"><p>暂无数据</p>' +
+    '<tr><td colspan="17" class="empty-state"><p>暂无数据</p>' +
     '<p style="font-size:12px;color:#bbb;">' +
     (isFile
       ? '浏览器禁止本地文件 fetch。请在此目录运行：<code style="background:#f0f0f0;padding:2px 6px;border-radius:4px;">python -m http.server 8080</code> 然后用 <code style="background:#f0f0f0;padding:2px 6px;border-radius:4px;">http://localhost:8080</code> 打开'
@@ -323,7 +323,7 @@ function renderAll() {
   const visibleDayData = keyword ? dayData.filter(r => String(r.门店名称 || '').includes(keyword)) : dayData;
   if (!dayData.length) {
     document.querySelector('#detailTable tbody').innerHTML =
-      '<tr><td colspan="15" class="empty-state"><p>该日期暂无数据</p></td></tr>';
+      '<tr><td colspan="17" class="empty-state"><p>该日期暂无数据</p></td></tr>';
     return;
   }
 
@@ -409,7 +409,7 @@ function renderInsights(dayData, totals) {
 function renderDetailTable(day) {
   if (!day.length) {
     document.querySelector('#detailTable tbody').innerHTML =
-      '<tr><td colspan="15" class="empty-state"><p>没有匹配的门店</p></td></tr>';
+      '<tr><td colspan="17" class="empty-state"><p>没有匹配的门店</p></td></tr>';
     document.getElementById('anomalyBar').style.display = 'none';
     return;
   }
@@ -428,8 +428,10 @@ function renderDetailTable(day) {
       dyVisit,
       dyConv: dyVisit > 0 ? (dyReport / dyVisit) : 0,
       mtScore: r.美团评分 || 0,
+      dzdpScore: r.大众评分 || 0,
       dyScore: r.抖音评分 || 0,
       bizScore: r.经营评分 || 0,
+      mtScan: r.美团扫码 || 0,
       good: r.新增好评 || 0,
       bad: r.新增差评 || 0
     };
@@ -487,8 +489,10 @@ function renderDetailTable(day) {
       <td>¥${fmt(s.wjRecharge)}</td>
       <td class="num-muted">${fmt(s.mtVisit)}</td>
       <td class="num-muted">${fmt(s.dyVisit)}</td>
+      <td class="num-muted">${s.mtScan > 0 ? s.mtScan : '-'}</td>
       <td class="${convClass(s)}">${fmtConv(s.dyConv)}</td>
       <td>${s.mtScore.toFixed(1)}</td>
+      <td>${s.dzdpScore > 0 ? s.dzdpScore.toFixed(1) : '-'}</td>
       <td>${s.dyScore.toFixed(1)}</td>
       <td>${s.bizScore.toFixed(1)}</td>
       <td style="color:var(--good)">${s.good}</td>
