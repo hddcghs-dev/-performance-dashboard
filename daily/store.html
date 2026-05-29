@@ -352,6 +352,20 @@ tbody tr:hover td { background: #f8fafc; }
     </div>
   </section>
 
+  <section class="section grid-main">
+    <div class="card" style="--accent:var(--orange)">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">扫码数据</div>
+          <div class="panel-subtitle">月度美团扫码和抖音扫码汇总。</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="quality-list" id="scanList"></div>
+      </div>
+    </div>
+  </section>
+
   <section class="card" style="--accent:var(--line-strong); margin-top:14px;">
     <div class="panel-head">
       <div>
@@ -364,7 +378,7 @@ tbody tr:hover td { background: #f8fafc; }
         <thead>
           <tr>
             <th>日期</th><th>总业绩</th><th>美团核销</th><th>抖音核销</th><th>开卡</th><th>续充</th>
-            <th>美团访问</th><th>抖音访问</th><th>美团千访</th><th>抖音千访</th>
+            <th>美团访问</th><th>抖音访问</th><th>美团扫码</th><th>抖音扫码</th>
             <th>30s回复</th><th>美团评分</th><th>大众评分</th><th>抖音评分</th><th>好评</th><th>差评</th>
           </tr>
         </thead>
@@ -478,6 +492,8 @@ function totals(rows) {
     bad: sumBy(rows, row => row.新增差评),
     mtVisit: sumBy(rows, row => row.美团访问量),
     dyVisit: sumBy(rows, row => row.抖音访问量),
+    mtScan: sumBy(rows, row => row.美团扫码),
+    dyScan: sumBy(rows, row => row.抖音扫码),
   };
 }
 
@@ -522,9 +538,18 @@ function render() {
 
   renderMix(data, t);
   renderMiniBars(data, t);
+  renderScanData(data, t);
   renderCharts(data);
   renderTable(data);
   document.getElementById("updated").textContent = `${currentStore} · ${currentMonth} · ${data.length} 天`;
+}
+
+function renderScanData(data, t) {
+  document.getElementById("scanList").innerHTML = [
+    `<div class="quality-row"><span>美团扫码</span><strong>${fmt(t.mtScan)}</strong></div>`,
+    `<div class="quality-row"><span>抖音扫码</span><strong>${fmt(t.dyScan)}</strong></div>`,
+    `<div class="quality-row"><span>扫码合计</span><strong>${fmt(t.mtScan + t.dyScan)}</strong></div>`,
+  ].join("");
 }
 
 function renderMix(data, t) {
@@ -637,8 +662,8 @@ function renderTable(data) {
       <td>${money(row.微矩续充 || row.续充金额)}</td>
       <td>${fmt(mtVisit)}</td>
       <td>${fmt(dyVisit)}</td>
-      <td>${mtVisit ? money(mtPerVisit) : "-"}</td>
-      <td>${dyVisit ? money(dyPerVisit) : "-"}</td>
+      <td class="muted">${fmt(n(row.美团扫码))}</td>
+      <td class="muted">${fmt(n(row.抖音扫码))}</td>
       <td class="${row["30s回复率"] != null && row["30s回复率"] > 0 && row["30s回复率"] < .5 ? "warn" : ""}">${row["30s回复率"] == null ? "-" : pct(row["30s回复率"])}</td>
       <td>${row.美团评分 ? Number(row.美团评分).toFixed(1) : "-"}</td>
       <td>${row.大众评分 ? Number(row.大众评分).toFixed(1) : "-"}</td>

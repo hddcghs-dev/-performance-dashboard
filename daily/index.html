@@ -505,7 +505,7 @@ tbody tr:hover td { background: #f8fafc; }
         <thead>
           <tr>
             <th>排名</th><th>门店</th><th>总业绩</th><th>美团核销</th><th>抖音核销</th>
-            <th>开卡</th><th>续充</th><th>美团访问</th><th>抖音访问</th><th>美团千访</th><th>抖音千访</th>
+            <th>开卡</th><th>续充</th><th>美团访问</th><th>抖音访问</th><th>美团扫码</th><th>抖音扫码</th>
             <th>30s回复</th><th>美团评分</th><th>大众评分</th><th>抖音评分</th><th>好评</th><th>差评</th>
           </tr>
         </thead>
@@ -618,6 +618,8 @@ function buildRows(rows) {
       dyVisit,
       mtPerVisit: mtVisit ? mt / mtVisit * 1000 : 0,
       dyPerVisit: dyVisit ? dy / dyVisit * 1000 : 0,
+      mtScan: n(row.美团扫码),
+      dyScan: n(row.抖音扫码),
       reply30: row["30s回复率"],
       mtScore: n(row.美团评分),
       dzdpScore: n(row.大众评分),
@@ -781,8 +783,8 @@ function renderTable(rows) {
     <td>${money(row.recharge)}</td>
     <td class="muted">${fmt(row.mtVisit)}</td>
     <td class="muted">${fmt(row.dyVisit)}</td>
-    <td>${row.mtVisit ? money(row.mtPerVisit) : "-"}</td>
-    <td>${row.dyVisit ? money(row.dyPerVisit) : "-"}</td>
+    <td class="muted">${fmt(row.mtScan)}</td>
+    <td class="muted">${fmt(row.dyScan)}</td>
     <td class="${row.reply30 != null && row.reply30 > 0 && row.reply30 < .5 ? "reply-low" : ""}">${row.reply30 == null ? "-" : pct(row.reply30)}</td>
     <td class="${row.mtScore && row.mtScore < 4.6 ? "score-low" : ""}">${row.mtScore ? row.mtScore.toFixed(1) : "-"}</td>
     <td>${row.dzdpScore ? row.dzdpScore.toFixed(1) : "-"}</td>
