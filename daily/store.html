@@ -531,9 +531,6 @@ function renderAnalysis(data, t) {
   }).join("");
 
   document.getElementById("analysisList").innerHTML = [
-    `<div class="quality-row"><span>美团千访核销</span><strong>${t.mtVisit ? money(t.mt / t.mtVisit * 1000) : "-"}</strong></div>`,
-    `<div class="quality-row"><span>抖音千访核销</span><strong>${t.dyVisit ? money(t.dy / t.dyVisit * 1000) : "-"}</strong></div>`,
-    `<div class="quality-row"><span>30s平均回复率</span><strong>${avgBy(data, row => row["30s回复率"]) ? pct(avgBy(data, row => row["30s回复率"])) : "-"}</strong></div>`,
     `<div class="quality-row"><span>平均评分</span><strong>美团 ${avgBy(data, row => row.美团评分).toFixed(1)} / 抖音 ${avgBy(data, row => row.抖音评分).toFixed(1)}</strong></div>`,
     `<div class="quality-row"><span>美团扫码</span><strong>${fmt(t.mtScan)}</strong></div>`,
     `<div class="quality-row"><span>抖音扫码</span><strong>${fmt(t.dyScan)}</strong></div>`,
