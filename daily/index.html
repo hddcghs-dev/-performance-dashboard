@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>民德搓澡堂 · 日报看板</title>
 <link rel="icon" href="data:,">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
 <style>
 :root {
   --page: #f3f5f8;
@@ -26,6 +27,26 @@
   --shadow: 0 18px 44px rgba(15, 23, 42, .08);
   --shadow-soft: 0 1px 2px rgba(15, 23, 42, .06);
   --radius: 8px;
+  --bg-grad-1: #edf2f7;
+  --bg-grad-2: #f7f8fb;
+  --bento-bg: linear-gradient(180deg, #fff, #fbfcfe);
+  --bento-border: #eef2f7;
+}
+html.dark {
+  --page: #0f1117;
+  --paper: #1a1d27;
+  --paper-soft: #1e2130;
+  --ink: #e5e7eb;
+  --muted: #94a3b8;
+  --faint: #64748b;
+  --line: #2a2d3a;
+  --line-strong: #3a3d4a;
+  --shadow: 0 18px 44px rgba(0, 0, 0, .3);
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, .2);
+  --bg-grad-1: #0f1117;
+  --bg-grad-2: #13151e;
+  --bento-bg: linear-gradient(180deg, #1a1d27, #1e2130);
+  --bento-border: #2a2d3a;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { background: var(--page); }
@@ -34,7 +55,7 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
   color: var(--ink);
   background:
-    linear-gradient(180deg, #edf2f7 0, #f7f8fb 270px, var(--page) 100%);
+    linear-gradient(180deg, var(--bg-grad-1) 0, var(--bg-grad-2) 270px, var(--page) 100%);
   -webkit-font-smoothing: antialiased;
 }
 button, input, select { font: inherit; }
@@ -156,8 +177,8 @@ h1 {
 }
 .card {
   position: relative;
-  background: rgba(255,255,255,.96);
-  border: 1px solid rgba(229,231,235,.92);
+  background: var(--paper);
+  border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: var(--shadow-soft);
   overflow: hidden;
@@ -253,10 +274,28 @@ h1 {
 .bento-card {
   min-height: 172px;
   padding: 14px;
-  border: 1px solid #eef2f7;
+  border: 1px solid var(--bento-border);
   border-radius: 8px;
-  background: linear-gradient(180deg, #fff, #fbfcfe);
+  background: var(--bento-bg);
 }
+.chart { width: 100%; height: 354px; }
+.chart.tall { height: 430px; }
+.wide { grid-column: 1 / -1; }
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(255,255,255,.24);
+  border-radius: 8px;
+  background: rgba(255,255,255,.10);
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  transition: transform .18s ease, background .18s ease;
+}
+.theme-toggle:hover { transform: translateY(-1px); background: rgba(255,255,255,.18); }
 .mix-track {
   display: grid;
   grid-template-columns: var(--mt-share,1fr) var(--dy-share,1fr) var(--other-share,1fr);
@@ -380,16 +419,16 @@ th {
   z-index: 2;
   padding: 11px 12px;
   color: var(--muted);
-  background: #f8fafc;
+  background: var(--paper-soft);
   border-bottom: 1px solid var(--line);
   text-align: left;
   white-space: nowrap;
   font-size: 12px;
   font-weight: 800;
 }
-td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; white-space: nowrap; }
+td { padding: 10px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
 tbody tr { transition: background .16s ease; }
-tbody tr:hover td { background: #f8fafc; }
+tbody tr:hover td { background: var(--paper-soft); }
 .store-link { color: var(--ink); text-decoration: none; font-weight: 790; }
 .store-link:hover { color: var(--brand); }
 .money { color: var(--ink); font-weight: 800; }
@@ -438,6 +477,7 @@ tbody tr:hover td { background: #f8fafc; }
       <input type="date" id="datePicker" onchange="onDateChange(this.value)">
       <button type="button" onclick="navDate(-1)">后一天</button>
       <button type="button" onclick="resetDate()">最新</button>
+      <button class="theme-toggle" onclick="toggleDark()" title="切换深色模式" id="themeBtn">🌙</button>
     </div>
     <div class="hero-stats" id="heroStats"></div>
   </section>
@@ -480,6 +520,39 @@ tbody tr:hover td { background: #f8fafc; }
         </div>
       </div>
       <div class="panel-body alert-list" id="alertList"></div>
+    </div>
+  </section>
+
+  <section class="section grid-main">
+    <div class="card wide" style="--accent:var(--brand)">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">近期趋势</div>
+          <div class="panel-subtitle">全店合计总业绩、美团核销、抖音核销走势。</div>
+        </div>
+      </div>
+      <div class="panel-body"><div class="chart tall" id="trendChart"></div></div>
+    </div>
+  </section>
+
+  <section class="section grid-main">
+    <div class="card" style="--accent:var(--brand)">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">业绩 Top 5</div>
+          <div class="panel-subtitle">按总业绩排序的门店排名。</div>
+        </div>
+      </div>
+      <div class="panel-body rank-list" id="rankRevenue"></div>
+    </div>
+    <div class="card" style="--accent:var(--red)">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">差评 Top 5</div>
+          <div class="panel-subtitle">差评数最多的门店。</div>
+        </div>
+      </div>
+      <div class="panel-body rank-list" id="rankBad"></div>
     </div>
   </section>
 
@@ -680,6 +753,8 @@ function renderAll() {
 
   renderStructure(dayData, rows, t, health);
   renderAlerts(rows);
+  renderRankings(rows);
+  renderTrendChart();
   renderTable(rows);
   document.getElementById("updated").textContent = `数据日期：${currentDate} | 门店数：${storeCount}`;
 }
@@ -793,6 +868,89 @@ function renderTable(rows) {
     <td class="${row.bad > 0 ? "bad-cell" : ""}">${fmt(row.bad)}</td>
   </tr>`).join("");
 }
+
+// === Dark mode ===
+function toggleDark() {
+  const on = document.documentElement.classList.toggle("dark");
+  document.getElementById("themeBtn").textContent = on ? "☀️" : "🌙";
+  try { localStorage.setItem("dark", on ? "1" : "0"); } catch(_) {}
+  if (trendInstance) trendInstance.resize();
+}
+(function initTheme() {
+  try {
+    if (localStorage.getItem("dark") === "1") {
+      document.documentElement.classList.add("dark");
+      document.getElementById("themeBtn").textContent = "☀️";
+    }
+  } catch(_) {}
+})();
+
+// === Trend chart ===
+let trendInstance = null;
+const chartTheme = {
+  animationDuration: 850,
+  animationEasing: "cubicOut",
+  tooltip: {
+    trigger: "axis",
+    backgroundColor: "#fff",
+    borderColor: "#e5e7eb",
+    textStyle: { color: "#111827", fontSize: 12 },
+    extraCssText: "box-shadow:0 10px 28px rgba(15,23,42,.12);border-radius:8px;padding:10px 14px;"
+  },
+  legend: { top: 2, right: 8, itemWidth: 10, itemHeight: 10, textStyle: { color: "#64748b", fontSize: 11 } },
+  grid: { left: 14, right: 18, top: 58, bottom: 34, containLabel: true },
+  xAxis: { type: "category", axisTick: { show: false }, axisLine: { lineStyle: { color: "#e5e7eb" } }, axisLabel: { color: "#94a3b8", fontSize: 10 } },
+  yAxis: { type: "value", axisTick: { show: false }, axisLine: { show: false }, axisLabel: { color: "#94a3b8", fontSize: 10 }, splitLine: { lineStyle: { color: "#eef2f7", type: "dashed" } } }
+};
+
+function renderTrendChart() {
+  const el = document.getElementById("trendChart");
+  if (!el) return;
+  if (trendInstance) trendInstance.dispose();
+  trendInstance = echarts.init(el);
+
+  // Get last 7 available dates ending at currentDate
+  const idx = availableDates.indexOf(currentDate);
+  const recentDates = availableDates.slice(Math.max(idx, 0), Math.max(idx, 0) + 7).reverse();
+
+  const revenue = [], mtArr = [], dyArr = [];
+  for (const d of recentDates) {
+    const dayRows = allData.filter(row => row.日期 === d);
+    revenue.push(sumBy(dayRows, row => row.微矩总业绩 || row.总营业额));
+    mtArr.push(sumBy(dayRows, row => row.美团核销金额));
+    dyArr.push(sumBy(dayRows, row => row.抖音核销金额));
+  }
+
+  trendInstance.setOption({
+    ...chartTheme,
+    xAxis: { ...chartTheme.xAxis, data: recentDates.map(d => d.slice(5)), boundaryGap: false },
+    yAxis: { ...chartTheme.yAxis, axisLabel: { color: "#94a3b8", fontSize: 10, formatter: v => "¥" + fmt(v) } },
+    series: [
+      { name: "总业绩", type: "line", smooth: true, symbol: "circle", symbolSize: 6, data: revenue,
+        lineStyle: { color: "#2563eb", width: 3 }, itemStyle: { color: "#2563eb" },
+        areaStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{ offset: 0, color: "rgba(37,99,235,.22)" }, { offset: 1, color: "rgba(37,99,235,0)" }]) } },
+      { name: "美团核销", type: "line", smooth: true, symbol: "none", data: mtArr, lineStyle: { color: "#f97316", width: 2, type: "dashed" } },
+      { name: "抖音核销", type: "line", smooth: true, symbol: "none", data: dyArr, lineStyle: { color: "#0891b2", width: 2, type: "dashed" } },
+    ]
+  });
+}
+
+// === Rankings ===
+function renderRankings(rows) {
+  const sorted = [...rows].sort((a, b) => b.revenue - a.revenue);
+  const max = sorted[0]?.revenue || 1;
+  document.getElementById("rankRevenue").innerHTML = sorted.slice(0, 5).map((row, i) =>
+    rankItem(row, i, row.revenue, money(row.revenue), max)
+  ).join("") || '<div class="empty">暂无数据</div>';
+
+  const badSorted = [...rows].filter(r => r.bad > 0).sort((a, b) => b.bad - a.bad);
+  const maxBad = badSorted[0]?.bad || 1;
+  document.getElementById("rankBad").innerHTML = badSorted.slice(0, 5).map((row, i) =>
+    rankItem(row, i, row.bad, fmt(row.bad) + " 条", maxBad)
+  ).join("") || '<div class="empty">无差评 👍</div>';
+}
+
+window.addEventListener("resize", () => { if (trendInstance) trendInstance.resize(); });
 
 loadData();
 </script>
