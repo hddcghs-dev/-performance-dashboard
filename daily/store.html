@@ -33,9 +33,8 @@ html { background: var(--page); }
 body {
   min-height: 100vh;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
-  color: var(--ink);
-  background:
-    linear-gradient(180deg, #edf2f7 0, #f7f8fb 270px, var(--page) 100%);
+  color: #1a1d23;
+  background: #f4f5f7;
   -webkit-font-smoothing: antialiased;
 }
 button { font: inherit; cursor: pointer; }
@@ -123,46 +122,34 @@ h1 {
 .month-tools button:hover { transform: translateY(-1px); background: rgba(255,255,255,.18); }
 .month-label { display: inline-flex; align-items: center; justify-content: center; min-width: 92px; }
 
-.section { margin-top: 14px; display: grid; gap: 14px; }
+.section { margin-top: 20px; display: grid; gap: 16px; }
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
 }
 .card {
   position: relative;
-  background: rgba(255,255,255,.96);
-  border: 1px solid rgba(229,231,235,.92);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-soft);
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.04), 0 1px 2px rgba(0,0,0,.02);
   overflow: hidden;
   animation: enter .46s ease both;
 }
-.card::after {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 3px;
-  background: var(--accent, var(--brand));
-  transform: scaleX(0);
-  transform-origin: left;
-  animation: lineIn .72s ease .12s both;
-}
-.kpi-card { min-height: 126px; padding: 16px; }
+.kpi-card { padding: 20px 22px; }
 .kpi-card:nth-child(2) { animation-delay: .04s; }
 .kpi-card:nth-child(3) { animation-delay: .08s; }
 .kpi-card:nth-child(4) { animation-delay: .12s; }
-.kpi-card:nth-child(5) { animation-delay: .16s; }
-.kpi-card:nth-child(6) { animation-delay: .20s; }
-.label { color: var(--muted); font-size: 12px; font-weight: 720; }
+.label { color: #9ca3af; font-size: 11px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; }
 .kpi-value {
-  margin-top: 14px;
-  font-size: clamp(24px, 2vw, 31px);
-  line-height: 1;
-  font-weight: 820;
-  letter-spacing: 0;
+  margin-top: 10px;
+  font-size: clamp(26px, 2.2vw, 32px);
+  line-height: 1.1;
+  font-weight: 700;
+  color: #1a1d23;
+  letter-spacing: -.02em;
 }
-.kpi-foot { display: flex; gap: 7px; align-items: center; margin-top: 12px; color: var(--faint); font-size: 12px; }
+.kpi-foot { display: flex; gap: 6px; align-items: center; margin-top: 10px; color: #9ca3af; font-size: 12px; }
 .delta {
   display: inline-flex;
   align-items: center;
@@ -177,8 +164,8 @@ h1 {
 .delta.flat { color: var(--muted); background: #f1f5f9; }
 .grid-main {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(380px, .85fr);
-  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
   align-items: start;
 }
 .panel-head {
@@ -186,15 +173,13 @@ h1 {
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
-  padding: 16px 18px 13px;
-  border-bottom: 1px solid var(--line);
+  padding: 18px 20px 0;
 }
-.panel-title { font-size: 15px; font-weight: 800; }
-.panel-subtitle { margin-top: 5px; color: var(--muted); font-size: 12px; line-height: 1.45; }
-.panel-body { padding: 16px 18px 18px; }
+.panel-title { font-size: 13px; font-weight: 600; color: #374151; }
+.panel-subtitle { margin-top: 4px; color: #9ca3af; font-size: 12px; line-height: 1.45; }
+.panel-body { padding: 14px 20px 20px; }
 .wide { grid-column: 1 / -1; }
-.chart { width: 100%; height: 354px; }
-.chart.tall { height: 430px; }
+.chart { width: 100%; height: 300px; }
 .mix-track {
   display: grid;
   grid-template-columns: var(--mt-share,1fr) var(--dy-share,1fr) var(--other-share,1fr);
@@ -257,7 +242,7 @@ tbody tr:hover td { background: #f8fafc; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 @media (max-width: 1240px) {
-  .kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .grid-main { grid-template-columns: 1fr; }
 }
 @media (max-width: 860px) {
@@ -265,7 +250,7 @@ tbody tr:hover td { background: #f8fafc; }
   .hero { grid-template-columns: 1fr; min-height: auto; padding: 18px 16px; }
   .month-tools { justify-content: flex-start; }
   .kpi-grid { grid-template-columns: 1fr 1fr; }
-  .chart, .chart.tall { height: 320px; }
+  .chart { height: 280px; }
   .panel-head { display: block; }
 }
 @media (max-width: 560px) {
@@ -293,84 +278,61 @@ tbody tr:hover td { background: #f8fafc; }
     <div class="kpi-grid" id="kpiGrid"></div>
   </section>
 
-  <section class="section grid-main">
-    <div class="card wide" style="--accent:var(--brand)">
+  <section class="section">
+    <div class="card">
       <div class="panel-head">
         <div>
           <div class="panel-title">营收趋势</div>
-          <div class="panel-subtitle">总业绩与美团、抖音核销走势放在同一坐标里看。</div>
+          <div class="panel-subtitle">总业绩与美团、抖音核销走势</div>
         </div>
       </div>
-      <div class="panel-body"><div class="chart tall" id="revenueChart"></div></div>
+      <div class="panel-body"><div class="chart" id="revenueChart" style="height:340px;"></div></div>
     </div>
   </section>
 
   <section class="section grid-main">
-    <div class="card" style="--accent:var(--orange)">
+    <div class="card">
       <div class="panel-head">
         <div>
           <div class="panel-title">评分与评价</div>
-          <div class="panel-subtitle">评分走势和差评柱状同时展示。</div>
+          <div class="panel-subtitle">评分走势和差评柱状</div>
         </div>
       </div>
       <div class="panel-body"><div class="chart" id="qualityChart"></div></div>
     </div>
 
-    <div class="card" style="--accent:var(--teal)">
+    <div class="card">
       <div class="panel-head">
         <div>
-          <div class="panel-title">渠道结构</div>
-          <div class="panel-subtitle">月内收入来源和关键经营质量。</div>
+          <div class="panel-title">访问与转化</div>
+          <div class="panel-subtitle">访问量和 30s 回复率</div>
+        </div>
+      </div>
+      <div class="panel-body"><div class="chart" id="visitChart"></div></div>
+    </div>
+
+    <div class="card">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">经营分析</div>
+          <div class="panel-subtitle">渠道、扫码与结构占比</div>
         </div>
       </div>
       <div class="panel-body">
         <div class="mix-track" id="mixTrack"><span class="mt"></span><span class="dy"></span><span class="other"></span></div>
         <div class="legend" id="mixLegend"></div>
-        <div class="quality-list" id="qualityList" style="margin-top:18px;"></div>
+        <div style="margin-top:16px; border-top:1px solid #f3f4f6; padding-top:14px;">
+          <div class="quality-list" id="analysisList"></div>
+        </div>
       </div>
     </div>
   </section>
 
-  <section class="section grid-main">
-    <div class="card" style="--accent:var(--cyan)">
-      <div class="panel-head">
-        <div>
-          <div class="panel-title">访问与转化</div>
-          <div class="panel-subtitle">访问量和 30s 回复率，判断流量承接。</div>
-        </div>
-      </div>
-      <div class="panel-body"><div class="chart" id="visitChart"></div></div>
-    </div>
-    <div class="card" style="--accent:var(--violet)">
-      <div class="panel-head">
-        <div>
-          <div class="panel-title">月度结构强弱</div>
-          <div class="panel-subtitle">用进度条看收入构成和评价净值。</div>
-        </div>
-      </div>
-      <div class="panel-body mini-bars" id="miniBars"></div>
-    </div>
-  </section>
-
-  <section class="section grid-main">
-    <div class="card" style="--accent:var(--orange)">
-      <div class="panel-head">
-        <div>
-          <div class="panel-title">扫码数据</div>
-          <div class="panel-subtitle">月度美团扫码和抖音扫码汇总。</div>
-        </div>
-      </div>
-      <div class="panel-body">
-        <div class="quality-list" id="scanList"></div>
-      </div>
-    </div>
-  </section>
-
-  <section class="card" style="--accent:var(--line-strong); margin-top:14px;">
+  <section class="card" style="margin-top:20px;">
     <div class="panel-head">
       <div>
         <div class="panel-title">每日明细</div>
-        <div class="panel-subtitle">保留所有原始指标，异常值高亮。</div>
+        <div class="panel-subtitle">保留所有原始指标，异常值高亮</div>
       </div>
     </div>
     <div class="table-wrap">
@@ -504,8 +466,8 @@ function trend(now, prev, lowerIsGood = false) {
   return `<span class="delta ${cls}">${diff > 0 ? "+" : ""}${fmt(diff)}</span><span>较上月</span>`;
 }
 
-function kpiCard(label, value, foot, accent) {
-  return `<article class="card kpi-card" style="--accent:${accent}">
+function kpiCard(label, value, foot) {
+  return `<article class="card kpi-card">
     <div class="label">${label}</div>
     <div class="kpi-value">${value}</div>
     <div class="kpi-foot">${foot}</div>
@@ -528,31 +490,19 @@ function render() {
   const p = totals(prevData);
   document.getElementById("storeSubtitle").textContent = `${currentMonth} | ${data.length} 天 | 总业绩 ${money(t.revenue)}`;
   document.getElementById("kpiGrid").innerHTML = [
-    kpiCard("总业绩", money(t.revenue), trend(t.revenue, p.revenue), "var(--brand)"),
-    kpiCard("美团核销", money(t.mt), trend(t.mt, p.mt), "var(--orange)"),
-    kpiCard("抖音核销", money(t.dy), trend(t.dy, p.dy), "var(--cyan)"),
-    kpiCard("开卡 / 续充", `${money(t.card)} / ${money(t.recharge)}`, `<span>会员现金流</span>`, "var(--violet)"),
-    kpiCard("好评", fmt(t.good), trend(t.good, p.good), "var(--green)"),
-    kpiCard("差评", fmt(t.bad), trend(t.bad, p.bad, true), "var(--red)"),
+    kpiCard("总业绩", money(t.revenue), trend(t.revenue, p.revenue)),
+    kpiCard("美团核销", money(t.mt), trend(t.mt, p.mt)),
+    kpiCard("抖音核销", money(t.dy), trend(t.dy, p.dy)),
+    kpiCard("会员收入", `${money(t.card + t.recharge)}`, `<span>开卡 ${money(t.card)} · 续充 ${money(t.recharge)}</span>`),
   ].join("");
 
-  renderMix(data, t);
-  renderMiniBars(data, t);
-  renderScanData(data, t);
+  renderAnalysis(data, t);
   renderCharts(data);
   renderTable(data);
   document.getElementById("updated").textContent = `${currentStore} · ${currentMonth} · ${data.length} 天`;
 }
 
-function renderScanData(data, t) {
-  document.getElementById("scanList").innerHTML = [
-    `<div class="quality-row"><span>美团扫码</span><strong>${fmt(t.mtScan)}</strong></div>`,
-    `<div class="quality-row"><span>抖音扫码</span><strong>${fmt(t.dyScan)}</strong></div>`,
-    `<div class="quality-row"><span>扫码合计</span><strong>${fmt(t.mtScan + t.dyScan)}</strong></div>`,
-  ].join("");
-}
-
-function renderMix(data, t) {
+function renderAnalysis(data, t) {
   const total = Math.max(t.revenue, t.mt + t.dy, 1);
   const other = Math.max(total - t.mt - t.dy, 0);
   const mix = document.getElementById("mixTrack");
@@ -564,32 +514,30 @@ function renderMix(data, t) {
     `<div class="legend-row"><span><i class="dot" style="background:var(--cyan)"></i>抖音核销</span><strong>${money(t.dy)} · ${(t.dy / total * 100).toFixed(1)}%</strong></div>`,
     `<div class="legend-row"><span><i class="dot" style="background:var(--teal)"></i>其他收入</span><strong>${money(other)} · ${(other / total * 100).toFixed(1)}%</strong></div>`,
   ].join("");
-  document.getElementById("qualityList").innerHTML = [
+
+  const barTotal = Math.max(t.revenue, 1);
+  const barRows = [
+    ["美团核销", t.mt, "#f97316"],
+    ["抖音核销", t.dy, "#0891b2"],
+    ["开卡收入", t.card, "#7c3aed"],
+    ["续充收入", t.recharge, "#0f766e"],
+  ];
+  const barsHtml = barRows.map(([label, value, color]) => {
+    const width = Math.min(value / barTotal * 100, 100);
+    return `<div class="mini-row">
+      <div class="mini-row-head"><span>${label}</span><strong>${money(value)}</strong></div>
+      <div class="bar-track"><div class="bar-fill" style="--w:${Math.max(width, 2)}%;background:${color}"></div></div>
+    </div>`;
+  }).join("");
+
+  document.getElementById("analysisList").innerHTML = [
     `<div class="quality-row"><span>美团千访核销</span><strong>${t.mtVisit ? money(t.mt / t.mtVisit * 1000) : "-"}</strong></div>`,
     `<div class="quality-row"><span>抖音千访核销</span><strong>${t.dyVisit ? money(t.dy / t.dyVisit * 1000) : "-"}</strong></div>`,
     `<div class="quality-row"><span>30s平均回复率</span><strong>${avgBy(data, row => row["30s回复率"]) ? pct(avgBy(data, row => row["30s回复率"])) : "-"}</strong></div>`,
     `<div class="quality-row"><span>平均评分</span><strong>美团 ${avgBy(data, row => row.美团评分).toFixed(1)} / 抖音 ${avgBy(data, row => row.抖音评分).toFixed(1)}</strong></div>`,
-  ].join("");
-}
-
-function renderMiniBars(data, t) {
-  const total = Math.max(t.revenue, 1);
-  const rows = [
-    ["美团核销占比", t.mt, "var(--orange)"],
-    ["抖音核销占比", t.dy, "var(--cyan)"],
-    ["开卡收入占比", t.card, "var(--violet)"],
-    ["续充收入占比", t.recharge, "var(--teal)"],
-    ["评价净值", Math.max(t.good - t.bad, 0), "var(--green)"],
-  ];
-  const maxReview = Math.max(t.good, 1);
-  document.getElementById("miniBars").innerHTML = rows.map(([label, value, color], index) => {
-    const base = index === 4 ? maxReview : total;
-    const width = Math.min(value / base * 100, 100);
-    return `<div class="mini-row">
-      <div class="mini-row-head"><span>${label}</span><strong>${index === 4 ? fmt(value) : money(value)}</strong></div>
-      <div class="bar-track"><div class="bar-fill" style="--w:${Math.max(width, 2)}%;background:${color}"></div></div>
-    </div>`;
-  }).join("");
+    `<div class="quality-row"><span>美团扫码</span><strong>${fmt(t.mtScan)}</strong></div>`,
+    `<div class="quality-row"><span>抖音扫码</span><strong>${fmt(t.dyScan)}</strong></div>`,
+  ].join("") + `<div style="margin-top:14px;border-top:1px solid #f3f4f6;padding-top:14px;">${barsHtml}</div>`;
 }
 
 function chart(id) {
