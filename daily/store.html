@@ -166,7 +166,17 @@ h1 {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
-  align-items: start;
+  align-items: stretch;
+}
+.grid-main > .card {
+  display: flex;
+  flex-direction: column;
+}
+.grid-main > .card > .panel-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
 .panel-head {
   display: flex;
@@ -515,26 +525,11 @@ function renderAnalysis(data, t) {
     `<div class="legend-row"><span><i class="dot" style="background:var(--teal)"></i>其他收入</span><strong>${money(other)} · ${(other / total * 100).toFixed(1)}%</strong></div>`,
   ].join("");
 
-  const barTotal = Math.max(t.revenue, 1);
-  const barRows = [
-    ["美团核销", t.mt, "#f97316"],
-    ["抖音核销", t.dy, "#0891b2"],
-    ["开卡收入", t.card, "#7c3aed"],
-    ["续充收入", t.recharge, "#0f766e"],
-  ];
-  const barsHtml = barRows.map(([label, value, color]) => {
-    const width = Math.min(value / barTotal * 100, 100);
-    return `<div class="mini-row">
-      <div class="mini-row-head"><span>${label}</span><strong>${money(value)}</strong></div>
-      <div class="bar-track"><div class="bar-fill" style="--w:${Math.max(width, 2)}%;background:${color}"></div></div>
-    </div>`;
-  }).join("");
-
   document.getElementById("analysisList").innerHTML = [
     `<div class="quality-row"><span>平均评分</span><strong>美团 ${avgBy(data, row => row.美团评分).toFixed(1)} / 抖音 ${avgBy(data, row => row.抖音评分).toFixed(1)}</strong></div>`,
     `<div class="quality-row"><span>美团扫码</span><strong>${fmt(t.mtScan)}</strong></div>`,
     `<div class="quality-row"><span>抖音扫码</span><strong>${fmt(t.dyScan)}</strong></div>`,
-  ].join("") + `<div style="margin-top:14px;border-top:1px solid #f3f4f6;padding-top:14px;">${barsHtml}</div>`;
+  ].join("");
 }
 
 function chart(id) {
