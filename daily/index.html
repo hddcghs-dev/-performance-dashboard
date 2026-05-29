@@ -4,467 +4,794 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>民德搓澡堂 · 日报看板</title>
+<link rel="icon" href="data:,">
 <style>
 :root {
-  --bg: #eef2f6;
-  --surface: #ffffff;
-  --surface-soft: #f8fafc;
-  --ink: #172033;
-  --muted: #667085;
-  --subtle: #98a2b3;
-  --line: #e4e7ec;
-  --brand: #1f6feb;
-  --brand-2: #14b8a6;
-  --mt: #f97316;
-  --dy: #0891b2;
-  --good: #039855;
-  --bad: #d92d20;
-  --warn: #dc6803;
-  --shadow: 0 18px 45px rgba(16, 24, 40, 0.08);
-  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --page: #f3f5f8;
+  --paper: #ffffff;
+  --paper-soft: #f8fafc;
+  --ink: #111827;
+  --muted: #64748b;
+  --faint: #94a3b8;
+  --line: #e5e7eb;
+  --line-strong: #d7dde7;
+  --brand: #2563eb;
+  --teal: #0f766e;
+  --amber: #f59e0b;
+  --orange: #f97316;
+  --cyan: #0891b2;
+  --green: #059669;
+  --red: #dc2626;
+  --violet: #7c3aed;
+  --shadow: 0 18px 44px rgba(15, 23, 42, .08);
+  --shadow-soft: 0 1px 2px rgba(15, 23, 42, .06);
+  --radius: 8px;
 }
-* { margin: 0; padding: 0; box-sizing: border-box; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: var(--page); }
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
-  background:
-    radial-gradient(circle at 12% 0%, rgba(31, 111, 235, 0.12), transparent 28%),
-    linear-gradient(180deg, #f7f9fc 0%, var(--bg) 100%);
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
   color: var(--ink);
+  background:
+    linear-gradient(180deg, #edf2f7 0, #f7f8fb 270px, var(--page) 100%);
   -webkit-font-smoothing: antialiased;
 }
-.hero {
-  background: linear-gradient(135deg, #101828 0%, #17345e 54%, #0f766e 100%);
-  color: #fff;
-  padding: 24px 32px 28px;
-  box-shadow: 0 12px 38px rgba(16, 24, 40, 0.2);
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+.app {
+  max-width: 1760px;
+  margin: 0 auto;
+  padding: 18px 20px 30px;
 }
-.hero-inner { max-width: 1600px; margin: 0 auto; display: grid; grid-template-columns: 1fr auto; gap: 18px; align-items: center; }
-.eyebrow { font-size: 12px; color: rgba(255,255,255,0.68); margin-bottom: 5px; }
-.hero h1 { font-size: 28px; font-weight: 750; letter-spacing: 0; }
-.hero-subtitle { margin-top: 8px; color: rgba(255,255,255,0.72); font-size: 13px; }
-.date-nav { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-.date-nav button, .date-nav input[type="date"] {
-  height: 36px;
+.hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 22px;
+  min-height: 176px;
+  padding: 22px;
+  color: #fff;
+  background:
+    linear-gradient(135deg, #171923 0%, #243145 48%, #135e58 100%);
+  border: 1px solid rgba(255, 255, 255, .16);
+  border-radius: var(--radius);
+  box-shadow: 0 24px 68px rgba(17, 24, 39, .22);
+  overflow: hidden;
+}
+.hero::before {
+  content: "";
+  position: absolute;
+  left: 22px;
+  right: 22px;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.46), transparent);
+}
+.hero-copy { position: relative; z-index: 1; align-self: center; }
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255,255,255,.72);
+  font-size: 12px;
+  font-weight: 680;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.eyebrow::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #34d399;
+  box-shadow: 0 0 0 5px rgba(52, 211, 153, .13);
+}
+h1 {
+  margin-top: 12px;
+  font-size: clamp(25px, 3vw, 38px);
+  line-height: 1.06;
+  font-weight: 790;
+  letter-spacing: 0;
+}
+.hero-subtitle {
+  margin-top: 12px;
+  max-width: 760px;
+  color: rgba(255,255,255,.74);
+  font-size: 14px;
+  line-height: 1.7;
+}
+.hero-actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 8px;
+  align-items: start;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+.hero-actions button, .hero-actions input {
+  height: 38px;
+  border: 1px solid rgba(255,255,255,.24);
   border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.22);
-  background: rgba(255,255,255,0.1);
+  background: rgba(255,255,255,.10);
   color: #fff;
   padding: 0 12px;
   font-size: 13px;
-  font-weight: 650;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+  font-weight: 690;
+  outline: none;
+  transition: transform .18s ease, background .18s ease, border-color .18s ease;
 }
-.date-nav button { cursor: pointer; transition: background 0.18s, transform 0.18s; }
-.date-nav button:hover { background: rgba(255,255,255,0.18); transform: translateY(-1px); }
-.date-nav input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); }
-.container { max-width: 1600px; margin: 0 auto; padding: 22px 24px 28px; }
-.kpi-cards { display: grid; grid-template-columns: repeat(5, minmax(170px, 1fr)); gap: 14px; margin-top: -40px; margin-bottom: 18px; }
-.kpi-card {
+.hero-actions button:hover { transform: translateY(-1px); background: rgba(255,255,255,.18); border-color: rgba(255,255,255,.34); }
+.hero-actions input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); }
+.hero-stats {
   position: relative;
-  min-height: 118px;
-  background: rgba(255,255,255,0.92);
-  border: 1px solid rgba(255,255,255,0.72);
+  z-index: 1;
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 6px;
+}
+.hero-stat {
+  min-height: 74px;
+  padding: 12px 14px;
   border-radius: 8px;
-  padding: 16px 18px;
-  box-shadow: var(--shadow);
-  overflow: hidden;
+  background: rgba(255,255,255,.09);
+  border: 1px solid rgba(255,255,255,.13);
   backdrop-filter: blur(12px);
 }
-.kpi-card::after { content: ""; position: absolute; inset: auto 14px 0 14px; height: 3px; border-radius: 999px 999px 0 0; background: var(--line); }
-.kpi-card.mt::after { background: var(--mt); }
-.kpi-card.dy::after { background: var(--dy); }
-.kpi-card.good::after { background: var(--good); }
-.kpi-card.bad::after { background: var(--bad); }
-.kpi-label { font-size: 12px; color: var(--muted); font-weight: 650; margin-bottom: 8px; }
-.kpi-value { font-size: 28px; line-height: 1.1; font-weight: 760; color: var(--ink); letter-spacing: 0; }
-.kpi-value.mt { color: var(--mt); }
-.kpi-value.dy { color: var(--dy); }
-.kpi-value.good { color: var(--good); }
-.kpi-value.bad { color: var(--bad); }
-.kpi-meta { margin-top: 8px; display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; }
-.kpi-delta { padding: 2px 7px; border-radius: 999px; font-size: 11px; font-weight: 750; }
-.kpi-delta.up { background: #ecfdf3; color: var(--good); }
-.kpi-delta.down { background: #fef3f2; color: var(--bad); }
-.kpi-card.has-bad { background: #fff6f5; border-color: #fecdca; }
-.insight-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
-.insight-panel, .panel {
-  background: rgba(255,255,255,0.94);
-  border: 1px solid rgba(228,231,236,0.9);
-  border-radius: 8px;
-  box-shadow: var(--shadow-sm);
+.hero-stat span { color: rgba(255,255,255,.62); font-size: 12px; font-weight: 650; }
+.hero-stat strong { display: block; margin-top: 8px; font-size: 22px; line-height: 1; }
+
+.section {
+  margin-top: 14px;
+  display: grid;
+  gap: 14px;
 }
-.insight-panel { padding: 16px 18px; min-height: 126px; }
-.panel { padding: 18px 20px; margin-bottom: 18px; }
-.panel-head { display: flex; justify-content: space-between; gap: 14px; align-items: flex-start; margin-bottom: 14px; }
-.panel h3, .insight-panel h3 { font-size: 14px; font-weight: 750; color: var(--ink); }
-.panel-desc { color: var(--muted); font-size: 12px; margin-top: 4px; }
-.metric-line { display: flex; justify-content: space-between; gap: 12px; margin-top: 12px; font-size: 13px; color: var(--muted); }
-.metric-line strong { color: var(--ink); font-size: 17px; }
-.mix-bar { display: grid; grid-template-columns: var(--mt-share, 1fr) var(--dy-share, 1fr) var(--cash-share, 1fr); height: 12px; overflow: hidden; border-radius: 999px; background: var(--line); margin: 18px 0 12px; }
-.mix-bar span:nth-child(1) { background: var(--mt); }
-.mix-bar span:nth-child(2) { background: var(--dy); }
-.mix-bar span:nth-child(3) { background: var(--brand-2); }
-.legend { display: flex; gap: 12px; flex-wrap: wrap; color: var(--muted); font-size: 12px; }
-.legend i { display: inline-block; width: 8px; height: 8px; border-radius: 999px; margin-right: 5px; }
-.anomaly-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; padding: 12px 14px; background: #fffbeb; border: 1px solid #fedf89; border-radius: 8px; }
-.anomaly-bar.has-critical { background: #fff6f5; border-color: #fecdca; }
-.anomaly-title { font-size: 13px; font-weight: 750; color: var(--ink); margin-right: 4px; }
-.anomaly-tag { display: inline-flex; align-items: center; padding: 4px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; }
-.anomaly-tag.conv { background: #fff4e5; color: var(--warn); }
-.anomaly-tag.bad { background: #fef3f2; color: var(--bad); }
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+}
+.card {
+  position: relative;
+  background: rgba(255,255,255,.96);
+  border: 1px solid rgba(229,231,235,.92);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+  animation: enter .46s ease both;
+}
+.card::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: var(--accent, var(--brand));
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: lineIn .72s ease .12s both;
+}
+.kpi-card {
+  min-height: 126px;
+  padding: 16px;
+}
+.kpi-card:nth-child(2) { animation-delay: .04s; }
+.kpi-card:nth-child(3) { animation-delay: .08s; }
+.kpi-card:nth-child(4) { animation-delay: .12s; }
+.kpi-card:nth-child(5) { animation-delay: .16s; }
+.kpi-card:nth-child(6) { animation-delay: .20s; }
+.label-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 720;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 760;
+}
+.kpi-value {
+  margin-top: 14px;
+  font-size: clamp(24px, 2vw, 31px);
+  line-height: 1;
+  font-weight: 820;
+  letter-spacing: 0;
+}
+.kpi-foot {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  margin-top: 12px;
+  color: var(--faint);
+  font-size: 12px;
+}
+.delta {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 790;
+}
+.delta.up { color: var(--green); background: #ecfdf5; }
+.delta.down { color: var(--red); background: #fef2f2; }
+.delta.flat { color: var(--muted); background: #f1f5f9; }
+.grid-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(380px, .85fr);
+  gap: 14px;
+  align-items: start;
+}
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px 18px 13px;
+  border-bottom: 1px solid var(--line);
+}
+.panel-title { font-size: 15px; font-weight: 800; }
+.panel-subtitle { margin-top: 5px; color: var(--muted); font-size: 12px; line-height: 1.45; }
+.panel-body { padding: 16px 18px 18px; }
+.bento {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.bento-card {
+  min-height: 172px;
+  padding: 14px;
+  border: 1px solid #eef2f7;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #fff, #fbfcfe);
+}
+.mix-track {
+  display: grid;
+  grid-template-columns: var(--mt-share,1fr) var(--dy-share,1fr) var(--other-share,1fr);
+  height: 18px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--line);
+}
+.mix-track span { transform-origin: left; animation: lineIn .8s ease both; }
+.mix-track .mt { background: linear-gradient(90deg, #fb923c, var(--orange)); }
+.mix-track .dy { background: linear-gradient(90deg, #22d3ee, var(--cyan)); }
+.mix-track .other { background: linear-gradient(90deg, #34d399, var(--teal)); }
+.legend { display: grid; gap: 9px; margin-top: 16px; font-size: 12px; color: var(--muted); }
+.legend-row, .quality-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 999px; margin-right: 6px; }
+.quality-list { display: grid; gap: 12px; }
+.quality-row {
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eef2f7;
+  font-size: 12px;
+  color: var(--muted);
+}
+.quality-row:last-child { border-bottom: 0; padding-bottom: 0; }
+.quality-row strong { color: var(--ink); font-size: 18px; }
+.health {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+}
+.ring {
+  width: 108px;
+  aspect-ratio: 1;
+  border-radius: 999px;
+  background:
+    conic-gradient(var(--ring, var(--green)) calc(var(--score, 0) * 1%), #e5e7eb 0);
+  display: grid;
+  place-items: center;
+  position: relative;
+}
+.ring::after {
+  content: "";
+  position: absolute;
+  inset: 10px;
+  background: #fff;
+  border-radius: inherit;
+}
+.ring strong { position: relative; z-index: 1; font-size: 25px; }
+.health-copy { display: grid; gap: 8px; font-size: 12px; color: var(--muted); }
+.alert-list { display: grid; gap: 9px; }
+.alert {
+  display: grid;
+  grid-template-columns: 9px minmax(0, 1fr) auto;
+  gap: 10px;
+  padding: 11px;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  background: #fffbeb;
+}
+.alert.bad { border-color: #fecaca; background: #fff5f5; }
+.mark { width: 9px; height: 9px; border-radius: 999px; background: var(--amber); margin-top: 5px; }
+.alert.bad .mark { background: var(--red); }
+.alert h3 { font-size: 13px; font-weight: 790; }
+.alert p { margin-top: 4px; color: var(--muted); font-size: 12px; line-height: 1.45; }
+.alert-count { color: var(--muted); font-size: 12px; font-weight: 780; }
+.rank-list { display: grid; gap: 9px; }
+.rank-item {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid #edf2f7;
+  border-radius: 8px;
+  background: #fff;
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+.rank-item:hover { transform: translateY(-1px); border-color: var(--line-strong); box-shadow: var(--shadow-soft); }
+.rank-no {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  color: #fff;
+  background: #64748b;
+  font-size: 12px;
+  font-weight: 820;
+}
+.rank-no.top1 { background: #991b1b; }
+.rank-no.top2 { background: #c2410c; }
+.rank-no.top3 { background: #b45309; }
+.rank-name { min-width: 0; }
+.rank-name a { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; color: var(--ink); text-decoration: none; font-size: 13px; font-weight: 790; vertical-align: bottom; }
+.rank-name a:hover { color: var(--brand); }
+.rank-bar { margin-top: 6px; height: 5px; border-radius: 999px; background: #eef2f7; overflow: hidden; }
+.rank-bar span { display: block; width: var(--w, 0%); height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--brand), var(--teal)); transform-origin: left; animation: lineIn .7s ease both; }
+.rank-value { font-size: 13px; font-weight: 790; }
+.table-panel { margin-top: 14px; }
 .table-tools { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.table-tools input {
-  height: 34px;
-  width: 210px;
+.table-tools input, .table-tools select {
+  height: 36px;
   border: 1px solid var(--line);
   border-radius: 8px;
+  background: var(--paper-soft);
   padding: 0 11px;
   color: var(--ink);
-  background: var(--surface-soft);
+  outline: none;
 }
-.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; background: var(--surface); }
-th { background: #f8fafc; padding: 11px 12px; text-align: left; font-weight: 750; color: var(--muted); border-bottom: 1px solid var(--line); white-space: nowrap; position: sticky; top: 0; z-index: 1; }
-td { padding: 10px 12px; border-bottom: 1px solid #f1f3f7; white-space: nowrap; }
-tr:last-child td { border-bottom: 0; }
-tr:hover td { background: #f8fafc; }
-.store-name { font-weight: 720; color: var(--ink); }
-.store-name a { color: var(--ink); text-decoration: none; }
-.store-name a:hover { color: var(--brand); }
-.rank-badge { display: inline-flex; width: 26px; height: 26px; align-items: center; justify-content: center; border-radius: 7px; font-size: 12px; font-weight: 760; color: #fff; }
-.rank-1 { background: #b42318; } .rank-2 { background: #c2410c; } .rank-3 { background: #b54708; } .rank-other { background: #667085; }
-.money-main { font-weight: 760; color: var(--ink); }
-.num-muted { color: var(--muted); }
-.conv-low { background: #fffbeb; color: var(--warn); font-weight: 760; }
-.bad-yes { background: #fff6f5; color: var(--bad); font-weight: 760; }
-.bad-row td { background: #fffafa; }
-.empty-state { text-align: center; padding: 58px 20px; color: var(--subtle); }
-.updated { font-size: 11px; color: var(--subtle); text-align: right; padding: 8px 0; }
-.note { font-size: 12px; color: var(--subtle); margin-top: 12px; }
-@media (max-width: 1100px) {
-  .hero-inner { grid-template-columns: 1fr; }
-  .date-nav { justify-content: flex-start; }
-  .kpi-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: -26px; }
-  .insight-grid { grid-template-columns: 1fr; }
+.table-tools input { width: 230px; }
+.table-wrap { overflow: auto; max-height: 64vh; border-top: 1px solid var(--line); }
+table { width: 100%; min-width: 1220px; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 11px 12px;
+  color: var(--muted);
+  background: #f8fafc;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 800;
 }
-@media (max-width: 640px) {
-  .hero { padding: 20px 16px 42px; }
-  .hero h1 { font-size: 23px; }
-  .container { padding: 14px; }
-  .kpi-cards { grid-template-columns: 1fr; }
+td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; white-space: nowrap; }
+tbody tr { transition: background .16s ease; }
+tbody tr:hover td { background: #f8fafc; }
+.store-link { color: var(--ink); text-decoration: none; font-weight: 790; }
+.store-link:hover { color: var(--brand); }
+.money { color: var(--ink); font-weight: 800; }
+.muted { color: var(--muted); }
+.score-low { color: var(--amber); font-weight: 800; }
+.bad-cell { color: var(--red); font-weight: 820; background: #fff5f5; }
+.reply-low { color: var(--amber); font-weight: 820; background: #fffbeb; }
+.empty { padding: 54px 20px; color: var(--faint); text-align: center; }
+.updated { padding: 12px 2px 0; color: var(--faint); font-size: 11px; text-align: right; }
+@keyframes enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes lineIn { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+@media (max-width: 1240px) {
+  .kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .grid-main { grid-template-columns: 1fr; }
+}
+@media (max-width: 860px) {
+  .app { padding: 12px; }
+  .hero { grid-template-columns: 1fr; min-height: auto; padding: 18px 16px; }
+  .hero-actions { justify-content: flex-start; }
+  .hero-stats { grid-template-columns: 1fr 1fr; }
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+  .bento { grid-template-columns: 1fr; }
   .panel-head { display: block; }
   .table-tools { margin-top: 12px; }
   .table-tools input { width: 100%; }
 }
+@media (max-width: 560px) {
+  .kpi-grid, .hero-stats { grid-template-columns: 1fr; }
+  .health { grid-template-columns: 1fr; }
+}
 </style>
 </head>
 <body>
-
-<div class="hero">
-  <div class="hero-inner">
-    <div>
-      <div class="eyebrow">DAILY OPERATION COMMAND CENTER</div>
-      <h1>民德搓澡堂 · 日报看板</h1>
-      <div class="hero-subtitle" id="heroSubtitle">门店营收、渠道核销、客流转化和评价风险统一跟踪</div>
+<main class="app">
+  <section class="hero">
+    <div class="hero-copy">
+      <div class="eyebrow">Daily Operation Desk</div>
+      <h1>民德搓澡堂 · 经营日报</h1>
+      <p class="hero-subtitle" id="heroSubtitle">从总业绩、渠道核销、客流效率到评价风险，一屏判断今天该盯哪几家店。</p>
     </div>
-  <div class="date-nav">
-    <button onclick="navDate(-1)">前一天</button>
-    <input type="date" id="datePicker" onchange="onDateChange(this.value)">
-    <button onclick="navDate(1)">后一天</button>
-    <button onclick="resetDate()">最新日期</button>
-  </div>
-  </div>
-</div>
-
-<div class="container">
-  <div class="kpi-cards" id="kpiCards">
-    <div class="kpi-card"><div class="kpi-label">总业绩</div><div class="kpi-value" id="kpiTotal">-</div><div class="kpi-meta" id="kpiTotalMeta">-</div></div>
-    <div class="kpi-card mt"><div class="kpi-label">美团核销</div><div class="kpi-value mt" id="kpiMt">-</div><div class="kpi-meta" id="kpiMtMeta">-</div></div>
-    <div class="kpi-card dy"><div class="kpi-label">抖音核销</div><div class="kpi-value dy" id="kpiDy">-</div><div class="kpi-meta" id="kpiDyMeta">-</div></div>
-    <div class="kpi-card good"><div class="kpi-label">好评</div><div class="kpi-value good" id="kpiGood">-</div><div class="kpi-meta" id="kpiGoodMeta">-</div></div>
-    <div class="kpi-card bad" id="kpiBadCard"><div class="kpi-label">差评</div><div class="kpi-value bad" id="kpiBad">-</div><div class="kpi-meta" id="kpiBadMeta">-</div></div>
-  </div>
-
-  <div class="insight-grid" id="insightGrid">
-    <div class="insight-panel">
-      <h3>渠道结构</h3>
-      <div class="mix-bar" id="mixBar"><span></span><span></span><span></span></div>
-      <div class="legend" id="mixLegend"></div>
+    <div class="hero-actions">
+      <button type="button" onclick="navDate(1)">前一天</button>
+      <input type="date" id="datePicker" onchange="onDateChange(this.value)">
+      <button type="button" onclick="navDate(-1)">后一天</button>
+      <button type="button" onclick="resetDate()">最新</button>
     </div>
-    <div class="insight-panel">
-      <h3>客流效率</h3>
-      <div class="metric-line"><span>抖音千访核销</span><strong id="dyPerVisit">-</strong></div>
-      <div class="metric-line"><span>美团千访核销</span><strong id="mtPerVisit">-</strong></div>
-    </div>
-  </div>
+    <div class="hero-stats" id="heroStats"></div>
+  </section>
 
-  <div class="panel">
+  <section class="section">
+    <div class="kpi-grid" id="kpiGrid"></div>
+  </section>
+
+  <section class="section grid-main">
+    <div class="card">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">经营结构</div>
+          <div class="panel-subtitle">总盘、渠道占比、转化效率和健康度放在一起看。</div>
+        </div>
+      </div>
+      <div class="panel-body bento">
+        <div class="bento-card">
+          <div class="mix-track" id="mixTrack"><span class="mt"></span><span class="dy"></span><span class="other"></span></div>
+          <div class="legend" id="mixLegend"></div>
+        </div>
+        <div class="bento-card health">
+          <div class="ring" id="healthRing"><strong id="healthScore">-</strong></div>
+          <div class="health-copy" id="healthCopy"></div>
+        </div>
+        <div class="bento-card">
+          <div class="quality-list" id="efficiencyList"></div>
+        </div>
+        <div class="bento-card">
+          <div class="quality-list" id="qualityList"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">风险队列</div>
+          <div class="panel-subtitle">差评、回复率、核销差额、低转化优先处理。</div>
+        </div>
+      </div>
+      <div class="panel-body alert-list" id="alertList"></div>
+    </div>
+  </section>
+
+  <section class="card table-panel">
     <div class="panel-head">
       <div>
-        <h3>全部门店业绩明细</h3>
-        <div class="panel-desc">点击门店名称查看月度趋势，红色背景代表有差评或访均核销异常。</div>
+        <div class="panel-title">全部门店明细</div>
+        <div class="panel-subtitle">按经营结果排序，异常字段高亮。</div>
       </div>
       <div class="table-tools">
         <input id="storeSearch" type="search" placeholder="搜索门店" oninput="renderAll()">
+        <select id="sortSelect" onchange="renderAll()">
+          <option value="revenue">按总业绩</option>
+          <option value="mt">按美团核销</option>
+          <option value="dy">按抖音核销</option>
+          <option value="bad">按差评</option>
+          <option value="reply">按30s回复率</option>
+        </select>
       </div>
     </div>
-    <div id="anomalyBar"></div>
     <div class="table-wrap">
-      <table id="detailTable">
+      <table>
         <thead>
           <tr>
-            <th>排名</th><th>门店名称</th>
-            <th>总业绩</th>
-            <th>美团核销</th>
-            <th>抖音核销</th>
-            <th>开卡</th><th>续充</th>
-            <th>美团访问</th><th>抖音访问</th><th>美团扫码</th><th>抖音扫码</th>
-            <th>美团评分</th><th>大众评分</th><th>抖音评分</th><th>经营评分</th>
-            <th>好评</th><th>差评</th>
+            <th>排名</th><th>门店</th><th>总业绩</th><th>美团核销</th><th>抖音核销</th>
+            <th>开卡</th><th>续充</th><th>美团访问</th><th>抖音访问</th><th>美团千访</th><th>抖音千访</th>
+            <th>30s回复</th><th>美团评分</th><th>大众评分</th><th>抖音评分</th><th>好评</th><th>差评</th>
           </tr>
         </thead>
-        <tbody></tbody>
+        <tbody id="detailBody"></tbody>
       </table>
     </div>
-    <div class="note">核销金额来自美团/抖音日报。总业绩/开卡/续充来自微矩POS。</div>
-  </div>
-
-  <div class="updated" id="updateTime"></div>
-</div>
+  </section>
+  <div class="updated" id="updated"></div>
+</main>
 
 <script>
 let allData = [];
-let currentDate = '';
+let currentDate = "";
 let availableDates = [];
 
-const fmtNumber = (v) => Number(v || 0).toLocaleString('zh-CN', {maximumFractionDigits: 0});
-const fmtMoney = (v) => '¥' + fmtNumber(v);
-const sumBy = (rows, getter) => rows.reduce((s, r) => s + (Number(getter(r)) || 0), 0);
+const nf = new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 0 });
+const fmt = value => nf.format(Number(value || 0));
+const money = value => "¥" + fmt(value);
+const n = value => Number(value || 0);
+const pct = value => value == null || Number.isNaN(Number(value)) ? "-" : (Number(value) * 100).toFixed(0) + "%";
+const sumBy = (rows, getter) => rows.reduce((sum, row) => sum + n(getter(row)), 0);
+const avgBy = (rows, getter) => {
+  const values = rows.map(getter).map(Number).filter(v => Number.isFinite(v) && v > 0);
+  return values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+};
 
 async function loadData() {
-  // Try fetch first (works when served via HTTP/HTTPS)
   try {
-    const resp = await fetch('daily_data.json');
-    allData = await resp.json();
+    const response = await fetch("daily_data.json");
+    allData = await response.json();
     initApp();
     return;
-  } catch (e) {}
-
-  // Fallback for file:// protocol (local opening)
-  if (location.protocol === 'file:') {
-    try {
-      const xhr = new XMLHttpRequest();
-      xhr.open('GET', 'daily_data.json', false);
-      xhr.send(null);
-      if (xhr.status === 0 || xhr.status === 200) {
-        allData = JSON.parse(xhr.responseText);
-        initApp();
-        return;
-      }
-    } catch (e) {}
+  } catch (error) {
+    if (location.protocol === "file:") {
+      try {
+        const xhr = new XMLHttpRequest();
+        xhr.open("GET", "daily_data.json", false);
+        xhr.send(null);
+        if (xhr.status === 0 || xhr.status === 200) {
+          allData = JSON.parse(xhr.responseText);
+          initApp();
+          return;
+        }
+      } catch (_) {}
+    }
   }
-
-  // Show helpful error with local server command
-  const isFile = location.protocol === 'file:';
-  document.querySelector('#detailTable tbody').innerHTML =
-    '<tr><td colspan="17" class="empty-state"><p>暂无数据</p>' +
-    '<p style="font-size:12px;color:#bbb;">' +
-    (isFile
-      ? '浏览器禁止本地文件 fetch。请在此目录运行：<code style="background:#f0f0f0;padding:2px 6px;border-radius:4px;">python -m http.server 8080</code> 然后用 <code style="background:#f0f0f0;padding:2px 6px;border-radius:4px;">http://localhost:8080</code> 打开'
-      : '请先运行数据聚合脚本生成 daily_data.json') +
-    '</p></td></tr>';
+  document.getElementById("detailBody").innerHTML = `<tr><td colspan="17" class="empty">未能读取 daily_data.json</td></tr>`;
 }
 
 function initApp() {
-  if (!allData.length) return;
-
-  const dateSet = new Set(allData.map(r => r.日期).filter(d => d));
-  availableDates = [...dateSet].sort().reverse();
-
-  if (availableDates.length) {
-    const dp = document.getElementById('datePicker');
-    dp.min = availableDates[availableDates.length - 1];
-    dp.max = availableDates[0];
-  }
-
-  currentDate = availableDates[0] || '';
-  document.getElementById('datePicker').value = currentDate;
+  availableDates = [...new Set(allData.map(row => row.日期).filter(Boolean))].sort().reverse();
+  currentDate = availableDates[0] || "";
+  const picker = document.getElementById("datePicker");
+  picker.value = currentDate;
+  picker.min = availableDates[availableDates.length - 1] || "";
+  picker.max = availableDates[0] || "";
   renderAll();
 }
 
 function navDate(delta) {
-  const idx = availableDates.indexOf(currentDate);
-  if (idx === -1) return;
-  const newIdx = idx + delta;
-  if (newIdx < 0 || newIdx >= availableDates.length) return;
-  currentDate = availableDates[newIdx];
-  document.getElementById('datePicker').value = currentDate;
+  const index = availableDates.indexOf(currentDate);
+  const next = index + delta;
+  if (next < 0 || next >= availableDates.length) return;
+  currentDate = availableDates[next];
+  document.getElementById("datePicker").value = currentDate;
   renderAll();
 }
 
-function onDateChange(val) { currentDate = val; renderAll(); }
+function onDateChange(value) {
+  currentDate = value;
+  renderAll();
+}
 
 function resetDate() {
-  currentDate = availableDates[0] || '';
-  document.getElementById('datePicker').value = currentDate;
+  currentDate = availableDates[0] || "";
+  document.getElementById("datePicker").value = currentDate;
   renderAll();
+}
+
+function totals(rows) {
+  return {
+    revenue: sumBy(rows, row => row.微矩总业绩 || row.总营业额),
+    mt: sumBy(rows, row => row.美团核销金额),
+    dy: sumBy(rows, row => row.抖音核销金额),
+    card: sumBy(rows, row => row.微矩开卡 || row.开卡金额),
+    recharge: sumBy(rows, row => row.微矩续充 || row.续充金额),
+    good: sumBy(rows, row => row.新增好评),
+    bad: sumBy(rows, row => row.新增差评),
+    mtVisit: sumBy(rows, row => row.美团访问量),
+    dyVisit: sumBy(rows, row => row.抖音访问量),
+  };
+}
+
+function buildRows(rows) {
+  return rows.map(row => {
+    const revenue = n(row.微矩总业绩 || row.总营业额);
+    const mt = n(row.美团核销金额);
+    const dy = n(row.抖音核销金额);
+    const mtVisit = n(row.美团访问量);
+    const dyVisit = n(row.抖音访问量);
+    return {
+      raw: row,
+      name: row.门店名称 || "",
+      revenue,
+      mt,
+      dy,
+      card: n(row.微矩开卡 || row.开卡金额),
+      recharge: n(row.微矩续充 || row.续充金额),
+      mtVisit,
+      dyVisit,
+      mtPerVisit: mtVisit ? mt / mtVisit * 1000 : 0,
+      dyPerVisit: dyVisit ? dy / dyVisit * 1000 : 0,
+      reply30: row["30s回复率"],
+      mtScore: n(row.美团评分),
+      dzdpScore: n(row.大众评分),
+      dyScore: n(row.抖音评分),
+      good: n(row.新增好评),
+      bad: n(row.新增差评),
+      mtGap: n(row.美团核销差额),
+      dyGap: n(row.抖音核销差额),
+    };
+  });
+}
+
+function trend(now, prev, lowerIsGood = false) {
+  if (!prev) return `<span class="delta flat">无对比</span><span>前一日为空</span>`;
+  const diff = now - prev;
+  const cls = Math.abs(diff) < 0.01 ? "flat" : lowerIsGood ? (diff <= 0 ? "up" : "down") : (diff >= 0 ? "up" : "down");
+  return `<span class="delta ${cls}">${diff > 0 ? "+" : ""}${fmt(diff)}</span><span>较前一日</span>`;
+}
+
+function kpiCard(label, value, foot, accent, chip = "") {
+  return `<article class="card kpi-card" style="--accent:${accent}">
+    <div class="label-row"><span>${label}</span>${chip ? `<span class="chip">${chip}</span>` : ""}</div>
+    <div class="kpi-value">${value}</div>
+    <div class="kpi-foot">${foot}</div>
+  </article>`;
 }
 
 function renderAll() {
-  const keyword = (document.getElementById('storeSearch')?.value || '').trim();
-  const dayData = allData.filter(r => r.日期 === currentDate);
-  const visibleDayData = keyword ? dayData.filter(r => String(r.门店名称 || '').includes(keyword)) : dayData;
-  if (!dayData.length) {
-    document.querySelector('#detailTable tbody').innerHTML =
-      '<tr><td colspan="17" class="empty-state"><p>该日期暂无数据</p></td></tr>';
-    return;
-  }
-
-  // ── KPI 卡片 ──────────────────────────────────────
+  const dayData = allData.filter(row => row.日期 === currentDate);
   const prevDate = availableDates[availableDates.indexOf(currentDate) + 1];
-  const prevData = prevDate ? allData.filter(r => r.日期 === prevDate) : [];
-  const totals = {
-    total: sumBy(dayData, r => r.微矩总业绩 || r.总营业额),
-    mt: sumBy(dayData, r => r.美团核销金额),
-    dy: sumBy(dayData, r => r.抖音核销金额),
-    good: sumBy(dayData, r => r.新增好评),
-    bad: sumBy(dayData, r => r.新增差评),
-    card: sumBy(dayData, r => r.微矩开卡 || r.开卡金额),
-    recharge: sumBy(dayData, r => r.微矩续充 || r.续充金额),
-    mtVisit: sumBy(dayData, r => r.美团访问量),
-    dyVisit: sumBy(dayData, r => r.抖音访问量)
-  };
-  const prevTotals = {
-    total: sumBy(prevData, r => r.微矩总业绩 || r.总营业额),
-    mt: sumBy(prevData, r => r.美团核销金额),
-    dy: sumBy(prevData, r => r.抖音核销金额),
-    good: sumBy(prevData, r => r.新增好评),
-    bad: sumBy(prevData, r => r.新增差评)
-  };
-  const deltaHtml = (now, prev, lowerIsGood = false) => {
-    if (!prevData.length) return '<span>无前日对比</span>';
-    const diff = now - prev;
-    const cls = lowerIsGood ? (diff <= 0 ? 'up' : 'down') : (diff >= 0 ? 'up' : 'down');
-    const sign = diff > 0 ? '+' : '';
-    return `<span class="kpi-delta ${cls}">${sign}${fmtNumber(diff)}</span><span>较前日</span>`;
-  };
-
-  document.getElementById('kpiTotal').textContent = fmtMoney(totals.total);
-  document.getElementById('kpiMt').textContent = fmtMoney(totals.mt);
-  document.getElementById('kpiDy').textContent = fmtMoney(totals.dy);
-  document.getElementById('kpiGood').textContent = fmtNumber(totals.good);
-  document.getElementById('kpiBad').textContent = fmtNumber(totals.bad);
-  document.getElementById('kpiTotalMeta').innerHTML = deltaHtml(totals.total, prevTotals.total);
-  document.getElementById('kpiMtMeta').innerHTML = deltaHtml(totals.mt, prevTotals.mt);
-  document.getElementById('kpiDyMeta').innerHTML = deltaHtml(totals.dy, prevTotals.dy);
-  document.getElementById('kpiGoodMeta').innerHTML = deltaHtml(totals.good, prevTotals.good);
-  document.getElementById('kpiBadMeta').innerHTML = deltaHtml(totals.bad, prevTotals.bad, true);
-  document.getElementById('kpiBadCard').classList.toggle('has-bad', totals.bad > 0);
-  document.getElementById('heroSubtitle').textContent = `${currentDate} | ${new Set(dayData.map(r => r.门店名称)).size} 家门店 | 总业绩 ${fmtMoney(totals.total)}`;
-
-  renderInsights(dayData, totals);
-
-  renderDetailTable(visibleDayData);
-  document.getElementById('updateTime').textContent =
-    `数据更新: ${currentDate} | 共 ${new Set(dayData.map(r => r.门店名称)).size} 家门店`;
-}
-
-function renderInsights(dayData, totals) {
-  const total = Math.max(totals.total, totals.mt + totals.dy, 1);
-  const cash = Math.max(total - totals.mt - totals.dy, 0);
-  const mtShare = Math.max(totals.mt / total * 100, 1);
-  const dyShare = Math.max(totals.dy / total * 100, 1);
-  const cashShare = Math.max(cash / total * 100, 1);
-  document.getElementById('mixBar').style.setProperty('--mt-share', mtShare + 'fr');
-  document.getElementById('mixBar').style.setProperty('--dy-share', dyShare + 'fr');
-  document.getElementById('mixBar').style.setProperty('--cash-share', cashShare + 'fr');
-  document.getElementById('mixLegend').innerHTML = [
-    `<span><i style="background:var(--mt)"></i>美团 ${((totals.mt / total) * 100).toFixed(1)}%</span>`,
-    `<span><i style="background:var(--dy)"></i>抖音 ${((totals.dy / total) * 100).toFixed(1)}%</span>`,
-    `<span><i style="background:var(--brand-2)"></i>其他 ${((cash / total) * 100).toFixed(1)}%</span>`
-  ].join('');
-  document.getElementById('dyPerVisit').textContent = totals.dyVisit ? fmtMoney(totals.dy / totals.dyVisit * 1000) : '-';
-  document.getElementById('mtPerVisit').textContent = totals.mtVisit ? fmtMoney(totals.mt / totals.mtVisit * 1000) : '-';
-}
-
-function renderDetailTable(day) {
-  if (!day.length) {
-    document.querySelector('#detailTable tbody').innerHTML =
-      '<tr><td colspan="17" class="empty-state"><p>没有匹配的门店</p></td></tr>';
-    document.getElementById('anomalyBar').style.display = 'none';
+  const prevData = prevDate ? allData.filter(row => row.日期 === prevDate) : [];
+  if (!dayData.length) {
+    document.getElementById("detailBody").innerHTML = `<tr><td colspan="17" class="empty">该日期暂无数据</td></tr>`;
     return;
   }
+  const t = totals(dayData);
+  const p = totals(prevData);
+  const rows = buildRows(dayData);
+  const storeCount = new Set(dayData.map(row => row.门店名称)).size;
+  const health = calcHealth(rows, t);
 
-  const stores = [...day].map(r => ({
-    name: r.门店名称 || '',
-    total: r.微矩总业绩 || r.总营业额 || 0,
-    mtReport: r.美团核销金额 || 0,
-    dyReport: r.抖音核销金额 || 0,
-    wjCard: r.微矩开卡 || r.开卡金额 || 0,
-    wjRecharge: r.微矩续充 || r.续充金额 || 0,
-    mtVisit: r.美团访问量 || 0,
-    dyVisit: r.抖音访问量 || 0,
-    mtScore: r.美团评分 || 0,
-    dzdpScore: r.大众评分 || 0,
-    dyScore: r.抖音评分 || 0,
-    bizScore: r.经营评分 || 0,
-    mtScan: r.美团扫码 || 0,
-    dyScan: r.抖音扫码 || 0,
-    good: r.新增好评 || 0,
-    bad: r.新增差评 || 0
-  }));
+  document.getElementById("heroSubtitle").textContent = `${currentDate} | ${storeCount} 家门店 | 今日总业绩 ${money(t.revenue)}`;
+  document.getElementById("heroStats").innerHTML = [
+    `<div class="hero-stat"><span>门店数</span><strong>${storeCount}</strong></div>`,
+    `<div class="hero-stat"><span>美团 + 抖音</span><strong>${money(t.mt + t.dy)}</strong></div>`,
+    `<div class="hero-stat"><span>好评 / 差评</span><strong>${fmt(t.good)} / ${fmt(t.bad)}</strong></div>`,
+    `<div class="hero-stat"><span>经营健康度</span><strong>${health.score}</strong></div>`,
+  ].join("");
 
-  stores.sort((a, b) => b.total - a.total);
+  document.getElementById("kpiGrid").innerHTML = [
+    kpiCard("总业绩", money(t.revenue), trend(t.revenue, p.revenue), "var(--brand)", "总盘"),
+    kpiCard("美团核销", money(t.mt), trend(t.mt, p.mt), "var(--orange)", "平台"),
+    kpiCard("抖音核销", money(t.dy), trend(t.dy, p.dy), "var(--cyan)", "平台"),
+    kpiCard("开卡 / 续充", `${money(t.card)} / ${money(t.recharge)}`, `<span>会员现金流</span>`, "var(--violet)", "会员"),
+    kpiCard("新增好评", fmt(t.good), trend(t.good, p.good), "var(--green)", "口碑"),
+    kpiCard("新增差评", fmt(t.bad), trend(t.bad, p.bad, true), "var(--red)", "风险"),
+  ].join("");
 
-  // ── 异常检测 ──────────────────────────────────────
-  const anomalies = [];
-  stores.forEach(s => {
-    if (s.bad > 0) {
-      anomalies.push({ name: s.name, type: 'bad', msg: `差评 ${s.bad} 条` });
-    }
-  });
-
-  const anomalyBar = document.getElementById('anomalyBar');
-  if (anomalies.length > 0) {
-    const hasBad = anomalies.some(a => a.type === 'bad');
-    anomalyBar.className = 'anomaly-bar' + (hasBad ? ' has-critical' : '');
-    anomalyBar.innerHTML = '<span class="anomaly-title">异常提醒</span>' +
-      anomalies.map(a => `<span class="anomaly-tag ${a.type}">${a.name}: ${a.msg}</span>`).join('');
-    anomalyBar.style.display = 'block';
-  } else {
-    anomalyBar.style.display = 'none';
-  }
-
-  const fmt = (v) => v != null ? v.toLocaleString('zh-CN', {maximumFractionDigits: 0}) : '0';
-
-  const tbody = document.querySelector('#detailTable tbody');
-  tbody.innerHTML = stores.map((s, i) => {
-    const rank = i + 1;
-    const rkCls = rank <= 3 ? `rank-${rank}` : 'rank-other';
-    const badCls = s.bad > 0 ? 'bad-row' : '';
-    return `<tr class="${badCls}">
-      <td><span class="rank-badge ${rkCls}">${rank}</span></td>
-      <td class="store-name"><a href="store.html?store=${encodeURIComponent(s.name)}&month=${currentDate.slice(0,7)}">${s.name}</a></td>
-      <td class="money-main">¥${fmt(s.total)}</td>
-      <td>¥${fmt(s.mtReport)}</td>
-      <td>¥${fmt(s.dyReport)}</td>
-      <td>¥${fmt(s.wjCard)}</td>
-      <td>¥${fmt(s.wjRecharge)}</td>
-      <td class="num-muted">${fmt(s.mtVisit)}</td>
-      <td class="num-muted">${fmt(s.dyVisit)}</td>
-      <td class="num-muted">${s.mtScan > 0 ? s.mtScan : '-'}</td>
-      <td class="num-muted">${s.dyScan > 0 ? s.dyScan : '-'}</td>
-      <td>${s.mtScore.toFixed(1)}</td>
-      <td>${s.dzdpScore > 0 ? s.dzdpScore.toFixed(1) : '-'}</td>
-      <td>${s.dyScore.toFixed(1)}</td>
-      <td>${s.bizScore.toFixed(1)}</td>
-      <td style="color:var(--good)">${s.good}</td>
-      <td class="${s.bad > 0 ? 'bad-yes' : ''}">${s.bad}</td>
-    </tr>`;
-  }).join('');
+  renderStructure(dayData, rows, t, health);
+  renderAlerts(rows);
+  renderTable(rows);
+  document.getElementById("updated").textContent = `数据日期：${currentDate} | 门店数：${storeCount}`;
 }
 
-window.addEventListener('resize', () => {});
+function calcHealth(rows, t) {
+  const badPenalty = Math.min(t.bad * 8, 28);
+  const lowReplyPenalty = rows.filter(r => r.reply30 != null && n(r.reply30) > 0 && n(r.reply30) < .5).length * 5;
+  const lowScorePenalty = rows.filter(r => (r.mtScore && r.mtScore < 4.5) || (r.dyScore && r.dyScore < 4.5)).length * 3;
+  const zeroRevenuePenalty = rows.filter(r => r.revenue <= 0).length * 2;
+  const score = Math.max(0, Math.round(100 - badPenalty - lowReplyPenalty - lowScorePenalty - zeroRevenuePenalty));
+  return { score, color: score >= 82 ? "var(--green)" : score >= 68 ? "var(--amber)" : "var(--red)" };
+}
+
+function renderStructure(dayData, rows, t, health) {
+  const total = Math.max(t.revenue, t.mt + t.dy, 1);
+  const other = Math.max(total - t.mt - t.dy, 0);
+  document.getElementById("mixTrack").style.setProperty("--mt-share", Math.max(t.mt / total * 100, 1) + "fr");
+  document.getElementById("mixTrack").style.setProperty("--dy-share", Math.max(t.dy / total * 100, 1) + "fr");
+  document.getElementById("mixTrack").style.setProperty("--other-share", Math.max(other / total * 100, 1) + "fr");
+  document.getElementById("mixLegend").innerHTML = [
+    `<div class="legend-row"><span><i class="dot" style="background:var(--orange)"></i>美团核销</span><strong>${money(t.mt)} · ${(t.mt / total * 100).toFixed(1)}%</strong></div>`,
+    `<div class="legend-row"><span><i class="dot" style="background:var(--cyan)"></i>抖音核销</span><strong>${money(t.dy)} · ${(t.dy / total * 100).toFixed(1)}%</strong></div>`,
+    `<div class="legend-row"><span><i class="dot" style="background:var(--teal)"></i>其他收入</span><strong>${money(other)} · ${(other / total * 100).toFixed(1)}%</strong></div>`,
+  ].join("");
+
+  const ring = document.getElementById("healthRing");
+  ring.style.setProperty("--score", health.score);
+  ring.style.setProperty("--ring", health.color);
+  document.getElementById("healthScore").textContent = health.score;
+  document.getElementById("healthCopy").innerHTML = [
+    `<div>综合差评、低回复、低评分和零营收门店计算。</div>`,
+    `<div>低于 70 分时，先处理风险队列。</div>`,
+  ].join("");
+
+  const replyAvg = avgBy(dayData, row => row["30s回复率"]);
+  document.getElementById("efficiencyList").innerHTML = [
+    `<div class="quality-row"><span>美团千访核销</span><strong>${t.mtVisit ? money(t.mt / t.mtVisit * 1000) : "-"}</strong></div>`,
+    `<div class="quality-row"><span>抖音千访核销</span><strong>${t.dyVisit ? money(t.dy / t.dyVisit * 1000) : "-"}</strong></div>`,
+    `<div class="quality-row"><span>30s平均回复率</span><strong>${replyAvg ? pct(replyAvg) : "-"}</strong></div>`,
+  ].join("");
+  document.getElementById("qualityList").innerHTML = [
+    `<div class="quality-row"><span>平均美团评分</span><strong>${avgBy(dayData, row => row.美团评分).toFixed(1)}</strong></div>`,
+    `<div class="quality-row"><span>平均抖音评分</span><strong>${avgBy(dayData, row => row.抖音评分).toFixed(1)}</strong></div>`,
+    `<div class="quality-row"><span>评价净值</span><strong>${fmt(t.good - t.bad)}</strong></div>`,
+  ].join("");
+}
+
+function renderAlerts(rows) {
+  const badStores = rows.filter(row => row.bad > 0);
+  const lowReply = rows.filter(row => row.reply30 != null && n(row.reply30) > 0 && n(row.reply30) < .5);
+  const gapStores = rows.filter(row => Math.abs(row.mtGap) >= 100 || Math.abs(row.dyGap) >= 100);
+  const lowEfficiency = rows.filter(row => (row.mtVisit > 30 && row.mtPerVisit < 80) || (row.dyVisit > 30 && row.dyPerVisit < 80));
+  const items = [
+    { title: "新增差评", desc: badStores.slice(0, 4).map(row => `${row.name} ${fmt(row.bad)}条`).join("、") || "无", count: badStores.length, bad: true },
+    { title: "30s回复率低", desc: lowReply.slice(0, 4).map(row => `${row.name} ${pct(row.reply30)}`).join("、") || "无", count: lowReply.length },
+    { title: "核销差额异常", desc: gapStores.slice(0, 4).map(row => row.name).join("、") || "无", count: gapStores.length },
+    { title: "访问转化偏低", desc: lowEfficiency.slice(0, 4).map(row => row.name).join("、") || "无", count: lowEfficiency.length },
+  ];
+  document.getElementById("alertList").innerHTML = items.map(item => `<div class="alert ${item.bad ? "bad" : ""}">
+    <span class="mark"></span>
+    <div><h3>${item.title}</h3><p>${item.desc}</p></div>
+    <span class="alert-count">${item.count}</span>
+  </div>`).join("");
+}
+
+function rankItem(row, index, value, valueText, max) {
+  const rank = index + 1;
+  return `<div class="rank-item">
+    <span class="rank-no ${rank <= 3 ? `top${rank}` : ""}">${rank}</span>
+    <div class="rank-name">
+      <a href="store.html?store=${encodeURIComponent(row.name)}&month=${currentDate.slice(0, 7)}">${row.name}</a>
+      <div class="rank-bar"><span style="--w:${Math.max(value / max * 100, 3)}%"></span></div>
+    </div>
+    <div class="rank-value">${valueText}</div>
+  </div>`;
+}
+
+function renderTable(rows) {
+  const keyword = document.getElementById("storeSearch").value.trim();
+  const sort = document.getElementById("sortSelect").value;
+  let visible = keyword ? rows.filter(row => row.name.includes(keyword)) : rows;
+  const sorters = {
+    revenue: (a, b) => b.revenue - a.revenue,
+    mt: (a, b) => b.mt - a.mt,
+    dy: (a, b) => b.dy - a.dy,
+    bad: (a, b) => b.bad - a.bad,
+    reply: (a, b) => n(a.reply30) - n(b.reply30),
+  };
+  visible = [...visible].sort(sorters[sort] || sorters.revenue);
+  if (!visible.length) {
+    document.getElementById("detailBody").innerHTML = `<tr><td colspan="17" class="empty">没有匹配门店</td></tr>`;
+    return;
+  }
+  document.getElementById("detailBody").innerHTML = visible.map((row, index) => `<tr>
+    <td class="muted">${index + 1}</td>
+    <td><a class="store-link" href="store.html?store=${encodeURIComponent(row.name)}&month=${currentDate.slice(0, 7)}">${row.name}</a></td>
+    <td class="money">${money(row.revenue)}</td>
+    <td>${money(row.mt)}</td>
+    <td>${money(row.dy)}</td>
+    <td>${money(row.card)}</td>
+    <td>${money(row.recharge)}</td>
+    <td class="muted">${fmt(row.mtVisit)}</td>
+    <td class="muted">${fmt(row.dyVisit)}</td>
+    <td>${row.mtVisit ? money(row.mtPerVisit) : "-"}</td>
+    <td>${row.dyVisit ? money(row.dyPerVisit) : "-"}</td>
+    <td class="${row.reply30 != null && row.reply30 > 0 && row.reply30 < .5 ? "reply-low" : ""}">${row.reply30 == null ? "-" : pct(row.reply30)}</td>
+    <td class="${row.mtScore && row.mtScore < 4.6 ? "score-low" : ""}">${row.mtScore ? row.mtScore.toFixed(1) : "-"}</td>
+    <td>${row.dzdpScore ? row.dzdpScore.toFixed(1) : "-"}</td>
+    <td class="${row.dyScore && row.dyScore < 4.6 ? "score-low" : ""}">${row.dyScore ? row.dyScore.toFixed(1) : "-"}</td>
+    <td style="color:var(--green);font-weight:760">${fmt(row.good)}</td>
+    <td class="${row.bad > 0 ? "bad-cell" : ""}">${fmt(row.bad)}</td>
+  </tr>`).join("");
+}
+
 loadData();
 </script>
 </body>

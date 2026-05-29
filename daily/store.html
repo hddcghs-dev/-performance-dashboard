@@ -1,462 +1,656 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>门店趋势 · 民德搓澡堂</title>
+<link rel="icon" href="data:,">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
 <style>
 :root {
-  --bg: #eef2f6;
-  --card: #fff;
-  --text: #172033;
-  --text2: #667085;
-  --text3: #98a2b3;
-  --accent: #1f6feb;
-  --accent2: #14b8a6;
-  --mt: #f97316;
-  --dy: #0891b2;
-  --green: #039855;
-  --red: #d92d20;
-  --border: #e4e7ec;
-  --shadow: 0 1px 2px rgba(16,24,40,0.06);
-  --shadow-lg: 0 18px 45px rgba(16,24,40,0.08);
+  --page: #f3f5f8;
+  --paper: #ffffff;
+  --paper-soft: #f8fafc;
+  --ink: #111827;
+  --muted: #64748b;
+  --faint: #94a3b8;
+  --line: #e5e7eb;
+  --line-strong: #d7dde7;
+  --brand: #2563eb;
+  --teal: #0f766e;
+  --amber: #f59e0b;
+  --orange: #f97316;
+  --cyan: #0891b2;
+  --green: #059669;
+  --red: #dc2626;
+  --violet: #7c3aed;
+  --shadow: 0 18px 44px rgba(15, 23, 42, .08);
+  --shadow-soft: 0 1px 2px rgba(15, 23, 42, .06);
   --radius: 8px;
 }
-* { margin:0; padding:0; box-sizing:border-box; }
-html, body { max-width:100%; overflow-x:hidden; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: var(--page); }
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+  color: var(--ink);
   background:
-    radial-gradient(circle at 12% 0%, rgba(31,111,235,0.12), transparent 28%),
-    linear-gradient(180deg, #f7f9fc 0%, var(--bg) 100%);
-  color: var(--text);
+    linear-gradient(180deg, #edf2f7 0, #f7f8fb 270px, var(--page) 100%);
   -webkit-font-smoothing: antialiased;
 }
-
-/* Header */
-.header { background: linear-gradient(135deg, #101828 0%, #17345e 54%, #0f766e 100%); color: #fff; padding: 24px 32px 52px; box-shadow: 0 12px 38px rgba(16,24,40,0.2); }
-.header-inner { max-width:1440px; margin:0 auto; display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:18px; }
-.header-left { display:flex; flex-direction:column; gap:8px; }
-.header a { color: rgba(255,255,255,0.8); text-decoration:none; font-size:13px; width:max-content; border:1px solid rgba(255,255,255,0.22); border-radius:8px; padding:7px 13px; transition:all 0.2s; }
-.header a:hover { background:rgba(255,255,255,0.12); color:#fff; }
-.eyebrow { font-size:12px; color:rgba(255,255,255,0.68); }
-.header h1 { font-size:30px; font-weight:760; letter-spacing:0; }
-.store-subtitle { color:rgba(255,255,255,0.72); font-size:13px; }
-.month-nav { display:flex; align-items:center; gap:10px; }
-.month-nav button { height:36px; background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.22); border-radius:8px; padding:0 14px; cursor:pointer; font-size:13px; font-weight:650; transition:all 0.2s; }
-.month-nav button:hover { background:rgba(255,255,255,0.18); transform:translateY(-1px); }
-.month-nav .month-label { font-size:16px; font-weight:600; min-width:90px; text-align:center; letter-spacing:-0.3px; }
-
-.container { max-width:1440px; margin:0 auto; padding:0 24px 28px; }
-
-/* KPI Cards */
-.kpi-row { display:grid; grid-template-columns:repeat(6, minmax(150px, 1fr)); gap:14px; margin-top:-34px; margin-bottom:16px; min-width:0; }
-.kpi-card { position:relative; min-height:112px; background:rgba(255,255,255,0.94); border:1px solid rgba(255,255,255,0.72); border-radius:var(--radius); padding:16px 18px; box-shadow:var(--shadow-lg); display:flex; flex-direction:column; gap:5px; transition:box-shadow 0.2s; overflow:hidden; backdrop-filter:blur(12px); }
-.kpi-card::after { content:""; position:absolute; inset:auto 14px 0 14px; height:3px; border-radius:999px 999px 0 0; background:var(--border); }
-.kpi-card.mt::after { background:var(--mt); }
-.kpi-card.dy::after { background:var(--dy); }
-.kpi-card.good::after { background:var(--green); }
-.kpi-card.red::after { background:var(--red); }
-.kpi-card:hover { box-shadow: var(--shadow-lg); }
-.kpi-label { font-size:12px; color:var(--text2); font-weight:650; }
-.kpi-main { display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
-.kpi-value { font-size:25px; font-weight:760; letter-spacing:0; }
-.kpi-value.mt { color:var(--mt); } .kpi-value.dy { color:var(--dy); }
-.kpi-value.green { color:var(--green); } .kpi-value.red { color:var(--red); }
-.kpi-delta { font-size:11px; font-weight:750; padding:2px 8px; border-radius:999px; display:inline-flex; align-items:center; gap:2px; }
-.kpi-delta.up { background:#ecfdf5; color:#059669; }
-.kpi-delta.down { background:#fef2f2; color:#dc2626; }
-.summary-strip { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin-bottom:16px; }
-.summary-card { background:rgba(255,255,255,0.94); border:1px solid var(--border); border-radius:var(--radius); padding:15px 18px; box-shadow:var(--shadow); }
-.summary-card h3 { font-size:13px; color:var(--text); margin-bottom:10px; }
-.metric-line { display:flex; justify-content:space-between; gap:12px; color:var(--text2); font-size:13px; margin-top:8px; }
-.metric-line strong { color:var(--text); font-size:16px; }
-.mix-bar { display:grid; grid-template-columns:var(--mt-share,1fr) var(--dy-share,1fr) var(--other-share,1fr); height:12px; background:var(--border); border-radius:999px; overflow:hidden; margin:12px 0 10px; }
-.mix-bar span:nth-child(1){background:var(--mt);} .mix-bar span:nth-child(2){background:var(--dy);} .mix-bar span:nth-child(3){background:var(--accent2);}
-.legend { display:flex; gap:12px; flex-wrap:wrap; color:var(--text2); font-size:12px; }
-.legend i { display:inline-block; width:8px; height:8px; border-radius:999px; margin-right:5px; }
-
-/* Chart Grid */
-.chart-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:16px; min-width:0; }
-.chart-panel { background:rgba(255,255,255,0.96); border:1px solid var(--border); border-radius:var(--radius); padding:16px 18px; box-shadow:var(--shadow); min-width:0; overflow:hidden; }
-.chart-panel.full { grid-column:1 / -1; }
-.chart-panel h3 { font-size:14px; font-weight:750; color:var(--text); margin-bottom:4px; }
-.chart-subtitle { font-size:12px; color:var(--text3); margin-bottom:10px; }
-.chart-box { width:100%; min-width:0; height:318px; }
-.chart-box.tall { height:372px; }
-
-/* Data Table */
-.table-wrap { overflow-x:auto; margin-top:12px; border:1px solid var(--border); border-radius:var(--radius); }
-.table-wrap table { width:100%; border-collapse:separate; border-spacing:0; font-size:12px; }
-.table-wrap th { background:#f8fafc; padding:11px 12px; text-align:left; font-weight:750; color:var(--text2); border-bottom:1px solid var(--border); white-space:nowrap; position:sticky; top:0; font-size:11px; }
-.table-wrap td { padding:9px 12px; border-bottom:1px solid #f1f5f9; white-space:nowrap; }
-.table-wrap tr:last-child td { border-bottom:0; }
-.table-wrap tr:hover td { background:#f8fafc; }
-.bar-cell { display:flex; align-items:center; gap:6px; }
-.bar-cell .bar { height:6px; border-radius:3px; min-width:2px; transition:width 0.3s; }
-.bar-cell .bar.mt { background:var(--mt); } .bar-cell .bar.dy { background:var(--dy); }
-.weekend td { background:#fafafa; }
-
-/* Empty */
-.empty { text-align:center; padding:80px 20px; color:var(--text3); }
-.empty p { margin-top:8px; font-size:13px; }
-
-/* Footer */
-.footer { text-align:right; padding:8px 0; font-size:11px; color:var(--text3); }
-
-@media (max-width:768px) {
-  .chart-grid { grid-template-columns:1fr; }
-  .kpi-row { grid-template-columns:1fr 1fr; }
-  .summary-strip { grid-template-columns:1fr; }
-  .container { padding:0 14px 20px; }
-  .header { padding:20px 16px 44px; }
-  .header h1 { font-size:24px; }
-  .chart-box { height:270px; }
-  .chart-box.tall { height:300px; }
+button { font: inherit; cursor: pointer; }
+.app {
+  max-width: 1680px;
+  margin: 0 auto;
+  padding: 18px 20px 30px;
 }
-@media (max-width:520px) {
-  .kpi-row { grid-template-columns:1fr; }
-  .month-nav { width:100%; justify-content:space-between; }
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 22px;
+  min-height: 176px;
+  padding: 22px;
+  color: #fff;
+  background:
+    linear-gradient(135deg, #171923 0%, #243145 48%, #135e58 100%);
+  border: 1px solid rgba(255, 255, 255, .16);
+  border-radius: var(--radius);
+  box-shadow: 0 24px 68px rgba(17, 24, 39, .22);
+  overflow: hidden;
+}
+.back {
+  display: inline-flex;
+  width: max-content;
+  height: 34px;
+  align-items: center;
+  padding: 0 12px;
+  color: rgba(255,255,255,.84);
+  border: 1px solid rgba(255,255,255,.22);
+  border-radius: 8px;
+  background: rgba(255,255,255,.09);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 680;
+  transition: transform .18s ease, background .18s ease;
+}
+.back:hover { color: #fff; transform: translateY(-1px); background: rgba(255,255,255,.16); }
+.hero-copy { align-self: center; }
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  color: rgba(255,255,255,.72);
+  font-size: 12px;
+  font-weight: 680;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.eyebrow::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #34d399;
+  box-shadow: 0 0 0 5px rgba(52, 211, 153, .13);
+}
+h1 {
+  margin-top: 12px;
+  font-size: clamp(25px, 3vw, 38px);
+  line-height: 1.06;
+  font-weight: 790;
+  letter-spacing: 0;
+}
+.subtitle {
+  margin-top: 12px;
+  max-width: 760px;
+  color: rgba(255,255,255,.74);
+  font-size: 14px;
+  line-height: 1.7;
+}
+.month-tools { display: flex; gap: 8px; align-items: flex-start; justify-content: flex-end; flex-wrap: wrap; }
+.month-tools button, .month-label {
+  height: 38px;
+  border: 1px solid rgba(255,255,255,.24);
+  border-radius: 8px;
+  background: rgba(255,255,255,.10);
+  color: #fff;
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: 690;
+}
+.month-tools button { transition: transform .18s ease, background .18s ease; }
+.month-tools button:hover { transform: translateY(-1px); background: rgba(255,255,255,.18); }
+.month-label { display: inline-flex; align-items: center; justify-content: center; min-width: 92px; }
+
+.section { margin-top: 14px; display: grid; gap: 14px; }
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+}
+.card {
+  position: relative;
+  background: rgba(255,255,255,.96);
+  border: 1px solid rgba(229,231,235,.92);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+  animation: enter .46s ease both;
+}
+.card::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: var(--accent, var(--brand));
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: lineIn .72s ease .12s both;
+}
+.kpi-card { min-height: 126px; padding: 16px; }
+.kpi-card:nth-child(2) { animation-delay: .04s; }
+.kpi-card:nth-child(3) { animation-delay: .08s; }
+.kpi-card:nth-child(4) { animation-delay: .12s; }
+.kpi-card:nth-child(5) { animation-delay: .16s; }
+.kpi-card:nth-child(6) { animation-delay: .20s; }
+.label { color: var(--muted); font-size: 12px; font-weight: 720; }
+.kpi-value {
+  margin-top: 14px;
+  font-size: clamp(24px, 2vw, 31px);
+  line-height: 1;
+  font-weight: 820;
+  letter-spacing: 0;
+}
+.kpi-foot { display: flex; gap: 7px; align-items: center; margin-top: 12px; color: var(--faint); font-size: 12px; }
+.delta {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 790;
+}
+.delta.up { color: var(--green); background: #ecfdf5; }
+.delta.down { color: var(--red); background: #fef2f2; }
+.delta.flat { color: var(--muted); background: #f1f5f9; }
+.grid-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(380px, .85fr);
+  gap: 14px;
+  align-items: start;
+}
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px 18px 13px;
+  border-bottom: 1px solid var(--line);
+}
+.panel-title { font-size: 15px; font-weight: 800; }
+.panel-subtitle { margin-top: 5px; color: var(--muted); font-size: 12px; line-height: 1.45; }
+.panel-body { padding: 16px 18px 18px; }
+.wide { grid-column: 1 / -1; }
+.chart { width: 100%; height: 354px; }
+.chart.tall { height: 430px; }
+.mix-track {
+  display: grid;
+  grid-template-columns: var(--mt-share,1fr) var(--dy-share,1fr) var(--other-share,1fr);
+  height: 18px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--line);
+}
+.mix-track span { transform-origin: left; animation: lineIn .8s ease both; }
+.mix-track .mt { background: linear-gradient(90deg, #fb923c, var(--orange)); }
+.mix-track .dy { background: linear-gradient(90deg, #22d3ee, var(--cyan)); }
+.mix-track .other { background: linear-gradient(90deg, #34d399, var(--teal)); }
+.legend { display: grid; gap: 9px; margin-top: 16px; color: var(--muted); font-size: 12px; }
+.legend-row, .quality-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 999px; margin-right: 6px; }
+.quality-list { display: grid; gap: 12px; }
+.quality-row {
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eef2f7;
+  color: var(--muted);
+  font-size: 12px;
+}
+.quality-row:last-child { border-bottom: 0; padding-bottom: 0; }
+.quality-row strong { color: var(--ink); font-size: 18px; }
+.mini-bars { display: grid; gap: 11px; }
+.mini-row { display: grid; gap: 6px; }
+.mini-row-head { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; color: var(--muted); }
+.bar-track { height: 8px; border-radius: 999px; background: #eef2f7; overflow: hidden; }
+.bar-fill { height: 100%; width: var(--w, 0%); border-radius: inherit; background: linear-gradient(90deg, var(--brand), var(--teal)); transform-origin: left; animation: lineIn .75s ease both; }
+.table-wrap { overflow: auto; max-height: 58vh; border-top: 1px solid var(--line); }
+table { width: 100%; min-width: 1180px; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 11px 12px;
+  color: var(--muted);
+  background: #f8fafc;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 800;
+}
+td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; white-space: nowrap; }
+tbody tr:hover td { background: #f8fafc; }
+.money { color: var(--ink); font-weight: 800; }
+.warn { color: var(--amber); font-weight: 820; background: #fffbeb; }
+.bad { color: var(--red); font-weight: 820; background: #fff5f5; }
+.empty { padding: 60px 20px; text-align: center; color: var(--faint); }
+.updated { padding: 12px 2px 0; color: var(--faint); font-size: 11px; text-align: right; }
+@keyframes enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes lineIn { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+@media (max-width: 1240px) {
+  .kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .grid-main { grid-template-columns: 1fr; }
+}
+@media (max-width: 860px) {
+  .app { padding: 12px; }
+  .hero { grid-template-columns: 1fr; min-height: auto; padding: 18px 16px; }
+  .month-tools { justify-content: flex-start; }
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+  .chart, .chart.tall { height: 320px; }
+  .panel-head { display: block; }
+}
+@media (max-width: 560px) {
+  .kpi-grid { grid-template-columns: 1fr; }
 }
 </style>
 </head>
 <body>
-
-<div class="header">
-  <div class="header-inner">
-    <div class="header-left">
-      <a href="index.html">返回看板</a>
-      <div class="eyebrow">STORE PERFORMANCE DETAIL</div>
+<main class="app">
+  <section class="hero">
+    <div class="hero-copy">
+      <a class="back" href="index.html">返回看板</a>
+      <div class="eyebrow">Store Detail</div>
       <h1 id="storeTitle">门店趋势</h1>
-      <div class="store-subtitle" id="storeSubtitle">月度营收、渠道核销、评分和评价走势</div>
+      <p class="subtitle" id="storeSubtitle">月度营收、渠道核销、客流效率和评价风险。</p>
     </div>
-    <div class="month-nav">
-      <button onclick="navMonth(-1)">上月</button>
-      <span class="month-label" id="monthLabel">2026-05</span>
-      <button onclick="navMonth(1)">下月</button>
+    <div class="month-tools">
+      <button type="button" onclick="navMonth(-1)">上月</button>
+      <span class="month-label" id="monthLabel">-</span>
+      <button type="button" onclick="navMonth(1)">下月</button>
     </div>
-  </div>
-</div>
+  </section>
 
-<div class="container">
-  <div class="kpi-row" id="kpiRow"></div>
+  <section class="section">
+    <div class="kpi-grid" id="kpiGrid"></div>
+  </section>
 
-  <div class="summary-strip" id="summaryStrip">
-    <div class="summary-card">
-      <h3>渠道结构</h3>
-      <div class="mix-bar" id="mixBar"><span></span><span></span><span></span></div>
-      <div class="legend" id="mixLegend"></div>
+  <section class="section grid-main">
+    <div class="card wide" style="--accent:var(--brand)">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">营收趋势</div>
+          <div class="panel-subtitle">总业绩与美团、抖音核销走势放在同一坐标里看。</div>
+        </div>
+      </div>
+      <div class="panel-body"><div class="chart tall" id="revenueChart"></div></div>
     </div>
-    <div class="summary-card">
-      <h3>客流效率</h3>
-      <div class="metric-line"><span>美团千访核销</span><strong id="mtPerVisit">-</strong></div>
-      <div class="metric-line"><span>抖音千访核销</span><strong id="dyPerVisit">-</strong></div>
+  </section>
+
+  <section class="section grid-main">
+    <div class="card" style="--accent:var(--orange)">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">评分与评价</div>
+          <div class="panel-subtitle">评分走势和差评柱状同时展示。</div>
+        </div>
+      </div>
+      <div class="panel-body"><div class="chart" id="qualityChart"></div></div>
     </div>
-    <div class="summary-card">
-      <h3>经营质量</h3>
-      <div class="metric-line"><span>平均美团评分</span><strong id="avgMtScore">-</strong></div>
-      <div class="metric-line"><span>平均抖音评分</span><strong id="avgDyScore">-</strong></div>
+
+    <div class="card" style="--accent:var(--teal)">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">渠道结构</div>
+          <div class="panel-subtitle">月内收入来源和关键经营质量。</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="mix-track" id="mixTrack"><span class="mt"></span><span class="dy"></span><span class="other"></span></div>
+        <div class="legend" id="mixLegend"></div>
+        <div class="quality-list" id="qualityList" style="margin-top:18px;"></div>
+      </div>
     </div>
-  </div>
+  </section>
 
-  <div class="chart-grid" id="charts">
-    <div class="chart-panel full"><h3>营收趋势</h3><div class="chart-subtitle">总业绩与美团、抖音核销走势对比</div><div class="chart-box tall" id="cRevenue"></div></div>
-    <div class="chart-panel"><h3>评分走势</h3><div class="chart-subtitle">平台评分与经营评分变化</div><div class="chart-box" id="cScore"></div></div>
-    <div class="chart-panel"><h3>到店访问</h3><div class="chart-subtitle">美团和抖音访问人数趋势</div><div class="chart-box" id="cVisit"></div></div>
-    <div class="chart-panel"><h3>开卡 / 续充</h3><div class="chart-subtitle">会员收入结构</div><div class="chart-box" id="cCard"></div></div>
-    <div class="chart-panel"><h3>评价分布</h3><div class="chart-subtitle">新增好评与差评</div><div class="chart-box" id="cReview"></div></div>
-  </div>
+  <section class="section grid-main">
+    <div class="card" style="--accent:var(--cyan)">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">访问与转化</div>
+          <div class="panel-subtitle">访问量和 30s 回复率，判断流量承接。</div>
+        </div>
+      </div>
+      <div class="panel-body"><div class="chart" id="visitChart"></div></div>
+    </div>
+    <div class="card" style="--accent:var(--violet)">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">月度结构强弱</div>
+          <div class="panel-subtitle">用进度条看收入构成和评价净值。</div>
+        </div>
+      </div>
+      <div class="panel-body mini-bars" id="miniBars"></div>
+    </div>
+  </section>
 
-  <div class="chart-panel detail-panel" style="margin-top:16px;">
-    <h3>每日明细</h3>
-    <div class="table-wrap"><table id="detailTable"><thead><tr>
-      <th>日期</th><th>总业绩</th><th>美团核销</th><th>抖音核销</th><th>开卡</th><th>续充</th><th>美团访问</th><th>抖音访问</th><th>美团扫码</th><th>抖音扫码</th><th>美团评分</th><th>抖音评分</th><th>好评</th><th>差评</th>
-    </tr></thead><tbody></tbody></table></div>
-  </div>
-
-  <div class="footer" id="footer"></div>
-</div>
+  <section class="card" style="--accent:var(--line-strong); margin-top:14px;">
+    <div class="panel-head">
+      <div>
+        <div class="panel-title">每日明细</div>
+        <div class="panel-subtitle">保留所有原始指标，异常值高亮。</div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>日期</th><th>总业绩</th><th>美团核销</th><th>抖音核销</th><th>开卡</th><th>续充</th>
+            <th>美团访问</th><th>抖音访问</th><th>美团千访</th><th>抖音千访</th>
+            <th>30s回复</th><th>美团评分</th><th>大众评分</th><th>抖音评分</th><th>好评</th><th>差评</th>
+          </tr>
+        </thead>
+        <tbody id="detailBody"></tbody>
+      </table>
+    </div>
+  </section>
+  <div class="updated" id="updated"></div>
+</main>
 
 <script>
-// ── State ──
-let allData = [], currentMonth = '', currentStore = '';
+let allData = [];
+let currentStore = "";
+let currentMonth = "";
 let charts = {};
 
-// ── Helpers ──
-const fmt = v => v != null ? Number(v).toLocaleString('zh-CN', {maximumFractionDigits:0}) : '-';
-const fmtMoney = v => '¥' + fmt(v);
-const fmtPct = (a, b) => b ? ((a - b) / b * 100).toFixed(1) : null;
-const fmtPctUp = (a, b) => b === 0 ? (a > 0 ? '+∞' : '0%') : ((a - b) / b * 100).toFixed(1) + '%';
+const nf = new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 0 });
+const fmt = value => nf.format(Number(value || 0));
+const money = value => "¥" + fmt(value);
+const n = value => Number(value || 0);
+const pct = value => value == null || Number.isNaN(Number(value)) ? "-" : (Number(value) * 100).toFixed(0) + "%";
+const sumBy = (rows, getter) => rows.reduce((sum, row) => sum + n(getter(row)), 0);
+const avgBy = (rows, getter) => {
+  const values = rows.map(getter).map(Number).filter(v => Number.isFinite(v) && v > 0);
+  return values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+};
 
-function getParam(name) { return new URL(location.href).searchParams.get(name) || ''; }
+const chartTheme = {
+  animationDuration: 850,
+  animationEasing: "cubicOut",
+  tooltip: {
+    trigger: "axis",
+    backgroundColor: "#fff",
+    borderColor: "#e5e7eb",
+    textStyle: { color: "#111827", fontSize: 12 },
+    extraCssText: "box-shadow:0 10px 28px rgba(15,23,42,.12);border-radius:8px;padding:10px 14px;"
+  },
+  legend: { top: 2, right: 8, itemWidth: 10, itemHeight: 10, textStyle: { color: "#64748b", fontSize: 11 } },
+  grid: { left: 14, right: 18, top: 58, bottom: 34, containLabel: true },
+  xAxis: { type: "category", axisTick: { show: false }, axisLine: { lineStyle: { color: "#e5e7eb" } }, axisLabel: { color: "#94a3b8", fontSize: 10 } },
+  yAxis: { type: "value", axisTick: { show: false }, axisLine: { show: false }, axisLabel: { color: "#94a3b8", fontSize: 10 }, splitLine: { lineStyle: { color: "#eef2f7", type: "dashed" } } }
+};
 
-// ── ECharts init ──
-function initChart(domId) {
-  const dom = document.getElementById(domId);
-  if (!dom) return null;
-  const c = echarts.init(dom);
-  charts[domId] = c;
-  return c;
+function getParam(name) {
+  return new URL(location.href).searchParams.get(name) || "";
 }
 
-// ── Load data ──
 async function loadData() {
-  try { const r = await fetch('daily_data.json'); allData = await r.json(); initApp(); return; } catch(e) {}
-  if (location.protocol === 'file:') {
-    try { const x = new XMLHttpRequest(); x.open('GET','daily_data.json',false); x.send(null); if (x.status===0||x.status===200) { allData=JSON.parse(x.responseText); initApp(); return; } } catch(e) {}
+  try {
+    const response = await fetch("daily_data.json");
+    allData = await response.json();
+    initApp();
+    return;
+  } catch (error) {
+    if (location.protocol === "file:") {
+      try {
+        const xhr = new XMLHttpRequest();
+        xhr.open("GET", "daily_data.json", false);
+        xhr.send(null);
+        if (xhr.status === 0 || xhr.status === 200) {
+          allData = JSON.parse(xhr.responseText);
+          initApp();
+          return;
+        }
+      } catch (_) {}
+    }
   }
-  document.getElementById('charts').innerHTML = '<div class="chart-panel full"><div class="empty"><p style="font-size:40px;margin-bottom:12px;">📭</p><p>暂无数据</p></div></div>';
+  document.getElementById("detailBody").innerHTML = `<tr><td colspan="16" class="empty">未能读取 daily_data.json</td></tr>`;
 }
 
 function initApp() {
-  currentStore = decodeURIComponent(getParam('store'));
-  currentMonth = getParam('month') || '2026-05';
-  if (!currentStore) {
-    document.getElementById('storeTitle').textContent = '未指定门店';
-    return;
-  }
-  document.getElementById('storeTitle').textContent = currentStore;
-  document.getElementById('monthLabel').textContent = currentMonth;
+  currentStore = decodeURIComponent(getParam("store"));
+  currentMonth = getParam("month") || latestMonthForStore(currentStore);
+  document.getElementById("storeTitle").textContent = currentStore || "未指定门店";
   render();
 }
 
-function navMonth(d) {
-  const [y,m] = currentMonth.split('-').map(Number);
-  const dt = new Date(y, m-1+d, 1);
-  currentMonth = dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0');
-  document.getElementById('monthLabel').textContent = currentMonth;
+function latestMonthForStore(store) {
+  const dates = allData.filter(row => row.门店名称 === store).map(row => row.日期).filter(Boolean).sort();
+  return dates.length ? dates[dates.length - 1].slice(0, 7) : "";
+}
+
+function navMonth(delta) {
+  if (!currentMonth) return;
+  const [year, month] = currentMonth.split("-").map(Number);
+  const date = new Date(year, month - 1 + delta, 1);
+  currentMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
   render();
 }
 
-// ── Data helpers ──
-function storeMonthData(store, month) {
-  return allData.filter(r => r.门店名称 === store && String(r.日期).startsWith(month)).sort((a,b) => String(a.日期).localeCompare(String(b.日期)));
+function rowsForMonth(month) {
+  return allData
+    .filter(row => row.门店名称 === currentStore && String(row.日期 || "").startsWith(month))
+    .sort((a, b) => String(a.日期).localeCompare(String(b.日期)));
 }
 
-function prevMonth(month) {
-  const [y,m] = month.split('-').map(Number);
-  const d = new Date(y, m-2, 1);
-  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+function previousMonth(month) {
+  const [year, mon] = month.split("-").map(Number);
+  const date = new Date(year, mon - 2, 1);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 }
 
-function renderSummaryStrip(ctx) {
-  const { totalRev, totalMt, totalDy, totalMtVisit, totalDyVisit, data, avg } = ctx;
-  const total = Math.max(totalRev, totalMt + totalDy, 1);
-  const other = Math.max(total - totalMt - totalDy, 0);
-  document.getElementById('mixBar').style.setProperty('--mt-share', Math.max(totalMt / total * 100, 1) + 'fr');
-  document.getElementById('mixBar').style.setProperty('--dy-share', Math.max(totalDy / total * 100, 1) + 'fr');
-  document.getElementById('mixBar').style.setProperty('--other-share', Math.max(other / total * 100, 1) + 'fr');
-  document.getElementById('mixLegend').innerHTML = [
-    `<span><i style="background:var(--mt)"></i>美团 ${((totalMt / total) * 100).toFixed(1)}%</span>`,
-    `<span><i style="background:var(--dy)"></i>抖音 ${((totalDy / total) * 100).toFixed(1)}%</span>`,
-    `<span><i style="background:var(--accent2)"></i>其他 ${((other / total) * 100).toFixed(1)}%</span>`
-  ].join('');
-  document.getElementById('mtPerVisit').textContent = totalMtVisit ? fmtMoney(totalMt / totalMtVisit * 1000) : '-';
-  document.getElementById('dyPerVisit').textContent = totalDyVisit ? fmtMoney(totalDy / totalDyVisit * 1000) : '-';
-  const mtScore = avg(data, '美团评分');
-  const dyScore = avg(data, '抖音评分');
-  document.getElementById('avgMtScore').textContent = mtScore ? mtScore.toFixed(1) : '-';
-  document.getElementById('avgDyScore').textContent = dyScore ? dyScore.toFixed(1) : '-';
+function totals(rows) {
+  return {
+    revenue: sumBy(rows, row => row.微矩总业绩 || row.总营业额),
+    mt: sumBy(rows, row => row.美团核销金额),
+    dy: sumBy(rows, row => row.抖音核销金额),
+    card: sumBy(rows, row => row.微矩开卡 || row.开卡金额),
+    recharge: sumBy(rows, row => row.微矩续充 || row.续充金额),
+    good: sumBy(rows, row => row.新增好评),
+    bad: sumBy(rows, row => row.新增差评),
+    mtVisit: sumBy(rows, row => row.美团访问量),
+    dyVisit: sumBy(rows, row => row.抖音访问量),
+  };
 }
 
-// ── ECharts theme ──
-const theme = {
-  tooltip: { backgroundColor:'#fff', borderColor:'#e4e7ec', textStyle:{color:'#172033',fontSize:12}, extraCssText:'box-shadow:0 10px 28px rgba(16,24,40,0.12);border-radius:8px;padding:10px 14px;' },
-  legend: { top:4, right:8, itemWidth:10, itemHeight:10, textStyle:{fontSize:11,color:'#667085'} },
-  grid: { left:10, right:16, top:58, bottom:38, containLabel:true },
-  xAxis: { axisLine:{lineStyle:{color:'#e4e7ec'}}, axisTick:{show:false}, axisLabel:{color:'#98a2b3',fontSize:10,margin:12}, splitLine:{show:false} },
-  yAxis: { axisLine:{show:false}, axisTick:{show:false}, axisLabel:{color:'#98a2b3',fontSize:10,margin:10}, splitLine:{lineStyle:{color:'#eef2f6',type:'dashed'}} }
-};
+function trend(now, prev, lowerIsGood = false) {
+  if (!prev) return `<span class="delta flat">无对比</span><span>上月为空</span>`;
+  const diff = now - prev;
+  const cls = Math.abs(diff) < .01 ? "flat" : lowerIsGood ? (diff <= 0 ? "up" : "down") : (diff >= 0 ? "up" : "down");
+  return `<span class="delta ${cls}">${diff > 0 ? "+" : ""}${fmt(diff)}</span><span>较上月</span>`;
+}
 
-// ── Main render ──
+function kpiCard(label, value, foot, accent) {
+  return `<article class="card kpi-card" style="--accent:${accent}">
+    <div class="label">${label}</div>
+    <div class="kpi-value">${value}</div>
+    <div class="kpi-foot">${foot}</div>
+  </article>`;
+}
+
 function render() {
-  const data = storeMonthData(currentStore, currentMonth);
-  const prev = storeMonthData(currentStore, prevMonth(currentMonth));
-  const days = data.map(r => String(r.日期).slice(8));
-  const fullDates = data.map(r => String(r.日期));
-
-  if (!data.length) {
-    document.getElementById('charts').innerHTML = '<div class="chart-panel full"><div class="empty"><p style="font-size:40px;margin-bottom:12px;">📅</p><p>该月份暂无数据</p></div></div>';
-    document.getElementById('kpiRow').innerHTML = '';
+  document.getElementById("monthLabel").textContent = currentMonth || "-";
+  const data = rowsForMonth(currentMonth);
+  const prevData = rowsForMonth(previousMonth(currentMonth));
+  if (!currentStore || !data.length) {
+    document.getElementById("kpiGrid").innerHTML = "";
+    document.getElementById("detailBody").innerHTML = `<tr><td colspan="16" class="empty">该门店在 ${currentMonth || "-"} 暂无数据</td></tr>`;
+    Object.values(charts).forEach(chart => chart.dispose());
+    charts = {};
     return;
   }
 
-  // ── Aggregates ──
-  const sum = (arr, key) => arr.reduce((s,r) => s + (r[key] || 0), 0);
-  const sumValue = (arr, getter) => arr.reduce((s,r) => s + (getter(r) || 0), 0);
-  const avg = (arr, key) => { const v = arr.filter(r => r[key] != null).map(r => r[key]); return v.length ? v.reduce((a,b)=>a+b,0)/v.length : 0; };
+  const t = totals(data);
+  const p = totals(prevData);
+  document.getElementById("storeSubtitle").textContent = `${currentMonth} | ${data.length} 天 | 总业绩 ${money(t.revenue)}`;
+  document.getElementById("kpiGrid").innerHTML = [
+    kpiCard("总业绩", money(t.revenue), trend(t.revenue, p.revenue), "var(--brand)"),
+    kpiCard("美团核销", money(t.mt), trend(t.mt, p.mt), "var(--orange)"),
+    kpiCard("抖音核销", money(t.dy), trend(t.dy, p.dy), "var(--cyan)"),
+    kpiCard("开卡 / 续充", `${money(t.card)} / ${money(t.recharge)}`, `<span>会员现金流</span>`, "var(--violet)"),
+    kpiCard("好评", fmt(t.good), trend(t.good, p.good), "var(--green)"),
+    kpiCard("差评", fmt(t.bad), trend(t.bad, p.bad, true), "var(--red)"),
+  ].join("");
 
-  const totalRev = sumValue(data, r => r.微矩总业绩 || r.总营业额 || 0);
-  const totalMt = sum(data, '美团核销金额');
-  const totalDy = sum(data, '抖音核销金额');
-  const totalCard = sumValue(data, r => r.微矩开卡 || r.开卡金额 || 0);
-  const totalRecharge = sumValue(data, r => r.微矩续充 || r.续充金额 || 0);
-  const totalGood = sum(data, '新增好评');
-  const totalBad = sum(data, '新增差评');
-  const totalMtVisit = sum(data, '美团访问量');
-  const totalDyVisit = sum(data, '抖音访问量');
-
-  const prevRev = sumValue(prev, r => r.微矩总业绩 || r.总营业额 || 0);
-  const prevMt = sum(prev, '美团核销金额');
-  const prevDy = sum(prev, '抖音核销金额');
-  const prevCard = sumValue(prev, r => r.微矩开卡 || r.开卡金额 || 0);
-  const prevRecharge = sumValue(prev, r => r.微矩续充 || r.续充金额 || 0);
-  const prevGood = sum(prev, '新增好评');
-  const prevBad = sum(prev, '新增差评');
-  const prevMtVisit = sum(prev, '美团访问量');
-  const prevDyVisit = sum(prev, '抖音访问量');
-  document.getElementById('storeSubtitle').textContent = `${currentMonth} | ${data.length} 天 | 总业绩 ${fmtMoney(totalRev)}`;
-  renderSummaryStrip({ totalRev, totalMt, totalDy, totalMtVisit, totalDyVisit, data, avg });
-
-  // ── KPI cards ──
-  const kpiItems = [
-    { label:'总业绩', value:fmtMoney(totalRev), delta:fmtPctUp(totalRev, prevRev), up:totalRev>=prevRev, cls:'' },
-    { label:'美团核销', value:fmtMoney(totalMt), delta:fmtPctUp(totalMt, prevMt), up:totalMt>=prevMt, cls:'mt' },
-    { label:'抖音核销', value:fmtMoney(totalDy), delta:fmtPctUp(totalDy, prevDy), up:totalDy>=prevDy, cls:'dy' },
-    { label:'开卡', value:fmtMoney(totalCard), delta:fmtPctUp(totalCard, prevCard), up:totalCard>=prevCard, cls:'' },
-    { label:'续充', value:fmtMoney(totalRecharge), delta:fmtPctUp(totalRecharge, prevRecharge), up:totalRecharge>=prevRecharge, cls:'' },
-    { label:'好评/差评', value:totalGood+' / '+totalBad, delta:(totalGood-prevGood>=0?'+':'')+(totalGood-prevGood)+' 好评', up:totalGood>=prevGood, cls:totalBad>0?'red':'green' },
-  ];
-  document.getElementById('kpiRow').innerHTML = kpiItems.map(k => `
-    <div class="kpi-card ${k.cls}">
-      <div class="kpi-label">${k.label}</div>
-      <div class="kpi-main">
-        <span class="kpi-value ${k.cls}">${k.value}</span>
-        ${k.delta ? `<span class="kpi-delta ${k.up?'up':'down'}">${k.up?'▲':'▼'} ${k.delta}</span>` : ''}
-      </div>
-    </div>`).join('');
-
-  // ── Destroy old charts ──
-  Object.entries(charts).forEach(([id, c]) => { c.dispose(); delete charts[id]; });
-
-  // ── 1. Revenue trend (full width, area) ──
-  const c1 = initChart('cRevenue');
-  if (c1) c1.setOption({
-    ...theme,
-    tooltip: { ...theme.tooltip, trigger:'axis', axisPointer:{type:'cross'} },
-    legend: theme.legend,
-    xAxis: { ...theme.xAxis, data:days, boundaryGap:false },
-    yAxis: { ...theme.yAxis, axisLabel:{...theme.yAxis.axisLabel, formatter:v=>'¥'+fmt(v)} },
-    series: [
-      { name:'总业绩', type:'line', data:data.map(r=>r.微矩总业绩||r.总营业额||0), smooth:true, symbol:'circle', symbolSize:4,
-        lineStyle:{color:'#6366f1',width:2.5}, itemStyle:{color:'#6366f1'},
-        areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'rgba(99,102,241,0.25)'},{offset:1,color:'rgba(99,102,241,0.02)'}])},
-        markLine:{silent:true, symbol:'none', lineStyle:{color:'#cbd5e1',type:'dashed'}, data:[{yAxis:totalRev/data.length}]}
-      },
-      { name:'美团核销', type:'line', data:data.map(r=>r.美团核销金额||0), smooth:true, symbol:'none',
-        lineStyle:{color:'#f97316',width:1.5,type:'dashed'}, itemStyle:{color:'#f97316'} },
-      { name:'抖音核销', type:'line', data:data.map(r=>r.抖音核销金额||0), smooth:true, symbol:'none',
-        lineStyle:{color:'#06b6d4',width:1.5,type:'dashed'}, itemStyle:{color:'#06b6d4'} },
-    ]
-  });
-
-  // ── 2. Score ──
-  const c3 = initChart('cScore');
-  const scoreSeries = [];
-  if (data.some(r=>r.美团评分)) scoreSeries.push({ name:'美团评分', type:'line', data:data.map(r=>r.美团评分||null), smooth:true, symbol:'circle', symbolSize:5,
-    lineStyle:{color:'#f97316',width:2}, itemStyle:{color:'#f97316'}, connectNulls:true,
-    markLine:{silent:true, symbol:'none', lineStyle:{color:'#fdba74',type:'dashed'}, data:[{yAxis:avg(data,'美团评分')}]}
-  });
-  if (data.some(r=>r.抖音评分)) scoreSeries.push({ name:'抖音评分', type:'line', data:data.map(r=>r.抖音评分||null), smooth:true, symbol:'circle', symbolSize:5,
-    lineStyle:{color:'#06b6d4',width:2}, itemStyle:{color:'#06b6d4'}, connectNulls:true,
-    markLine:{silent:true, symbol:'none', lineStyle:{color:'#67e8f9',type:'dashed'}, data:[{yAxis:avg(data,'抖音评分')}]}
-  });
-  if (data.some(r=>r.经营评分)) scoreSeries.push({ name:'经营评分', type:'line', data:data.map(r=>r.经营评分||null), smooth:true, symbol:'diamond', symbolSize:4,
-    lineStyle:{color:'#10b981',width:1.5}, itemStyle:{color:'#10b981'}, connectNulls:true });
-  if (c3) c3.setOption({
-    ...theme,
-    legend: theme.legend,
-    xAxis: { ...theme.xAxis, data:days, boundaryGap:false },
-    yAxis: { ...theme.yAxis, min: data.some(r=>r.经营评分) ? 'dataMin' : 3.5, max:5 },
-    series: scoreSeries
-  });
-
-  // ── 4. Visits ──
-  const c4 = initChart('cVisit');
-  if (c4) c4.setOption({
-    ...theme,
-    legend: theme.legend,
-    xAxis: { ...theme.xAxis, data:days, boundaryGap:false },
-    series: [
-      { name:'美团访问', type:'line', data:data.map(r=>r.美团访问量||0), smooth:true, symbol:'circle', symbolSize:4,
-        lineStyle:{color:'#f97316',width:2}, itemStyle:{color:'#f97316'},
-        areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'rgba(249,115,22,0.18)'},{offset:1,color:'rgba(249,115,22,0)'}])}
-      },
-      { name:'抖音访问', type:'line', data:data.map(r=>r.抖音访问量||0), smooth:true, symbol:'circle', symbolSize:4,
-        lineStyle:{color:'#06b6d4',width:2}, itemStyle:{color:'#06b6d4'},
-        areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'rgba(6,182,212,0.18)'},{offset:1,color:'rgba(6,182,212,0)'}])}
-      }
-    ]
-  });
-
-  // ── 5. Card / Recharge ──
-  const c5 = initChart('cCard');
-  if (c5) c5.setOption({
-    ...theme,
-    legend: theme.legend,
-    xAxis: { ...theme.xAxis, data:days },
-    yAxis: { ...theme.yAxis, axisLabel:{...theme.yAxis.axisLabel, formatter:v=>'¥'+fmt(v)} },
-    series: [
-      { name:'开卡', type:'bar', stack:'card', data:data.map(r=>r.微矩开卡||r.开卡金额||0),
-        itemStyle:{color:'#6366f1', borderRadius:[4,4,0,0]} },
-      { name:'续充', type:'bar', stack:'card', data:data.map(r=>r.微矩续充||r.续充金额||0),
-        itemStyle:{color:'#a5b4fc', borderRadius:[0,0,0,0]} }
-    ]
-  });
-
-  // ── 6. Reviews ──
-  const c6 = initChart('cReview');
-  if (c6) c6.setOption({
-    ...theme,
-    legend: theme.legend,
-    xAxis: { ...theme.xAxis, data:days },
-    series: [
-      { name:'好评', type:'bar', data:data.map(r=>r.新增好评||0),
-        itemStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#34d399'},{offset:1,color:'#10b981'}]), borderRadius:[4,4,0,0]} },
-      { name:'差评', type:'bar', data:data.map(r=>r.新增差评||0),
-        itemStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#fca5a5'},{offset:1,color:'#ef4444'}]), borderRadius:[4,4,0,0]} }
-    ]
-  });
-
-  // ── Detail table ──
-  const maxRev = Math.max(...data.map(r=>r.微矩总业绩||r.总营业额||0), 1);
-  const maxVisit = Math.max(...data.map(r=>Math.max(r.美团访问量||0, r.抖音访问量||0)), 1);
-  document.querySelector('#detailTable tbody').innerHTML = data.map((r,i) => {
-    const rev = r.微矩总业绩 || r.总营业额 || 0;
-    const mt = r.美团核销金额 || 0;
-    const dt = r.抖音核销金额 || 0;
-    const card = r.微矩开卡 || r.开卡金额 || 0;
-    const recharge = r.微矩续充 || r.续充金额 || 0;
-    const mtV = r.美团访问量 || 0;
-    const dyV = r.抖音访问量 || 0;
-    const mtScan = r.美团扫码 || 0;
-    const dyScan = r.抖音扫码 || 0;
-    const isWeekend = [0,6].includes(new Date(fullDates[i]).getDay());
-    return `<tr${isWeekend?' class="weekend"':''}>
-      <td style="font-weight:500;">${days[i]}</td>
-      <td style="font-weight:600;">${fmtMoney(rev)}</td>
-      <td><div class="bar-cell"><span>${fmtMoney(mt)}</span><div class="bar mt" style="width:${(mt/maxRev*80)|0}px"></div></div></td>
-      <td><div class="bar-cell"><span>${fmtMoney(dt)}</span><div class="bar dy" style="width:${(dt/maxRev*80)|0}px"></div></div></td>
-      <td>${fmtMoney(card)}</td>
-      <td>${fmtMoney(recharge)}</td>
-      <td>${fmt(mtV)}</td>
-      <td>${fmt(dyV)}</td>
-      <td>${mtScan > 0 ? mtScan : '-'}</td>
-      <td>${dyScan > 0 ? dyScan : '-'}</td>
-      <td>${r.美团评分?r.美团评分.toFixed(1):'-'}</td>
-      <td>${r.抖音评分?r.抖音评分.toFixed(1):'-'}</td>
-      <td style="color:#059669;">${r.新增好评||0}</td>
-      <td style="color:${r.新增差评>0?'#dc2626':'#94a3b8'};">${r.新增差评||0}</td>
-    </tr>`;
-  }).join('');
-
-  document.getElementById('footer').textContent = `${currentMonth} · ${data.length}天 · 数据更新: ${data[data.length-1].日期}`;
+  renderMix(data, t);
+  renderMiniBars(data, t);
+  renderCharts(data);
+  renderTable(data);
+  document.getElementById("updated").textContent = `${currentStore} · ${currentMonth} · ${data.length} 天`;
 }
 
-window.addEventListener('resize', () => Object.values(charts).forEach(c => c.resize()));
+function renderMix(data, t) {
+  const total = Math.max(t.revenue, t.mt + t.dy, 1);
+  const other = Math.max(total - t.mt - t.dy, 0);
+  const mix = document.getElementById("mixTrack");
+  mix.style.setProperty("--mt-share", Math.max(t.mt / total * 100, 1) + "fr");
+  mix.style.setProperty("--dy-share", Math.max(t.dy / total * 100, 1) + "fr");
+  mix.style.setProperty("--other-share", Math.max(other / total * 100, 1) + "fr");
+  document.getElementById("mixLegend").innerHTML = [
+    `<div class="legend-row"><span><i class="dot" style="background:var(--orange)"></i>美团核销</span><strong>${money(t.mt)} · ${(t.mt / total * 100).toFixed(1)}%</strong></div>`,
+    `<div class="legend-row"><span><i class="dot" style="background:var(--cyan)"></i>抖音核销</span><strong>${money(t.dy)} · ${(t.dy / total * 100).toFixed(1)}%</strong></div>`,
+    `<div class="legend-row"><span><i class="dot" style="background:var(--teal)"></i>其他收入</span><strong>${money(other)} · ${(other / total * 100).toFixed(1)}%</strong></div>`,
+  ].join("");
+  document.getElementById("qualityList").innerHTML = [
+    `<div class="quality-row"><span>美团千访核销</span><strong>${t.mtVisit ? money(t.mt / t.mtVisit * 1000) : "-"}</strong></div>`,
+    `<div class="quality-row"><span>抖音千访核销</span><strong>${t.dyVisit ? money(t.dy / t.dyVisit * 1000) : "-"}</strong></div>`,
+    `<div class="quality-row"><span>30s平均回复率</span><strong>${avgBy(data, row => row["30s回复率"]) ? pct(avgBy(data, row => row["30s回复率"])) : "-"}</strong></div>`,
+    `<div class="quality-row"><span>平均评分</span><strong>美团 ${avgBy(data, row => row.美团评分).toFixed(1)} / 抖音 ${avgBy(data, row => row.抖音评分).toFixed(1)}</strong></div>`,
+  ].join("");
+}
+
+function renderMiniBars(data, t) {
+  const total = Math.max(t.revenue, 1);
+  const rows = [
+    ["美团核销占比", t.mt, "var(--orange)"],
+    ["抖音核销占比", t.dy, "var(--cyan)"],
+    ["开卡收入占比", t.card, "var(--violet)"],
+    ["续充收入占比", t.recharge, "var(--teal)"],
+    ["评价净值", Math.max(t.good - t.bad, 0), "var(--green)"],
+  ];
+  const maxReview = Math.max(t.good, 1);
+  document.getElementById("miniBars").innerHTML = rows.map(([label, value, color], index) => {
+    const base = index === 4 ? maxReview : total;
+    const width = Math.min(value / base * 100, 100);
+    return `<div class="mini-row">
+      <div class="mini-row-head"><span>${label}</span><strong>${index === 4 ? fmt(value) : money(value)}</strong></div>
+      <div class="bar-track"><div class="bar-fill" style="--w:${Math.max(width, 2)}%;background:${color}"></div></div>
+    </div>`;
+  }).join("");
+}
+
+function chart(id) {
+  if (charts[id]) charts[id].dispose();
+  const instance = echarts.init(document.getElementById(id));
+  charts[id] = instance;
+  return instance;
+}
+
+function renderCharts(data) {
+  const days = data.map(row => String(row.日期).slice(8));
+  chart("revenueChart").setOption({
+    ...chartTheme,
+    xAxis: { ...chartTheme.xAxis, data: days, boundaryGap: false },
+    yAxis: { ...chartTheme.yAxis, axisLabel: { color: "#94a3b8", fontSize: 10, formatter: value => "¥" + fmt(value) } },
+    series: [
+      { name: "总业绩", type: "line", smooth: true, symbol: "circle", symbolSize: 5, data: data.map(row => row.微矩总业绩 || row.总营业额 || 0),
+        lineStyle: { color: "#2563eb", width: 3 }, itemStyle: { color: "#2563eb" },
+        areaStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{ offset: 0, color: "rgba(37,99,235,.24)" }, { offset: 1, color: "rgba(37,99,235,0)" }]) } },
+      { name: "美团核销", type: "line", smooth: true, symbol: "none", data: data.map(row => row.美团核销金额 || 0), lineStyle: { color: "#f97316", width: 2, type: "dashed" } },
+      { name: "抖音核销", type: "line", smooth: true, symbol: "none", data: data.map(row => row.抖音核销金额 || 0), lineStyle: { color: "#0891b2", width: 2, type: "dashed" } },
+    ]
+  });
+
+  chart("qualityChart").setOption({
+    ...chartTheme,
+    xAxis: { ...chartTheme.xAxis, data: days, boundaryGap: false },
+    yAxis: [
+      { ...chartTheme.yAxis, min: 3.5, max: 5 },
+      { ...chartTheme.yAxis, min: 0, axisLabel: { color: "#94a3b8", fontSize: 10 } }
+    ],
+    series: [
+      { name: "美团评分", type: "line", smooth: true, symbolSize: 5, data: data.map(row => row.美团评分 || null), connectNulls: true, lineStyle: { color: "#f97316", width: 2 }, itemStyle: { color: "#f97316" } },
+      { name: "抖音评分", type: "line", smooth: true, symbolSize: 5, data: data.map(row => row.抖音评分 || null), connectNulls: true, lineStyle: { color: "#0891b2", width: 2 }, itemStyle: { color: "#0891b2" } },
+      { name: "差评", type: "bar", yAxisIndex: 1, data: data.map(row => row.新增差评 || 0), itemStyle: { color: "#dc2626", borderRadius: [4,4,0,0] } },
+    ]
+  });
+
+  chart("visitChart").setOption({
+    ...chartTheme,
+    xAxis: { ...chartTheme.xAxis, data: days, boundaryGap: false },
+    yAxis: [
+      { ...chartTheme.yAxis, axisLabel: { color: "#94a3b8", fontSize: 10 } },
+      { ...chartTheme.yAxis, axisLabel: { color: "#94a3b8", fontSize: 10, formatter: value => value + "%" }, splitLine: { show: false } }
+    ],
+    series: [
+      { name: "美团访问", type: "line", smooth: true, symbol: "circle", symbolSize: 4, data: data.map(row => row.美团访问量 || 0), lineStyle: { color: "#f97316", width: 2 }, itemStyle: { color: "#f97316" } },
+      { name: "抖音访问", type: "line", smooth: true, symbol: "circle", symbolSize: 4, data: data.map(row => row.抖音访问量 || 0), lineStyle: { color: "#0891b2", width: 2 }, itemStyle: { color: "#0891b2" } },
+      { name: "30s回复率", type: "line", smooth: true, symbol: "none", yAxisIndex: 1, data: data.map(row => (row["30s回复率"] || 0) * 100), lineStyle: { color: "#059669", width: 2, type: "dashed" } },
+    ]
+  });
+}
+
+function renderTable(data) {
+  document.getElementById("detailBody").innerHTML = data.map(row => {
+    const revenue = n(row.微矩总业绩 || row.总营业额);
+    const mt = n(row.美团核销金额);
+    const dy = n(row.抖音核销金额);
+    const mtVisit = n(row.美团访问量);
+    const dyVisit = n(row.抖音访问量);
+    const mtPerVisit = mtVisit ? mt / mtVisit * 1000 : 0;
+    const dyPerVisit = dyVisit ? dy / dyVisit * 1000 : 0;
+    const bad = n(row.新增差评);
+    return `<tr>
+      <td>${String(row.日期).slice(5)}</td>
+      <td class="money">${money(revenue)}</td>
+      <td>${money(mt)}</td>
+      <td>${money(dy)}</td>
+      <td>${money(row.微矩开卡 || row.开卡金额)}</td>
+      <td>${money(row.微矩续充 || row.续充金额)}</td>
+      <td>${fmt(mtVisit)}</td>
+      <td>${fmt(dyVisit)}</td>
+      <td>${mtVisit ? money(mtPerVisit) : "-"}</td>
+      <td>${dyVisit ? money(dyPerVisit) : "-"}</td>
+      <td class="${row["30s回复率"] != null && row["30s回复率"] > 0 && row["30s回复率"] < .5 ? "warn" : ""}">${row["30s回复率"] == null ? "-" : pct(row["30s回复率"])}</td>
+      <td>${row.美团评分 ? Number(row.美团评分).toFixed(1) : "-"}</td>
+      <td>${row.大众评分 ? Number(row.大众评分).toFixed(1) : "-"}</td>
+      <td>${row.抖音评分 ? Number(row.抖音评分).toFixed(1) : "-"}</td>
+      <td style="color:var(--green);font-weight:760">${fmt(row.新增好评)}</td>
+      <td class="${bad > 0 ? "bad" : ""}">${fmt(bad)}</td>
+    </tr>`;
+  }).join("");
+}
+
+window.addEventListener("resize", () => Object.values(charts).forEach(instance => instance.resize()));
 loadData();
 </script>
 </body>
 </html>
-
