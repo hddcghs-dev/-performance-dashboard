@@ -86,7 +86,7 @@ body {
 .kpi-delta.up { background: #ecfdf3; color: var(--good); }
 .kpi-delta.down { background: #fef3f2; color: var(--bad); }
 .kpi-card.has-bad { background: #fff6f5; border-color: #fecdca; }
-.insight-grid { display: grid; grid-template-columns: 1.1fr 0.9fr 1fr; gap: 14px; margin-bottom: 18px; }
+.insight-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
 .insight-panel, .panel {
   background: rgba(255,255,255,0.94);
   border: 1px solid rgba(228,231,236,0.9);
@@ -141,8 +141,6 @@ tr:hover td { background: #f8fafc; }
 .empty-state { text-align: center; padding: 58px 20px; color: var(--subtle); }
 .updated { font-size: 11px; color: var(--subtle); text-align: right; padding: 8px 0; }
 .note { font-size: 12px; color: var(--subtle); margin-top: 12px; }
-.sparkline { display: flex; align-items: end; gap: 3px; height: 34px; margin-top: 14px; }
-.sparkline span { flex: 1; min-width: 5px; border-radius: 3px 3px 0 0; background: linear-gradient(180deg, rgba(31,111,235,0.85), rgba(20,184,166,0.5)); }
 @media (max-width: 1100px) {
   .hero-inner { grid-template-columns: 1fr; }
   .date-nav { justify-content: flex-start; }
@@ -198,11 +196,6 @@ tr:hover td { background: #f8fafc; }
       <div class="metric-line"><span>抖音千访核销</span><strong id="dyPerVisit">-</strong></div>
       <div class="metric-line"><span>美团千访核销</span><strong id="mtPerVisit">-</strong></div>
     </div>
-    <div class="insight-panel">
-      <h3>近 7 条数据走势</h3>
-      <div class="sparkline" id="sparkline"></div>
-      <div class="metric-line"><span>最高门店</span><strong id="topStore">-</strong></div>
-    </div>
   </div>
 
   <div class="panel">
@@ -225,7 +218,7 @@ tr:hover td { background: #f8fafc; }
             <th>美团核销</th>
             <th>抖音核销</th>
             <th>开卡</th><th>续充</th>
-            <th>美团访问</th><th>抖音访问</th><th>美团扫码</th><th>抖音访均核销</th>
+            <th>美团访问</th><th>抖音访问</th><th>美团扫码</th><th>抖音扫码</th>
             <th>美团评分</th><th>大众评分</th><th>抖音评分</th><th>经营评分</th>
             <th>好评</th><th>差评</th>
           </tr>
@@ -233,7 +226,7 @@ tr:hover td { background: #f8fafc; }
         <tbody></tbody>
       </table>
     </div>
-    <div class="note">核销金额来自美团/抖音日报。总业绩/开卡/续充来自微矩POS。抖音访均核销 = 抖音核销金额 / 抖音访问人数。</div>
+    <div class="note">核销金额来自美团/抖音日报。总业绩/开卡/续充来自微矩POS。</div>
   </div>
 
   <div class="updated" id="updateTime"></div>
@@ -392,18 +385,6 @@ function renderInsights(dayData, totals) {
   ].join('');
   document.getElementById('dyPerVisit').textContent = totals.dyVisit ? fmtMoney(totals.dy / totals.dyVisit * 1000) : '-';
   document.getElementById('mtPerVisit').textContent = totals.mtVisit ? fmtMoney(totals.mt / totals.mtVisit * 1000) : '-';
-
-  const ranked = [...dayData].map(r => ({
-    name: r.门店名称 || '',
-    total: Number(r.微矩总业绩 || r.总营业额 || 0)
-  })).sort((a, b) => b.total - a.total);
-  const topSeven = ranked.slice(0, 7);
-  const max = Math.max(...topSeven.map(r => r.total), 1);
-  document.getElementById('sparkline').innerHTML = topSeven.map(r => {
-    const h = Math.max(12, r.total / max * 100);
-    return `<span title="${r.name} ${fmtMoney(r.total)}" style="height:${h}%"></span>`;
-  }).join('');
-  document.getElementById('topStore').textContent = ranked[0] ? `${ranked[0].name} ${fmtMoney(ranked[0].total)}` : '-';
 }
 
 function renderDetailTable(day) {
@@ -414,42 +395,32 @@ function renderDetailTable(day) {
     return;
   }
 
-  const stores = [...day].map(r => {
-    const dyVisit = r.抖音访问量 || 0;
-    const dyReport = r.抖音核销金额 || 0;
-    return {
-      name: r.门店名称 || '',
-      total: r.微矩总业绩 || r.总营业额 || 0,
-      mtReport: r.美团核销金额 || 0,
-      dyReport: r.抖音核销金额 || 0,
-      wjCard: r.微矩开卡 || r.开卡金额 || 0,
-      wjRecharge: r.微矩续充 || r.续充金额 || 0,
-      mtVisit: r.美团访问量 || 0,
-      dyVisit,
-      dyConv: dyVisit > 0 ? (dyReport / dyVisit) : 0,
-      mtScore: r.美团评分 || 0,
-      dzdpScore: r.大众评分 || 0,
-      dyScore: r.抖音评分 || 0,
-      bizScore: r.经营评分 || 0,
-      mtScan: r.美团扫码 || 0,
-      good: r.新增好评 || 0,
-      bad: r.新增差评 || 0
-    };
-  });
+  const stores = [...day].map(r => ({
+    name: r.门店名称 || '',
+    total: r.微矩总业绩 || r.总营业额 || 0,
+    mtReport: r.美团核销金额 || 0,
+    dyReport: r.抖音核销金额 || 0,
+    wjCard: r.微矩开卡 || r.开卡金额 || 0,
+    wjRecharge: r.微矩续充 || r.续充金额 || 0,
+    mtVisit: r.美团访问量 || 0,
+    dyVisit: r.抖音访问量 || 0,
+    mtScore: r.美团评分 || 0,
+    dzdpScore: r.大众评分 || 0,
+    dyScore: r.抖音评分 || 0,
+    bizScore: r.经营评分 || 0,
+    mtScan: r.美团扫码 || 0,
+    dyScan: r.抖音扫码 || 0,
+    good: r.新增好评 || 0,
+    bad: r.新增差评 || 0
+  }));
 
   stores.sort((a, b) => b.total - a.total);
 
   // ── 异常检测 ──────────────────────────────────────
-  const CONV_THRESHOLD = 0.3;      // 抖音访均核销 < 0.3元触发告警
-  const CONV_MIN_VISIT = 500;      // 抖音访问 > 500 才检查访均核销
-
   const anomalies = [];
   stores.forEach(s => {
     if (s.bad > 0) {
       anomalies.push({ name: s.name, type: 'bad', msg: `差评 ${s.bad} 条` });
-    }
-    if (s.dyConv < CONV_THRESHOLD && s.dyVisit > CONV_MIN_VISIT) {
-      anomalies.push({ name: s.name, type: 'conv', msg: `抖音访均核销 ¥${s.dyConv.toFixed(2)} (访问${s.dyVisit.toLocaleString('zh-CN')}→核销¥${s.dyReport.toLocaleString('zh-CN')})` });
     }
   });
 
@@ -465,14 +436,6 @@ function renderDetailTable(day) {
   }
 
   const fmt = (v) => v != null ? v.toLocaleString('zh-CN', {maximumFractionDigits: 0}) : '0';
-  const fmtConv = (v) => {
-    if (v == null || v === 0) return '-';
-    return '¥' + v.toFixed(2);
-  };
-  const convClass = (s) => {
-    if (s.dyConv < CONV_THRESHOLD && s.dyVisit > CONV_MIN_VISIT) return 'conv-low';
-    return '';
-  };
 
   const tbody = document.querySelector('#detailTable tbody');
   tbody.innerHTML = stores.map((s, i) => {
@@ -490,7 +453,7 @@ function renderDetailTable(day) {
       <td class="num-muted">${fmt(s.mtVisit)}</td>
       <td class="num-muted">${fmt(s.dyVisit)}</td>
       <td class="num-muted">${s.mtScan > 0 ? s.mtScan : '-'}</td>
-      <td class="${convClass(s)}">${fmtConv(s.dyConv)}</td>
+      <td class="num-muted">${s.dyScan > 0 ? s.dyScan : '-'}</td>
       <td>${s.mtScore.toFixed(1)}</td>
       <td>${s.dzdpScore > 0 ? s.dzdpScore.toFixed(1) : '-'}</td>
       <td>${s.dyScore.toFixed(1)}</td>

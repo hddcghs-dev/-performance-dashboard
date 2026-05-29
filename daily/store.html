@@ -171,7 +171,7 @@ body {
   <div class="chart-panel detail-panel" style="margin-top:16px;">
     <h3>每日明细</h3>
     <div class="table-wrap"><table id="detailTable"><thead><tr>
-      <th>日期</th><th>总业绩</th><th>美团核销</th><th>抖音核销</th><th>开卡</th><th>续充</th><th>美团访问</th><th>抖音访问</th><th>美团评分</th><th>抖音评分</th><th>好评</th><th>差评</th>
+      <th>日期</th><th>总业绩</th><th>美团核销</th><th>抖音核销</th><th>开卡</th><th>续充</th><th>美团访问</th><th>抖音访问</th><th>美团扫码</th><th>抖音扫码</th><th>美团评分</th><th>抖音评分</th><th>好评</th><th>差评</th>
     </tr></thead><tbody></tbody></table></div>
   </div>
 
@@ -430,6 +430,8 @@ function render() {
     const recharge = r.微矩续充 || r.续充金额 || 0;
     const mtV = r.美团访问量 || 0;
     const dyV = r.抖音访问量 || 0;
+    const mtScan = r.美团扫码 || 0;
+    const dyScan = r.抖音扫码 || 0;
     const isWeekend = [0,6].includes(new Date(fullDates[i]).getDay());
     return `<tr${isWeekend?' class="weekend"':''}>
       <td style="font-weight:500;">${days[i]}</td>
@@ -440,6 +442,8 @@ function render() {
       <td>${fmtMoney(recharge)}</td>
       <td>${fmt(mtV)}</td>
       <td>${fmt(dyV)}</td>
+      <td>${mtScan > 0 ? mtScan : '-'}</td>
+      <td>${dyScan > 0 ? dyScan : '-'}</td>
       <td>${r.美团评分?r.美团评分.toFixed(1):'-'}</td>
       <td>${r.抖音评分?r.抖音评分.toFixed(1):'-'}</td>
       <td style="color:#059669;">${r.新增好评||0}</td>
