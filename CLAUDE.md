@@ -12,10 +12,11 @@
 ### 门店顺序
 门店台账排列：民德路→红谷滩→抚河桥→抚州高新→朝阳→京东天虹→赣州章贡→上饶万年→九江中航城→九江万达→上饶婺源→杭州西湖→新余渝水→台州椒江→赣州南康→青岛北区→萍乡安源→温州时代→台州路桥→鹰潭月湖→宜春袁州→杭州市中心→合肥经开→泉州兴贤路
 
-### GitHub Pages 看板（历史版本）
+### GitHub Pages 看板
 - 在线: https://hddcghs-dev.github.io/-performance-dashboard/
 - 仓库: `hddcghs-dev/-performance-dashboard`
 - 本地: `../github-pages-deploy/`
+- **数据源**: 飞书Base API拉取（2026-05起改为直接从Base生成，不再依赖Excel）
 
 ## 月度更新流程
 
@@ -45,6 +46,8 @@
    - 合肥经开店→合肥经开店、台州椒江店→台州椒江店、九江中航城店→九江中航城店
    - 赣州店→赣州章贡加盟店、抚河桥店→抚河桥店、杭州西溪天街店→杭州西湖店
 
-### GitHub Pages 更新（旧系统，按需）
-1. `民德时代业绩看板.xlsx` → `python generate_json.py` → `dashboard_data.json`
-2. 复制到 `../github-pages-deploy/` 提交推送
+### GitHub Pages 部署
+数据源已从Excel改为飞书Base API，更新步骤：
+1. `bash pull_data.sh` — 从Base拉取全量数据到 temp_pages/
+2. `python process_data.py` — 生成 dashboard_data.json 并复制到 ../github-pages-deploy/
+3. 在 ../github-pages-deploy/ 提交推送即可部署
