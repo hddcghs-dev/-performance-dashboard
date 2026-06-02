@@ -47,7 +47,7 @@ button { font: inherit; cursor: pointer; }
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 22px;
-  min-height: 176px;
+  min-height: 266px;
   padding: 22px;
   color: #fff;
   background:
@@ -107,6 +107,33 @@ h1 {
   font-size: 14px;
   line-height: 1.7;
 }
+.hero-analysis {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+.ha-item {
+  min-height: 86px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.10);
+  backdrop-filter: blur(12px);
+}
+.ha-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255,255,255,.86);
+}
+.ha-dot { width: 7px; height: 7px; border-radius: 999px; flex-shrink: 0; }
+.ha-metrics { margin-top: 8px; font-size: 13px; line-height: 1.5; color: rgba(255,255,255,.72); }
+.ha-metrics strong { color: #fff; font-weight: 720; }
+.ha-action { margin-top: 5px; font-size: 12px; color: rgba(255,255,255,.50); line-height: 1.45; }
 .month-tools { display: flex; gap: 8px; align-items: flex-start; justify-content: flex-end; flex-wrap: wrap; }
 .month-tools button, .month-label {
   height: 38px;
@@ -259,6 +286,7 @@ tbody tr:hover td { background: #f8fafc; }
   .app { padding: 12px; }
   .hero { grid-template-columns: 1fr; min-height: auto; padding: 18px 16px; }
   .month-tools { justify-content: flex-start; }
+  .hero-analysis { grid-template-columns: 1fr; }
   .kpi-grid { grid-template-columns: 1fr 1fr; }
   .chart { height: 280px; }
   .panel-head { display: block; }
@@ -282,6 +310,7 @@ tbody tr:hover td { background: #f8fafc; }
       <span class="month-label" id="monthLabel">-</span>
       <button type="button" onclick="navMonth(1)">下月</button>
     </div>
+    <div class="hero-analysis" id="heroAnalysis"></div>
   </section>
 
   <section class="section">
@@ -484,12 +513,92 @@ function kpiCard(label, value, foot) {
   </article>`;
 }
 
+function renderHeroAnalysis(data, t, prevData) {
+  const p = totals(prevData);
+
+  // --- 卡金分析 ---
+  const cardTotal = t.card + t.recharge;
+  const cardPrev = p.card + p.recharge;
+  const cardDiff = cardTotal - cardPrev;
+  const cardRatio = t.revenue > 0 ? (cardTotal / t.revenue * 100) : 0;
+
+  let cardHtml;
+  if (cardTotal === 0) {
+    cardHtml = `<div class="ha-label"><span class="ha-dot" style="background:#f59e0b"></span>卡金分析</div>
+      <div class="ha-metrics">本月无开卡/续充记录</div>
+      <div class="ha-action">→ 充值意愿低，复购动力不足，需加强会员转化和复购引导</div>`;
+  } else if (cardDiff < 0 || cardRatio < 5) {
+    cardHtml = `<div class="ha-label"><span class="ha-dot" style="background:#ef4444"></span>卡金薄弱</div>
+      <div class="ha-metrics">开卡<strong>${money(t.card)}</strong> 续充<strong>${money(t.recharge)}</strong> | 占营收<strong>${cardRatio.toFixed(1)}%</strong>${cardDiff < 0 ? ' | 较上月 <strong style="color:#fca5a5">' + money(cardDiff) + '</strong>' : ''}</div>
+      <div class="ha-action">→ 充值转化不足，复购意愿弱，加强开卡权益和续充激励</div>`;
+  } else {
+    cardHtml = `<div class="ha-label"><span class="ha-dot" style="background:#22c55e"></span>卡金健康</div>
+      <div class="ha-metrics">开卡<strong>${money(t.card)}</strong> 续充<strong>${money(t.recharge)}</strong> | 占比<strong>${cardRatio.toFixed(1)}%</strong> | 较上月 <strong>+${money(cardDiff)}</strong></div>
+      <div class="ha-action">→ 会员现金流稳定，保持现有策略</div>`;
+  }
+
+  // --- 差评分析 ---
+  const mtRating = avgBy(data, r => r.美团评分);
+  const dyRating = avgBy(data, r => r.抖音评分);
+  const mtRatingPrev = avgBy(prevData, r => r.美团评分);
+  const mtDrop = mtRatingPrev > 0 ? mtRating - mtRatingPrev : 0;
+  const badCount = t.bad;
+
+  let reviewHtml;
+  if (badCount > 0 && mtDrop < -0.05) {
+    reviewHtml = `<div class="ha-label"><span class="ha-dot" style="background:#ef4444"></span>差评风险</div>
+      <div class="ha-metrics">新增<strong>${badCount}条</strong>差评 | 美团<strong>${mtRating.toFixed(1)}</strong>（↓${Math.abs(mtDrop).toFixed(1)}）| 抖音<strong>${dyRating.toFixed(1)}</strong></div>
+      <div class="ha-action">→ 差评拉低门店POI转化率，优先回访差评客户、管控服务质量</div>`;
+  } else if (badCount > 0) {
+    reviewHtml = `<div class="ha-label"><span class="ha-dot" style="background:#f59e0b"></span>差评关注</div>
+      <div class="ha-metrics">新增<strong>${badCount}条</strong>差评 | 美团<strong>${mtRating.toFixed(1)}</strong> 抖音<strong>${dyRating.toFixed(1)}</strong></div>
+      <div class="ha-action">→ 持续监控差评趋势，防止评分下降影响转化</div>`;
+  } else if (mtDrop < -0.1) {
+    reviewHtml = `<div class="ha-label"><span class="ha-dot" style="background:#f59e0b"></span>评分下滑</div>
+      <div class="ha-metrics">美团<strong>${mtRating.toFixed(1)}</strong>（↓${Math.abs(mtDrop).toFixed(1)}）| 抖音<strong>${dyRating.toFixed(1)}</strong> | 0差评</div>
+      <div class="ha-action">→ 无差评但评分在降，关注默认好评占比和评价质量</div>`;
+  } else {
+    reviewHtml = `<div class="ha-label"><span class="ha-dot" style="background:#22c55e"></span>评价健康</div>
+      <div class="ha-metrics">0差评 | 美团<strong>${mtRating.toFixed(1)}</strong> 抖音<strong>${dyRating.toFixed(1)}</strong></div>
+      <div class="ha-action">→ 口碑稳定，保持服务质量、鼓励好评积累</div>`;
+  }
+
+  // --- 回复率分析 ---
+  const reply30s = avgBy(data, r => r["30s回复率"]);
+  const reply5min = avgBy(data, r => r["5min回复率"]);
+
+  let replyHtml;
+  if (reply30s > 0 && reply30s < 0.5) {
+    replyHtml = `<div class="ha-label"><span class="ha-dot" style="background:#ef4444"></span>回复率预警</div>
+      <div class="ha-metrics">30s回复率 <strong style="color:#fca5a5">${pct(reply30s)}</strong> | 5min <strong>${pct(reply5min)}</strong> | 严重低于80%安全线</div>
+      <div class="ha-action">→ 存在咨询客户大量流失风险，需立即提升在线响应速度</div>`;
+  } else if (reply30s > 0 && reply30s < 0.8) {
+    replyHtml = `<div class="ha-label"><span class="ha-dot" style="background:#f59e0b"></span>回复率偏低</div>
+      <div class="ha-metrics">30s回复率 <strong>${pct(reply30s)}</strong> | 5min <strong>${pct(reply5min)}</strong> | 低于80%阈值</div>
+      <div class="ha-action">→ 存在咨询客户流失可能，优化客服排班和快捷回复</div>`;
+  } else if (reply30s >= 0.8) {
+    replyHtml = `<div class="ha-label"><span class="ha-dot" style="background:#22c55e"></span>回复率达标</div>
+      <div class="ha-metrics">30s回复率 <strong>${pct(reply30s)}</strong> | 5min <strong>${pct(reply5min)}</strong></div>
+      <div class="ha-action">→ 响应速度良好，保持在线客服效率</div>`;
+  } else {
+    replyHtml = `<div class="ha-label"><span class="ha-dot" style="background:#94a3b8"></span>回复率数据</div>
+      <div class="ha-metrics">暂无有效回复率数据</div>
+      <div class="ha-action">→ 检查美团后台数据同步状态</div>`;
+  }
+
+  document.getElementById("heroAnalysis").innerHTML =
+    `<div class="ha-item">${cardHtml}</div>
+     <div class="ha-item">${reviewHtml}</div>
+     <div class="ha-item">${replyHtml}</div>`;
+}
+
 function render() {
   document.getElementById("monthLabel").textContent = currentMonth || "-";
   const data = rowsForMonth(currentMonth);
   const prevData = rowsForMonth(previousMonth(currentMonth));
   if (!currentStore || !data.length) {
     document.getElementById("kpiGrid").innerHTML = "";
+    document.getElementById("heroAnalysis").innerHTML = "";
     document.getElementById("detailBody").innerHTML = `<tr><td colspan="16" class="empty">该门店在 ${currentMonth || "-"} 暂无数据</td></tr>`;
     Object.values(charts).forEach(chart => chart.dispose());
     charts = {};
@@ -498,6 +607,7 @@ function render() {
 
   const t = totals(data);
   const p = totals(prevData);
+  renderHeroAnalysis(data, t, prevData);
   document.getElementById("storeSubtitle").textContent = `${currentMonth} | ${data.length} 天 | 总业绩 ${money(t.revenue)}`;
   document.getElementById("kpiGrid").innerHTML = [
     kpiCard("总业绩", money(t.revenue), trend(t.revenue, p.revenue)),
