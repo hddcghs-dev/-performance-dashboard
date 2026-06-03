@@ -197,11 +197,12 @@ button:hover { background: rgba(212,168,67,0.25); }
 }
 table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: 12px;
 }
 th {
-  background: rgba(255,255,255,0.02);
+  background: var(--card2);
   color: var(--text2);
   font-weight: 500;
   text-align: right;
@@ -210,6 +211,8 @@ th {
   white-space: nowrap;
   position: sticky;
   top: 0;
+  z-index: 5;
+  box-shadow: 0 1px 0 var(--border);
 }
 th:first-child { text-align: left; }
 td {
@@ -291,6 +294,55 @@ tr:hover td { background: rgba(255,255,255,0.03); }
   padding: 14px 12px;
   font-size: 12px;
   color: var(--text2);
+}
+
+.compare-summary {
+  margin-bottom: 16px;
+}
+.compare-summary-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255,255,255,0.02);
+}
+.compare-summary-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text2);
+}
+.compare-summary-sub {
+  font-size: 11px;
+  color: var(--text2);
+}
+.compare-summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 220px;
+  gap: 10px;
+  padding: 12px;
+}
+.median-box {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid rgba(212,168,67,0.25);
+  border-radius: 8px;
+  background: rgba(212,168,67,0.06);
+}
+.median-label {
+  font-size: 11px;
+  color: var(--text2);
+  margin-bottom: 6px;
+}
+.median-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Store detail header */
@@ -540,6 +592,7 @@ tr:hover td { background: rgba(255,255,255,0.03); }
   .chart-grid, .chart-grid-3 { grid-template-columns: 1fr; }
   .kpi-grid { grid-template-columns: repeat(3, 1fr); }
   .insight-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .compare-summary-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 600px) {
   .header { align-items: flex-start; flex-direction: column; gap: 10px; padding: 12px 14px; }
@@ -670,12 +723,13 @@ tr:hover td { background: rgba(255,255,255,0.03); }
       <div class="chart-card-title">门店对比柱状图</div>
       <div class="chart" id="chart-compare-bar"></div>
     </div>
+    <div class="chart-card compare-summary" id="compare-summary"></div>
     <div class="table-card">
       <div class="chart-card-title" style="display:flex;align-items:center;gap:8px;">
         <span>对比数据明细</span>
         <button class="export-btn" onclick="exportCSV()">导出CSV</button>
       </div>
-      <div style="max-height:400px;overflow-y:auto;">
+      <div class="table-scroll" style="max-height:400px;overflow-y:auto;">
         <table>
           <thead id="compare-table-head"></thead>
           <tbody id="compare-table-body"></tbody>
@@ -1788,7 +1842,64 @@ function renderCompare() {
   }).join('');
 
   renderCompareChart(dates);
+  renderCompareSummary(dates);
   renderCompareTable(dates);
+}
+
+function fmtCompareValue(v, metric) {
+  if (isPct(metric)) return fmtPct(v);
+  if (isAvgMetric(metric)) return fmtScore(v);
+  if (MONEY_METRICS.has(metric)) return fmtY(v);
+  return fmtN(Math.round(v));
+}
+
+function getCompareRankRows(dates, metric) {
+  return compareSelectedStores
+    .map(store => ({ store, value: calcStoreValue(dates, store, metric) }))
+    .sort((a, b) => b.value - a.value);
+}
+
+function renderCompareSummary(dates) {
+  const container = document.getElementById('compare-summary');
+  if (!container) return;
+  if (compareSelectedStores.length === 0 || compareSelectedMetrics.length === 0) {
+    container.innerHTML = '';
+    return;
+  }
+
+  const metric = compareSelectedMetrics[0];
+  const rows = getCompareRankRows(dates, metric);
+  const values = rows.map(r => r.value).sort((a, b) => a - b);
+  const mid = Math.floor(values.length / 2);
+  const median = values.length % 2 ? values[mid] : (values[mid - 1] + values[mid]) / 2;
+  const metricName = METRIC_LABELS[metric] || metric;
+  const topRows = rows.slice(0, 5);
+  const bottomRows = rows.slice(-5).reverse();
+  const periodText = `${dates[0].substring(0,7).replace('-','年')}月 - ${dates[dates.length - 1].substring(0,7).replace('-','年')}月`;
+
+  function list(title, items, cls) {
+    return `<div class="insight-card">
+      <div class="insight-title">${title}</div>
+      ${items.map((x, i) => `<div class="insight-row">
+        <span class="name">${i + 1}. ${escapeHtml(x.store)}</span>
+        <span class="val ${cls || ''}">${fmtCompareValue(x.value, metric)}</span>
+      </div>`).join('')}
+    </div>`;
+  }
+
+  container.innerHTML = `
+    <div class="compare-summary-header">
+      <div class="compare-summary-title">${escapeHtml(metricName)}排名摘要</div>
+      <div class="compare-summary-sub">${compareSelectedStores.length}家门店 · ${periodText}</div>
+    </div>
+    <div class="compare-summary-grid">
+      ${list('前5', topRows, 'good')}
+      ${list('后5', bottomRows, 'bad')}
+      <div class="median-box">
+        <div class="median-label">中位数</div>
+        <div class="median-value">${fmtCompareValue(median, metric)}</div>
+      </div>
+    </div>`;
 }
 
 function renderCompareChart(dates) {
