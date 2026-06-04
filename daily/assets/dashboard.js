@@ -159,9 +159,7 @@ function renderAll() {
     kpiCard("新增差评", fmt(t.bad), trend(t.bad, p.bad, true), "var(--red)", "风险"),
   ].join("");
 
-  renderStructure(dayData, rows, t, health);
   renderAlerts(rows);
-  renderRankings(rows);
   renderTrendChart();
   renderTable(rows);
   document.getElementById("updated").textContent = `数据日期：${currentDate} | 门店数：${storeCount}`;
@@ -174,40 +172,6 @@ function calcHealth(rows, t) {
   const zeroRevenuePenalty = rows.filter(r => r.revenue <= 0).length * 2;
   const score = Math.max(0, Math.round(100 - badPenalty - lowReplyPenalty - lowScorePenalty - zeroRevenuePenalty));
   return { score, color: score >= 82 ? "var(--green)" : score >= 68 ? "var(--amber)" : "var(--red)" };
-}
-
-function renderStructure(dayData, rows, t, health) {
-  const total = Math.max(t.revenue, t.mt + t.dy, 1);
-  const other = Math.max(total - t.mt - t.dy, 0);
-  document.getElementById("mixTrack").style.setProperty("--mt-share", Math.max(t.mt / total * 100, 1) + "fr");
-  document.getElementById("mixTrack").style.setProperty("--dy-share", Math.max(t.dy / total * 100, 1) + "fr");
-  document.getElementById("mixTrack").style.setProperty("--other-share", Math.max(other / total * 100, 1) + "fr");
-  document.getElementById("mixLegend").innerHTML = [
-    `<div class="legend-row"><span><i class="dot" style="background:var(--orange)"></i>美团核销</span><strong>${money(t.mt)} · ${(t.mt / total * 100).toFixed(1)}%</strong></div>`,
-    `<div class="legend-row"><span><i class="dot" style="background:var(--cyan)"></i>抖音核销</span><strong>${money(t.dy)} · ${(t.dy / total * 100).toFixed(1)}%</strong></div>`,
-    `<div class="legend-row"><span><i class="dot" style="background:var(--teal)"></i>其他收入</span><strong>${money(other)} · ${(other / total * 100).toFixed(1)}%</strong></div>`,
-  ].join("");
-
-  const ring = document.getElementById("healthRing");
-  ring.style.setProperty("--score", health.score);
-  ring.style.setProperty("--ring", health.color);
-  document.getElementById("healthScore").textContent = health.score;
-  document.getElementById("healthCopy").innerHTML = [
-    `<div>综合差评、低回复、低评分和零营收门店计算。</div>`,
-    `<div>低于 70 分时，先处理风险队列。</div>`,
-  ].join("");
-
-  const replyAvg = avgBy(dayData, row => row["30s回复率"]);
-  document.getElementById("efficiencyList").innerHTML = [
-    `<div class="quality-row"><span>美团千访核销</span><strong>${t.mtVisit ? money(t.mt / t.mtVisit * 1000) : "-"}</strong></div>`,
-    `<div class="quality-row"><span>抖音千访核销</span><strong>${t.dyVisit ? money(t.dy / t.dyVisit * 1000) : "-"}</strong></div>`,
-    `<div class="quality-row"><span>30s平均回复率</span><strong>${replyAvg ? pct(replyAvg) : "-"}</strong></div>`,
-  ].join("");
-  document.getElementById("qualityList").innerHTML = [
-    `<div class="quality-row"><span>平均美团评分</span><strong>${avgBy(dayData, row => row.美团评分).toFixed(1)}</strong></div>`,
-    `<div class="quality-row"><span>平均抖音评分</span><strong>${avgBy(dayData, row => row.抖音评分).toFixed(1)}</strong></div>`,
-    `<div class="quality-row"><span>评价净值</span><strong>${fmt(t.good - t.bad)}</strong></div>`,
-  ].join("");
 }
 
 function renderAlerts(rows) {
@@ -226,18 +190,6 @@ function renderAlerts(rows) {
     <div><h3>${item.title}</h3><p>${item.desc}</p></div>
     <span class="alert-count">${item.count}</span>
   </div>`).join("");
-}
-
-function rankItem(row, index, value, valueText, max) {
-  const rank = index + 1;
-  return `<div class="rank-item">
-    <span class="rank-no ${rank <= 3 ? `top${rank}` : ""}">${rank}</span>
-    <div class="rank-name">
-      <a href="store.html?store=${encodeURIComponent(row.name)}&month=${currentDate.slice(0, 7)}">${row.name}</a>
-      <div class="rank-bar"><span style="--w:${Math.max(value / max * 100, 3)}%"></span></div>
-    </div>
-    <div class="rank-value">${valueText}</div>
-  </div>`;
 }
 
 function renderTable(rows) {
@@ -317,45 +269,37 @@ function renderTrendChart() {
   if (trendInstance) trendInstance.dispose();
   trendInstance = echarts.init(el);
 
-  // Get last 7 available dates ending at currentDate
   const idx = availableDates.indexOf(currentDate);
   const recentDates = availableDates.slice(Math.max(idx, 0), Math.max(idx, 0) + 7).reverse();
 
-  const revenue = [], mtArr = [], dyArr = [];
+  const revenue = [], mtArr = [], dyArr = [], mtVisit = [], dyVisit = [];
   for (const d of recentDates) {
     const dayRows = allData.filter(row => row.日期 === d);
     revenue.push(sumBy(dayRows, row => row.微矩总业绩 || row.总营业额));
     mtArr.push(sumBy(dayRows, row => row.美团核销金额));
     dyArr.push(sumBy(dayRows, row => row.抖音核销金额));
+    mtVisit.push(sumBy(dayRows, row => row.美团访问量));
+    dyVisit.push(sumBy(dayRows, row => row.抖音访问量));
   }
 
   trendInstance.setOption({
     ...chartTheme,
+    legend: { ...chartTheme.legend, data: ["总业绩", "美团核销", "抖音核销", "美团访问量", "抖音访问量"] },
     xAxis: { ...chartTheme.xAxis, data: recentDates.map(d => d.slice(5)), boundaryGap: false },
-    yAxis: { ...chartTheme.yAxis, axisLabel: { color: "#94a3b8", fontSize: 10, formatter: v => "¥" + fmt(v) } },
+    yAxis: [
+      { ...chartTheme.yAxis, axisLabel: { color: "#94a3b8", fontSize: 10, formatter: v => "¥" + fmt(v) } },
+      { ...chartTheme.yAxis, axisLabel: { color: "#94a3b8", fontSize: 10, formatter: v => fmt(v) + "次" } },
+    ],
     series: [
-      { name: "总业绩", type: "line", smooth: true, symbol: "circle", symbolSize: 6, data: revenue,
+      { name: "总业绩", type: "line", yAxisIndex: 0, smooth: true, symbol: "circle", symbolSize: 6, data: revenue,
         lineStyle: { color: "#2563eb", width: 3 }, itemStyle: { color: "#2563eb" },
         areaStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{ offset: 0, color: "rgba(37,99,235,.22)" }, { offset: 1, color: "rgba(37,99,235,0)" }]) } },
-      { name: "美团核销", type: "line", smooth: true, symbol: "none", data: mtArr, lineStyle: { color: "#f97316", width: 2, type: "dashed" } },
-      { name: "抖音核销", type: "line", smooth: true, symbol: "none", data: dyArr, lineStyle: { color: "#0891b2", width: 2, type: "dashed" } },
+      { name: "美团核销", type: "line", yAxisIndex: 0, smooth: true, symbol: "none", data: mtArr, lineStyle: { color: "#f97316", width: 2, type: "dashed" } },
+      { name: "抖音核销", type: "line", yAxisIndex: 0, smooth: true, symbol: "none", data: dyArr, lineStyle: { color: "#0891b2", width: 2, type: "dashed" } },
+      { name: "美团访问量", type: "bar", yAxisIndex: 1, data: mtVisit, barWidth: 12, itemStyle: { color: "rgba(249,115,22,.28)", borderRadius: [4,4,0,0] } },
+      { name: "抖音访问量", type: "bar", yAxisIndex: 1, data: dyVisit, barWidth: 12, itemStyle: { color: "rgba(8,145,178,.28)", borderRadius: [4,4,0,0] } },
     ]
   });
-}
-
-// === Rankings ===
-function renderRankings(rows) {
-  const sorted = [...rows].sort((a, b) => b.revenue - a.revenue);
-  const max = sorted[0]?.revenue || 1;
-  document.getElementById("rankRevenue").innerHTML = sorted.slice(0, 5).map((row, i) =>
-    rankItem(row, i, row.revenue, money(row.revenue), max)
-  ).join("") || '<div class="empty">暂无数据</div>';
-
-  const badSorted = [...rows].filter(r => r.bad > 0).sort((a, b) => b.bad - a.bad);
-  const maxBad = badSorted[0]?.bad || 1;
-  document.getElementById("rankBad").innerHTML = badSorted.slice(0, 5).map((row, i) =>
-    rankItem(row, i, row.bad, fmt(row.bad) + " 条", maxBad)
-  ).join("") || '<div class="empty">无差评 👍</div>';
 }
 
 window.addEventListener("resize", () => { if (trendInstance) trendInstance.resize(); });

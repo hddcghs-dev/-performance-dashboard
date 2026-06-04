@@ -242,8 +242,8 @@ html.dark .card { border-color: var(--line); }
   gap: 12px;
 }
 .kpi-card {
-  min-height: 132px;
-  padding: 16px;
+  min-height: 96px;
+  padding: 10px 12px;
   transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
 }
 .kpi-card:hover {
@@ -272,9 +272,9 @@ html.dark .card { border-color: var(--line); }
   font-weight: 760;
 }
 .kpi-value {
-  margin-top: 14px;
+  margin-top: 8px;
   color: var(--ink);
-  font-size: 30px;
+  font-size: 22px;
   line-height: 1;
   font-weight: 840;
   letter-spacing: 0;
@@ -283,7 +283,7 @@ html.dark .card { border-color: var(--line); }
   display: flex;
   gap: 7px;
   align-items: center;
-  margin-top: 12px;
+  margin-top: 8px;
   color: var(--faint);
   font-size: 12px;
 }
@@ -303,51 +303,6 @@ html.dark .card { border-color: var(--line); }
 .chart { width: 100%; height: 354px; }
 .chart.tall { height: 430px; }
 .wide { grid-column: 1 / -1; }
-
-.mix-track {
-  display: grid;
-  grid-template-columns: var(--mt-share,1fr) var(--dy-share,1fr) var(--other-share,1fr);
-  height: 18px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: var(--line);
-}
-.mix-track span { transform-origin: left; animation: lineIn .7s ease both; }
-.mix-track .mt { background: linear-gradient(90deg, #fb923c, var(--orange)); }
-.mix-track .dy { background: linear-gradient(90deg, #22d3ee, var(--cyan)); }
-.mix-track .other { background: linear-gradient(90deg, #34d399, var(--teal)); }
-.legend,
-.quality-list {
-  display: grid;
-  gap: 10px;
-}
-.legend { margin-top: 16px; color: var(--muted); font-size: 12px; }
-.legend-row,
-.quality-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px;
-  align-items: center;
-}
-.dot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  margin-right: 6px;
-  border-radius: 999px;
-}
-.quality-row {
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--line);
-  color: var(--muted);
-  font-size: 12px;
-}
-.quality-row:last-child { padding-bottom: 0; border-bottom: 0; }
-.quality-row strong {
-  color: var(--ink);
-  font-size: 18px;
-  font-weight: 820;
-}
 
 .table-wrap {
   overflow: auto;
@@ -411,11 +366,6 @@ tbody tr:hover td { background: var(--paper-soft); }
   color: var(--faint);
   font-size: 11px;
   text-align: right;
-}
-
-@keyframes lineIn {
-  from { transform: scaleX(0); }
-  to { transform: scaleX(1); }
 }
 
 @media (prefers-reduced-motion: reduce) {
