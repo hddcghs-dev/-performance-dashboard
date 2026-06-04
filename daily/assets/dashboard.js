@@ -33,7 +33,7 @@ async function loadData() {
       } catch (_) {}
     }
   }
-  document.getElementById("detailBody").innerHTML = `<tr><td colspan="17" class="empty">未能读取 daily_data.json</td></tr>`;
+  document.getElementById("detailBody").innerHTML = `<tr><td colspan="13" class="empty">未能读取 daily_data.json</td></tr>`;
 }
 
 function initApp() {
@@ -71,8 +71,6 @@ function totals(rows) {
     revenue: sumBy(rows, row => row.微矩总业绩 || row.总营业额),
     mt: sumBy(rows, row => row.美团核销金额),
     dy: sumBy(rows, row => row.抖音核销金额),
-    card: sumBy(rows, row => row.微矩开卡 || row.开卡金额),
-    recharge: sumBy(rows, row => row.微矩续充 || row.续充金额),
     good: sumBy(rows, row => row.新增好评),
     bad: sumBy(rows, row => row.新增差评),
     mtVisit: sumBy(rows, row => row.美团访问量),
@@ -93,8 +91,6 @@ function buildRows(rows) {
       revenue,
       mt,
       dy,
-      card: n(row.微矩开卡 || row.开卡金额),
-      recharge: n(row.微矩续充 || row.续充金额),
       mtVisit,
       dyVisit,
       mtPerVisit: mtVisit ? mt / mtVisit * 1000 : 0,
@@ -102,6 +98,7 @@ function buildRows(rows) {
       mtScan: n(row.美团扫码),
       dyScan: n(row.抖音扫码),
       reply30: row["30s回复率"],
+      reply5min: row["5min回复率"],
       mtScore: n(row.美团评分),
       dzdpScore: n(row.大众评分),
       dyScore: n(row.抖音评分),
@@ -133,7 +130,7 @@ function renderAll() {
   const prevDate = availableDates[availableDates.indexOf(currentDate) + 1];
   const prevData = prevDate ? allData.filter(row => row.日期 === prevDate) : [];
   if (!dayData.length) {
-    document.getElementById("detailBody").innerHTML = `<tr><td colspan="17" class="empty">该日期暂无数据</td></tr>`;
+    document.getElementById("detailBody").innerHTML = `<tr><td colspan="13" class="empty">该日期暂无数据</td></tr>`;
     return;
   }
   const t = totals(dayData);
@@ -154,12 +151,11 @@ function renderAll() {
     kpiCard("总业绩", money(t.revenue), trend(t.revenue, p.revenue), "var(--brand)", "总盘"),
     kpiCard("美团核销", money(t.mt), trend(t.mt, p.mt), "var(--orange)", "平台"),
     kpiCard("抖音核销", money(t.dy), trend(t.dy, p.dy), "var(--cyan)", "平台"),
-    kpiCard("开卡 / 续充", `${money(t.card)} / ${money(t.recharge)}`, `<span>会员现金流</span>`, "var(--violet)", "会员"),
     kpiCard("新增好评", fmt(t.good), trend(t.good, p.good), "var(--green)", "口碑"),
     kpiCard("新增差评", fmt(t.bad), trend(t.bad, p.bad, true), "var(--red)", "风险"),
   ].join("");
 
-  renderAlerts(rows);
+  renderAlerts(rows, prevData);
   renderTrendChart();
   renderTable(rows);
   document.getElementById("updated").textContent = `数据日期：${currentDate} | 门店数：${storeCount}`;
@@ -174,13 +170,28 @@ function calcHealth(rows, t) {
   return { score, color: score >= 82 ? "var(--green)" : score >= 68 ? "var(--amber)" : "var(--red)" };
 }
 
-function renderAlerts(rows) {
+function renderAlerts(rows, prevData) {
   const badStores = rows.filter(row => row.bad > 0);
   const lowReply = rows.filter(row => row.reply30 != null && n(row.reply30) > 0 && n(row.reply30) < .5);
   const gapStores = rows.filter(row => Math.abs(row.mtGap) >= 100 || Math.abs(row.dyGap) >= 100);
   const lowEfficiency = rows.filter(row => (row.mtVisit > 30 && row.mtPerVisit < 80) || (row.dyVisit > 30 && row.dyPerVisit < 80));
+  const scoreDropStores = [];
+  if (prevData.length) {
+    const prevMap = new Map(prevData.map(r => [r.门店名称, r]));
+    for (const row of rows) {
+      if (!row.name) continue;
+      const prev = prevMap.get(row.raw.门店名称);
+      if (!prev) continue;
+      const drops = [];
+      if (n(row.mtScore) && n(prev.美团评分) && n(row.mtScore) < n(prev.美团评分)) drops.push(`美团${n(prev.美团评分).toFixed(1)}→${n(row.mtScore).toFixed(1)}`);
+      if (n(row.dzdpScore) && n(prev.大众评分) && n(row.dzdpScore) < n(prev.大众评分)) drops.push(`大众${n(prev.大众评分).toFixed(1)}→${n(row.dzdpScore).toFixed(1)}`);
+      if (n(row.dyScore) && n(prev.抖音评分) && n(row.dyScore) < n(prev.抖音评分)) drops.push(`抖音${n(prev.抖音评分).toFixed(1)}→${n(row.dyScore).toFixed(1)}`);
+      if (drops.length) scoreDropStores.push({ name: row.name, drops });
+    }
+  }
   const items = [
     { title: "新增差评", desc: badStores.slice(0, 4).map(row => `${row.name} ${fmt(row.bad)}条`).join("、") || "无", count: badStores.length, bad: true },
+    { title: "评分下降", desc: scoreDropStores.slice(0, 4).map(s => `${s.name}(${s.drops.join(",")})`).join("、") || "无", count: scoreDropStores.length, bad: true },
     { title: "30s回复率低", desc: lowReply.slice(0, 4).map(row => `${row.name} ${pct(row.reply30)}`).join("、") || "无", count: lowReply.length },
     { title: "核销差额异常", desc: gapStores.slice(0, 4).map(row => row.name).join("、") || "无", count: gapStores.length },
     { title: "访问转化偏低", desc: lowEfficiency.slice(0, 4).map(row => row.name).join("、") || "无", count: lowEfficiency.length },
@@ -205,7 +216,7 @@ function renderTable(rows) {
   };
   visible = [...visible].sort(sorters[sort] || sorters.revenue);
   if (!visible.length) {
-    document.getElementById("detailBody").innerHTML = `<tr><td colspan="17" class="empty">没有匹配门店</td></tr>`;
+    document.getElementById("detailBody").innerHTML = `<tr><td colspan="13" class="empty">没有匹配门店</td></tr>`;
     return;
   }
   document.getElementById("detailBody").innerHTML = visible.map((row, index) => `<tr>
@@ -214,16 +225,13 @@ function renderTable(rows) {
     <td class="money">${money(row.revenue)}</td>
     <td>${money(row.mt)}</td>
     <td>${money(row.dy)}</td>
-    <td>${money(row.card)}</td>
-    <td>${money(row.recharge)}</td>
+
     <td class="muted">${fmt(row.mtVisit)}</td>
     <td class="muted">${fmt(row.dyVisit)}</td>
     <td class="muted">${fmt(row.mtScan)}</td>
     <td class="muted">${fmt(row.dyScan)}</td>
     <td class="${row.reply30 != null && row.reply30 > 0 && row.reply30 < .5 ? "reply-low" : ""}">${row.reply30 == null ? "-" : pct(row.reply30)}</td>
-    <td class="${row.mtScore && row.mtScore < 4.6 ? "score-low" : ""}">${row.mtScore ? row.mtScore.toFixed(1) : "-"}</td>
-    <td>${row.dzdpScore ? row.dzdpScore.toFixed(1) : "-"}</td>
-    <td class="${row.dyScore && row.dyScore < 4.6 ? "score-low" : ""}">${row.dyScore ? row.dyScore.toFixed(1) : "-"}</td>
+    <td class="${row.reply5min != null && row.reply5min > 0 && row.reply5min < .5 ? "reply-low" : ""}">${row.reply5min == null ? "-" : pct(row.reply5min)}</td>
     <td style="color:var(--green);font-weight:760">${fmt(row.good)}</td>
     <td class="${row.bad > 0 ? "bad-cell" : ""}">${fmt(row.bad)}</td>
   </tr>`).join("");
