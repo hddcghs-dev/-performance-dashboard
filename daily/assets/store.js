@@ -14,22 +14,6 @@ const avgBy = (rows, getter) => {
   return values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
 };
 
-const chartTheme = {
-  animationDuration: 850,
-  animationEasing: "cubicOut",
-  tooltip: {
-    trigger: "axis",
-    backgroundColor: "#fff",
-    borderColor: "#e5e7eb",
-    textStyle: { color: "#111827", fontSize: 12 },
-    extraCssText: "box-shadow:0 10px 28px rgba(15,23,42,.12);border-radius:8px;padding:10px 14px;"
-  },
-  legend: { top: 2, right: 8, itemWidth: 10, itemHeight: 10, textStyle: { color: "#64748b", fontSize: 11 } },
-  grid: { left: 14, right: 18, top: 58, bottom: 34, containLabel: true },
-  xAxis: { type: "category", axisTick: { show: false }, axisLine: { lineStyle: { color: "#e5e7eb" } }, axisLabel: { color: "#94a3b8", fontSize: 10 } },
-  yAxis: { type: "value", axisTick: { show: false }, axisLine: { show: false }, axisLabel: { color: "#94a3b8", fontSize: 10 }, splitLine: { lineStyle: { color: "#eef2f7", type: "dashed" } } }
-};
-
 function getParam(name) {
   return new URL(location.href).searchParams.get(name) || "";
 }
@@ -54,7 +38,8 @@ async function loadData() {
       } catch (_) {}
     }
   }
-  document.getElementById("detailBody").innerHTML = `<tr><td colspan="16" class="empty">未能读取 daily_data.json</td></tr>`;
+  document.getElementById("detailBody").innerHTML = `<tr><td colspan="16" class="empty"><div class="icon">❌</div>未能读取 daily_data.json</td></tr>`;
+  document.getElementById("updated").textContent = "❌ 数据加载失败";
 }
 
 function initApp() {
@@ -106,15 +91,16 @@ function totals(rows) {
 }
 
 function trend(now, prev, lowerIsGood = false) {
-  if (!prev) return `<span class="delta flat">无对比</span><span>上月为空</span>`;
+  if (!prev) return `<span class="delta flat">—</span><span>上月为空</span>`;
   const diff = now - prev;
   const cls = Math.abs(diff) < .01 ? "flat" : lowerIsGood ? (diff <= 0 ? "up" : "down") : (diff >= 0 ? "up" : "down");
-  return `<span class="delta ${cls}">${diff > 0 ? "+" : ""}${fmt(diff)}</span><span>较上月</span>`;
+  const arrow = diff > 0 ? "↑" : diff < 0 ? "↓" : "→";
+  return `<span class="delta ${cls}">${arrow} ${Math.abs(diff) > 0 ? (diff > 0 ? "+" : "") + fmt(diff) : "持平"}</span><span>较上月</span>`;
 }
 
-function kpiCard(label, value, foot) {
+function kpiCard(label, value, foot, icon = "") {
   return `<article class="card kpi-card">
-    <div class="label">${label}</div>
+    <div class="label">${icon ? `<span class="icon">${icon}</span>` : ""}${label}</div>
     <div class="kpi-value">${value}</div>
     <div class="kpi-foot">${foot}</div>
   </article>`;
@@ -206,7 +192,7 @@ function render() {
   if (!currentStore || !data.length) {
     document.getElementById("kpiGrid").innerHTML = "";
     document.getElementById("heroAnalysis").innerHTML = "";
-    document.getElementById("detailBody").innerHTML = `<tr><td colspan="16" class="empty">该门店在 ${currentMonth || "-"} 暂无数据</td></tr>`;
+    document.getElementById("detailBody").innerHTML = `<tr><td colspan="16" class="empty"><div class="icon">📭</div>该门店在 ${currentMonth || "-"} 暂无数据</td></tr>`;
     Object.values(charts).forEach(chart => chart.dispose());
     charts = {};
     return;
@@ -217,16 +203,16 @@ function render() {
   renderHeroAnalysis(data, t, prevData);
   document.getElementById("storeSubtitle").textContent = `${currentMonth} | ${data.length} 天 | 总业绩 ${money(t.revenue)}`;
   document.getElementById("kpiGrid").innerHTML = [
-    kpiCard("总业绩", money(t.revenue), trend(t.revenue, p.revenue)),
-    kpiCard("美团核销", money(t.mt), trend(t.mt, p.mt)),
-    kpiCard("抖音核销", money(t.dy), trend(t.dy, p.dy)),
-    kpiCard("会员收入", `${money(t.card + t.recharge)}`, `<span>开卡 ${money(t.card)} · 续充 ${money(t.recharge)}</span>`),
+    kpiCard("总业绩", money(t.revenue), trend(t.revenue, p.revenue), "💰"),
+    kpiCard("美团核销", money(t.mt), trend(t.mt, p.mt), "🟠"),
+    kpiCard("抖音核销", money(t.dy), trend(t.dy, p.dy), "🔵"),
+    kpiCard("会员收入", `${money(t.card + t.recharge)}`, `<span>开卡 ${money(t.card)} · 续充 ${money(t.recharge)}</span>`, "💳"),
   ].join("");
 
   renderAnalysis(data, t);
   renderCharts(data);
   renderTable(data);
-  document.getElementById("updated").textContent = `${currentStore} · ${currentMonth} · ${data.length} 天`;
+  document.getElementById("updated").innerHTML = `🏪 ${currentStore} · 📅 ${currentMonth} · 📊 ${data.length} 天 · ⏰ ${new Date().toLocaleString("zh-CN")}`;
 }
 
 function renderAnalysis(data, t) {
@@ -256,45 +242,78 @@ function chart(id) {
   return instance;
 }
 
+function getChartTheme() {
+  const isDark = document.documentElement.classList.contains("dark");
+  return {
+    animationDuration: 900,
+    animationEasing: "cubicOut",
+    tooltip: {
+      trigger: "axis",
+      backgroundColor: isDark ? "#151b2b" : "#fff",
+      borderColor: isDark ? "#2d3442" : "#e5e7eb",
+      borderWidth: 1,
+      textStyle: { color: isDark ? "#f8fafc" : "#111827", fontSize: 12 },
+      extraCssText: `box-shadow:0 10px 28px rgba(15,23,42,.12);border-radius:8px;padding:10px 14px;`
+    },
+    legend: { top: 2, right: 8, itemWidth: 10, itemHeight: 10, textStyle: { color: isDark ? "#94a3b8" : "#64748b", fontSize: 11 } },
+    grid: { left: 14, right: 18, top: 58, bottom: 34, containLabel: true },
+    xAxis: { 
+      type: "category", 
+      axisTick: { show: false }, 
+      axisLine: { lineStyle: { color: isDark ? "#2d3442" : "#e5e7eb" } }, 
+      axisLabel: { color: isDark ? "#64748b" : "#94a3b8", fontSize: 10 } 
+    },
+    yAxis: { 
+      type: "value", 
+      axisTick: { show: false }, 
+      axisLine: { show: false }, 
+      axisLabel: { color: isDark ? "#64748b" : "#94a3b8", fontSize: 10 }, 
+      splitLine: { lineStyle: { color: isDark ? "#1e293b" : "#eef2f7", type: "dashed" } } 
+    }
+  };
+}
+
 function renderCharts(data) {
   const days = data.map(row => String(row.日期).slice(8));
+  const theme = getChartTheme();
+  
   chart("revenueChart").setOption({
-    ...chartTheme,
-    xAxis: { ...chartTheme.xAxis, data: days, boundaryGap: false },
-    yAxis: { ...chartTheme.yAxis, axisLabel: { color: "#94a3b8", fontSize: 10, formatter: value => "¥" + fmt(value) } },
+    ...theme,
+    xAxis: { ...theme.xAxis, data: days, boundaryGap: false },
+    yAxis: { ...theme.yAxis, axisLabel: { color: theme.yAxis.axisLabel.color, fontSize: 10, formatter: value => "¥" + fmt(value) } },
     series: [
-      { name: "总业绩", type: "line", smooth: true, symbol: "circle", symbolSize: 5, data: data.map(row => row.微矩总业绩 || row.总营业额 || 0),
-        lineStyle: { color: "#2563eb", width: 3 }, itemStyle: { color: "#2563eb" },
-        areaStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{ offset: 0, color: "rgba(37,99,235,.24)" }, { offset: 1, color: "rgba(37,99,235,0)" }]) } },
+      { name: "总业绩", type: "line", smooth: true, symbol: "circle", symbolSize: 6, data: data.map(row => row.微矩总业绩 || row.总营业额 || 0),
+        lineStyle: { color: "#3b82f6", width: 3 }, itemStyle: { color: "#3b82f6", borderWidth: 2, borderColor: document.documentElement.classList.contains("dark") ? "#151b2b" : "#fff" },
+        areaStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{ offset: 0, color: "rgba(59,130,246,.24)" }, { offset: 1, color: "rgba(59,130,246,0)" }]) } },
       { name: "美团核销", type: "line", smooth: true, symbol: "none", data: data.map(row => row.美团核销金额 || 0), lineStyle: { color: "#f97316", width: 2, type: "dashed" } },
-      { name: "抖音核销", type: "line", smooth: true, symbol: "none", data: data.map(row => row.抖音核销金额 || 0), lineStyle: { color: "#0891b2", width: 2, type: "dashed" } },
+      { name: "抖音核销", type: "line", smooth: true, symbol: "none", data: data.map(row => row.抖音核销金额 || 0), lineStyle: { color: "#06b6d4", width: 2, type: "dashed" } },
     ]
   });
 
   chart("qualityChart").setOption({
-    ...chartTheme,
-    xAxis: { ...chartTheme.xAxis, data: days, boundaryGap: false },
+    ...theme,
+    xAxis: { ...theme.xAxis, data: days, boundaryGap: false },
     yAxis: [
-      { ...chartTheme.yAxis, min: 3.5, max: 5 },
-      { ...chartTheme.yAxis, min: 0, axisLabel: { color: "#94a3b8", fontSize: 10 } }
+      { ...theme.yAxis, min: 3.5, max: 5 },
+      { ...theme.yAxis, min: 0, axisLabel: { color: theme.yAxis.axisLabel.color, fontSize: 10 } }
     ],
     series: [
-      { name: "美团评分", type: "line", smooth: true, symbolSize: 5, data: data.map(row => row.美团评分 || null), connectNulls: true, lineStyle: { color: "#f97316", width: 2 }, itemStyle: { color: "#f97316" } },
-      { name: "抖音评分", type: "line", smooth: true, symbolSize: 5, data: data.map(row => row.抖音评分 || null), connectNulls: true, lineStyle: { color: "#0891b2", width: 2 }, itemStyle: { color: "#0891b2" } },
+      { name: "美团评分", type: "line", smooth: true, symbolSize: 6, data: data.map(row => row.美团评分 || null), connectNulls: true, lineStyle: { color: "#f97316", width: 2 }, itemStyle: { color: "#f97316" } },
+      { name: "抖音评分", type: "line", smooth: true, symbolSize: 6, data: data.map(row => row.抖音评分 || null), connectNulls: true, lineStyle: { color: "#06b6d4", width: 2 }, itemStyle: { color: "#06b6d4" } },
       { name: "差评", type: "bar", yAxisIndex: 1, data: data.map(row => row.新增差评 || 0), itemStyle: { color: "#dc2626", borderRadius: [4,4,0,0] } },
     ]
   });
 
   chart("visitChart").setOption({
-    ...chartTheme,
-    xAxis: { ...chartTheme.xAxis, data: days, boundaryGap: false },
+    ...theme,
+    xAxis: { ...theme.xAxis, data: days, boundaryGap: false },
     yAxis: [
-      { ...chartTheme.yAxis, axisLabel: { color: "#94a3b8", fontSize: 10 } },
-      { ...chartTheme.yAxis, axisLabel: { color: "#94a3b8", fontSize: 10, formatter: value => value + "%" }, splitLine: { show: false } }
+      { ...theme.yAxis, axisLabel: { color: theme.yAxis.axisLabel.color, fontSize: 10 } },
+      { ...theme.yAxis, axisLabel: { color: theme.yAxis.axisLabel.color, fontSize: 10, formatter: value => value + "%" }, splitLine: { show: false } }
     ],
     series: [
-      { name: "美团访问", type: "line", smooth: true, symbol: "circle", symbolSize: 4, data: data.map(row => row.美团访问量 || 0), lineStyle: { color: "#f97316", width: 2 }, itemStyle: { color: "#f97316" } },
-      { name: "抖音访问", type: "line", smooth: true, symbol: "circle", symbolSize: 4, data: data.map(row => row.抖音访问量 || 0), lineStyle: { color: "#0891b2", width: 2 }, itemStyle: { color: "#0891b2" } },
+      { name: "美团访问", type: "line", smooth: true, symbol: "circle", symbolSize: 5, data: data.map(row => row.美团访问量 || 0), lineStyle: { color: "#f97316", width: 2 }, itemStyle: { color: "#f97316" } },
+      { name: "抖音访问", type: "line", smooth: true, symbol: "circle", symbolSize: 5, data: data.map(row => row.抖音访问量 || 0), lineStyle: { color: "#06b6d4", width: 2 }, itemStyle: { color: "#06b6d4" } },
       { name: "30s回复率", type: "line", smooth: true, symbol: "none", yAxisIndex: 1, data: data.map(row => (row["30s回复率"] || 0) * 100), lineStyle: { color: "#059669", width: 2, type: "dashed" } },
     ]
   });
@@ -307,8 +326,6 @@ function renderTable(data) {
     const dy = n(row.抖音核销金额);
     const mtVisit = n(row.美团访问量);
     const dyVisit = n(row.抖音访问量);
-    const mtPerVisit = mtVisit ? mt / mtVisit * 1000 : 0;
-    const dyPerVisit = dyVisit ? dy / dyVisit * 1000 : 0;
     const bad = n(row.新增差评);
     return `<tr>
       <td>${String(row.日期).slice(5)}</td>
@@ -325,8 +342,8 @@ function renderTable(data) {
       <td>${row.美团评分 ? Number(row.美团评分).toFixed(1) : "-"}</td>
       <td>${row.大众评分 ? Number(row.大众评分).toFixed(1) : "-"}</td>
       <td>${row.抖音评分 ? Number(row.抖音评分).toFixed(1) : "-"}</td>
-      <td style="color:var(--green);font-weight:760">${fmt(row.新增好评)}</td>
-      <td class="${bad > 0 ? "bad" : ""}">${fmt(bad)}</td>
+      <td><span class="good-cell">${fmt(row.新增好评)}</span></td>
+      <td><span class="${bad > 0 ? "bad-cell" : ""}">${fmt(bad)}</span></td>
     </tr>`;
   }).join("");
 }

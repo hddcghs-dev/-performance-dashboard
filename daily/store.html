@@ -13,28 +13,52 @@
 <main class="app">
   <section class="hero">
     <div class="hero-copy">
-      <a class="back" href="index.html">返回看板</a>
+      <a class="back" href="index.html">← 返回看板</a>
       <div class="eyebrow">Store Detail</div>
       <h1 id="storeTitle">门店趋势</h1>
       <p class="subtitle" id="storeSubtitle">月度营收、渠道核销、客流效率和评价风险。</p>
     </div>
     <div class="month-tools">
-      <button type="button" onclick="navMonth(-1)" title="上月">←</button>
+      <button type="button" onclick="navMonth(-1)" title="上月">← 上月</button>
       <span class="month-label" id="monthLabel">-</span>
-      <button type="button" onclick="navMonth(1)" title="下月">→</button>
+      <button type="button" onclick="navMonth(1)" title="下月">下月 →</button>
     </div>
     <div class="hero-analysis" id="heroAnalysis"></div>
   </section>
 
   <section class="section">
-    <div class="kpi-grid" id="kpiGrid"></div>
+    <div class="kpi-grid" id="kpiGrid">
+      <div class="card kpi-card">
+        <div class="skeleton skeleton-title"></div>
+        <div class="skeleton skeleton-value"></div>
+        <div class="skeleton skeleton-text" style="width: 60%;"></div>
+      </div>
+      <div class="card kpi-card">
+        <div class="skeleton skeleton-title"></div>
+        <div class="skeleton skeleton-value"></div>
+        <div class="skeleton skeleton-text" style="width: 60%;"></div>
+      </div>
+      <div class="card kpi-card">
+        <div class="skeleton skeleton-title"></div>
+        <div class="skeleton skeleton-value"></div>
+        <div class="skeleton skeleton-text" style="width: 60%;"></div>
+      </div>
+      <div class="card kpi-card">
+        <div class="skeleton skeleton-title"></div>
+        <div class="skeleton skeleton-value"></div>
+        <div class="skeleton skeleton-text" style="width: 60%;"></div>
+      </div>
+    </div>
   </section>
 
   <section class="section">
-    <div class="card">
+    <div class="card" style="--accent:var(--brand); --accent-soft:var(--brand-soft);">
       <div class="panel-head">
         <div>
-          <div class="panel-title">营收趋势</div>
+          <div class="panel-title">
+            <span class="icon">📈</span>
+            营收趋势
+          </div>
           <div class="panel-subtitle">总业绩与美团、抖音核销走势</div>
         </div>
       </div>
@@ -43,30 +67,39 @@
   </section>
 
   <section class="section grid-main">
-    <div class="card">
+    <div class="card" style="--accent:var(--orange); --accent-soft:var(--orange-soft);">
       <div class="panel-head">
         <div>
-          <div class="panel-title">评分与评价</div>
+          <div class="panel-title">
+            <span class="icon">⭐</span>
+            评分与评价
+          </div>
           <div class="panel-subtitle">评分走势和差评柱状</div>
         </div>
       </div>
       <div class="panel-body"><div class="chart" id="qualityChart"></div></div>
     </div>
 
-    <div class="card">
+    <div class="card" style="--accent:var(--cyan); --accent-soft:var(--cyan-soft);">
       <div class="panel-head">
         <div>
-          <div class="panel-title">访问与转化</div>
+          <div class="panel-title">
+            <span class="icon">👁️</span>
+            访问与转化
+          </div>
           <div class="panel-subtitle">访问量和 30s 回复率</div>
         </div>
       </div>
       <div class="panel-body"><div class="chart" id="visitChart"></div></div>
     </div>
 
-    <div class="card">
+    <div class="card" style="--accent:var(--teal); --accent-soft:var(--teal-soft);">
       <div class="panel-head">
         <div>
-          <div class="panel-title">经营分析</div>
+          <div class="panel-title">
+            <span class="icon">📊</span>
+            经营分析
+          </div>
           <div class="panel-subtitle">渠道、扫码与结构占比</div>
         </div>
       </div>
@@ -83,7 +116,10 @@
   <section class="card" style="margin-top:20px;">
     <div class="panel-head">
       <div>
-        <div class="panel-title">每日明细</div>
+        <div class="panel-title">
+          <span class="icon">📋</span>
+          每日明细
+        </div>
         <div class="panel-subtitle">保留所有原始指标，异常值高亮</div>
       </div>
     </div>
@@ -96,11 +132,13 @@
             <th>30s回复</th><th>美团评分</th><th>大众评分</th><th>抖音评分</th><th>好评</th><th>差评</th>
           </tr>
         </thead>
-        <tbody id="detailBody"></tbody>
+        <tbody id="detailBody">
+          <tr><td colspan="16" class="empty">⏳ 正在加载数据...</td></tr>
+        </tbody>
       </table>
     </div>
   </section>
-  <div class="updated" id="updated"></div>
+  <div class="updated" id="updated">⏳ 数据加载中...</div>
 </main>
 
 <script src="assets/store.js"></script>
