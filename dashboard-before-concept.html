@@ -27,7 +27,7 @@ body {
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
-  background-image: radial-gradient(circle at 20% -10%, rgba(224,174,79,.11), transparent 34%), radial-gradient(circle at 95% 5%, rgba(108,92,231,.07), transparent 26%);
+  background-image: radial-gradient(circle at 20% -10%, rgba(224,174,79,.11), transparent 34%), radial-gradient(circle at 95% 5%, rgba(76,140,245,.07), transparent 26%);
   font-variant-numeric: tabular-nums;
 }
 .header {
@@ -115,11 +115,11 @@ select, button {
 }
 button {
   cursor: pointer;
-  background: rgba(108,92,231,0.15);
+  background: rgba(76,140,245,0.15);
   border-color: var(--gold);
   color: var(--gold);
 }
-button:hover { background: rgba(108,92,231,0.25); }
+button:hover { background: rgba(76,140,245,0.25); }
 
 /* Main layout */
 .main { padding: 20px 28px 36px; max-width:1600px; margin:0 auto; }
@@ -254,7 +254,7 @@ tr:hover td { background: rgba(255,255,255,0.03); }
 .num { font-variant-numeric: tabular-nums; }
 .total-row td {
   font-weight: 700;
-  background: rgba(108,92,231,0.08);
+  background: rgba(76,140,245,0.08);
   color: var(--gold);
 }
 .red { color: var(--red); }
@@ -360,9 +360,9 @@ tr:hover td { background: rgba(255,255,255,0.03); }
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  border: 1px solid rgba(108,92,231,0.25);
+  border: 1px solid rgba(76,140,245,0.25);
   border-radius: 8px;
-  background: rgba(108,92,231,0.06);
+  background: rgba(76,140,245,0.06);
 }
 .median-label {
   font-size: 11px;
@@ -431,7 +431,7 @@ tr:hover td { background: rgba(255,255,255,0.03); }
   align-items: center;
   gap: 8px;
 }
-.dropdown-item:hover { background: rgba(108,92,231,0.1); }
+.dropdown-item:hover { background: rgba(76,140,245,0.1); }
 .dropdown-item input[type=checkbox] { accent-color: var(--gold); }
 .dropdown-footer {
   padding: 8px 14px;
@@ -516,7 +516,7 @@ tr:hover td { background: rgba(255,255,255,0.03); }
   gap: 6px;
   color: var(--text2);
 }
-.metric-item:hover { background: rgba(108,92,231,0.1); color: var(--text); }
+.metric-item:hover { background: rgba(76,140,245,0.1); color: var(--text); }
 .metric-item input[type=checkbox] { accent-color: var(--gold); }
 .metric-item.selected { color: var(--gold); }
 
@@ -528,9 +528,9 @@ tr:hover td { background: rgba(255,255,255,0.03); }
   font-size: 11px;
   font-weight: 600;
 }
-.score-high { background: rgba(20,163,127,0.2); color: var(--green); }
+.score-high { background: rgba(53,183,121,0.2); color: var(--green); }
 .score-mid { background: rgba(240,140,62,0.2); color: var(--orange); }
-.score-low { background: rgba(239,91,91,0.2); color: var(--red); }
+.score-low { background: rgba(239,91,100,0.2); color: var(--red); }
 
 /* Preset buttons */
 .presets { display:flex; gap:4px; }
@@ -540,7 +540,7 @@ tr:hover td { background: rgba(255,255,255,0.03); }
   transition:all 0.2s;
 }
 .preset-btn:hover { border-color:var(--gold); color:var(--text); }
-.preset-btn.active { background:rgba(108,92,231,0.2); border-color:var(--gold); color:var(--gold); }
+.preset-btn.active { background:rgba(76,140,245,0.2); border-color:var(--gold); color:var(--gold); }
 .preset-btn .badge { font-size:9px; color:var(--text2); margin-left:3px; }
 
 /* Store search */
@@ -559,14 +559,14 @@ tr:hover td { background: rgba(255,255,255,0.03); }
 /* Export button */
 .export-btn {
   padding:5px 12px; border-radius:6px; font-size:11px; cursor:pointer;
-  background:rgba(108,92,231,0.15); border:1px solid var(--blue); color:var(--blue);
+  background:rgba(76,140,245,0.15); border:1px solid var(--blue); color:var(--blue);
   transition:all 0.2s; margin-left:auto;
 }
-.export-btn:hover { background:rgba(108,92,231,0.25); }
+.export-btn:hover { background:rgba(76,140,245,0.25); }
 
 /* Data quality indicators */
 .data-missing {
-  background:rgba(239,91,91,0.08); border:1px solid rgba(239,91,91,0.3);
+  background:rgba(239,91,100,0.08); border:1px solid rgba(239,91,100,0.3);
   border-radius:8px; padding:10px 14px; color:var(--red); font-size:12px;
   margin-bottom:12px; display:flex; align-items:center; gap:8px;
 }
@@ -577,16 +577,16 @@ tr:hover td { background: rgba(255,255,255,0.03); }
   margin-top: 16px;
   border: 1px solid var(--red);
   border-radius: 10px;
-  background: rgba(239,91,91,0.05);
+  background: rgba(239,91,100,0.05);
   overflow: hidden;
 }
 .alert-header {
   display: flex; align-items: center; gap: 8px;
   padding: 10px 16px;
-  background: rgba(239,91,91,0.1);
+  background: rgba(239,91,100,0.1);
   color: var(--red);
   font-size: 13px; font-weight: 600;
-  border-bottom: 1px solid rgba(239,91,91,0.15);
+  border-bottom: 1px solid rgba(239,91,100,0.15);
 }
 .alert-body { padding: 12px 16px; }
 .alert-group { margin-bottom: 14px; }
@@ -616,7 +616,7 @@ tr:hover td { background: rgba(255,255,255,0.03); }
 
 /* Freshness badge */
 .freshness {
-  font-size:10px; color:var(--text2); white-space:nowrap; padding:5px 9px; border-radius:99px; background:rgba(20,163,127,.08); border:1px solid rgba(20,163,127,.14);
+  font-size:10px; color:var(--text2); white-space:nowrap; padding:5px 9px; border-radius:99px; background:rgba(53,183,121,.08); border:1px solid rgba(53,183,121,.14);
 }
 
 @media (max-width: 900px) {
@@ -1286,7 +1286,7 @@ function csvCell(value) {
 const PCT_METRICS = new Set(['差评率','新客占比','曝光-访问转化率','意向转化率','抖音转化率','大钟占比']);
 function isPct(m) { return PCT_METRICS.has(m); }
 
-const CHART_COLORS = ['#6c5ce7','#ef5b5b','#14a37f','#8b98aa'];
+const CHART_COLORS = ['#4c8cf5','#ef5b64','#35b779','#8b98aa'];
 function getChart(id) {
   const el = document.getElementById(id);
   if (!el) return null;
@@ -1721,8 +1721,7 @@ function renderOverviewKPIs(dates) {
     { label:'抖音评分', val:fmtScore(dyScore.value), raw:dyScore.value, sub:latestDate.substring(0,7).replace('-','年')+'月 · 有效'+dyScore.count+'店', color: Number(dyScore.value)>4.5?'green':'', m:null },
     { label:'美团评分', val:fmtScore(mtScore.value), raw:mtScore.value, sub:latestDate.substring(0,7).replace('-','年')+'月 · 有效'+mtScore.count+'店', color: Number(mtScore.value)>4.5?'green':'', m:null },
   ];
-  const hiddenOverviewKpis = new Set(['现金流率','抖音评分','美团评分']);
-  container.innerHTML = kpis.filter(it => !hiddenOverviewKpis.has(it.label)).map(it => `
+  container.innerHTML = kpis.map(it => `
     <div class="kpi-card">
       <div class="kpi-label">${it.label}</div>
       <div class="kpi-value ${it.color}">${it.val}</div>
@@ -1768,7 +1767,10 @@ function renderOverviewInsights(dates) {
       const scores = [
         { label:'抖音', value:safeNum(x.r['抖音评分']), line:4.3 },
         { label:'美团', value:safeNum(x.r['美团评分']), line:4.3 },
+        { label:'大众点评', value:safeNum(x.r['大众点评']), line:4.0 },
       ].filter(s => s.value > 0 && s.value < s.line);
+      const mtOps = safeNum(x.r['美团经营分']);
+      if (mtOps > 0 && mtOps < 75) scores.push({ label:'经营分', value:mtOps, line:75 });
       return { store:x.store, scores };
     })
     .filter(x => x.scores.length > 0)
@@ -1822,11 +1824,11 @@ function renderTrendChart(dates, metrics) {
   chart.setOption({
     backgroundColor:'transparent',
     tooltip:{trigger:'axis',formatter:p=>p.map(x=>`${x.seriesName}: ${x.value.toLocaleString('zh-CN')}`).join('<br>')},
-    legend:{data:metrics.map(m=>METRIC_LABELS[m]||m),textStyle:{color:'#667085',fontSize:10},itemWidth:12,itemHeight:8,top:0},
-    xAxis:{type:'category',data:labels,axisLine:{lineStyle:{color:'#d7dce3'}},axisLabel:{color:'#667085',fontSize:10},splitLine:{show:false}},
+    legend:{data:metrics.map(m=>METRIC_LABELS[m]||m),textStyle:{color:'#8b949e',fontSize:10},itemWidth:12,itemHeight:8,top:0},
+    xAxis:{type:'category',data:labels,axisLine:{lineStyle:{color:'#30363d'}},axisLabel:{color:'#8b949e',fontSize:10},splitLine:{show:false}},
     yAxis:[
-      {type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:'#eceff3'}},axisLabel:{color:'#667085',fontSize:10},name:'',nameTextStyle:{show:false}},
-      hasPct ? {type:'value',axisLine:{show:false},splitLine:{show:false},axisLabel:{color:'#667085',fontSize:10,formatter:v=>(v*100).toFixed(0)+'%'},position:'right',offset:0} : null
+      {type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:'#21262d'}},axisLabel:{color:'#8b949e',fontSize:10},name:'',nameTextStyle:{show:false}},
+      hasPct ? {type:'value',axisLine:{show:false},splitLine:{show:false},axisLabel:{color:'#8b949e',fontSize:10,formatter:v=>(v*100).toFixed(0)+'%'},position:'right',offset:0} : null
     ].filter(y=>y!==null),
     series,
     grid:{left:60,right:hasPct?60:30,top:30,bottom:40}
@@ -1847,24 +1849,27 @@ function renderPieCharts(dates) {
   pie.setOption({
     backgroundColor:'transparent',
     tooltip:{formatter:p=>`${p.name}: ${p.value.toLocaleString('zh-CN')} (${p.percent.toFixed(1)}%) · 占服务营业额 ${(p.value/svcTotal*100).toFixed(1)}%`},
-    legend:{orient:'vertical',right:10,top:'center',textStyle:{color:'#667085',fontSize:11},itemWidth:10,itemHeight:10},
+    legend:{orient:'vertical',right:10,top:'center',textStyle:{color:'#8b949e',fontSize:11},itemWidth:10,itemHeight:10},
     series:[{
       type:'pie', radius:['40%','70%'], center:['35%','50%'],
       data:[
-        {value:dy,name:'抖音',itemStyle:{color:'#ef5b5b'}},
-        {value:mt,name:'美团',itemStyle:{color:'#6c5ce7'}},
-        {value:Math.max(0,svcTotal-dy-mt),name:'其它',itemStyle:{color:'#14a37f'}},
+        {value:dy,name:'抖音',itemStyle:{color:'#ef5b64'}},
+        {value:mt,name:'美团',itemStyle:{color:'#4c8cf5'}},
+        {value:kj,name:'卡金',itemStyle:{color:'#4c8cf5'}},
+        {value:free,name:'免单减免',itemStyle:{color:'#ef5b64'}},
+        {value:prod,name:'商品',itemStyle:{color:'#4c8cf5'}},
+        {value:Math.max(0,cashPay),name:'现金支付',itemStyle:{color:'#35b779'}},
       ],
-      label:{show:true,formatter:'{b}\n{d}%',fontSize:11,color:'#344054'},
-      labelLine:{lineStyle:{color:'#d7dce3'}}
+      label:{show:true,formatter:'{b}\n{d}%',fontSize:11,color:'#e6edf3'},
+      labelLine:{lineStyle:{color:'#30363d'}}
     }]
   });
   // 核验: 各成分之和 = 服务营业额
   const checkEl = document.getElementById('revenue-check');
   if (checkEl) {
-    const checkSum = dy + mt + Math.max(0,svcTotal-dy-mt);
+    const checkSum = dy + mt + kj + free + prod + Math.max(0,cashPay);
     const diff = Math.abs(svcTotal - checkSum);
-    checkEl.textContent = `抖音 + 美团 + 其它 = ${checkSum.toLocaleString('zh-CN')}  ·  服务营业额 ${svcTotal.toLocaleString('zh-CN')}  ${diff < 1 ? '正常' : '差额 '+diff.toFixed(2)}`;
+    checkEl.textContent = `抖音+美团+卡金+免单减免+商品+现金 = ${checkSum.toLocaleString('zh-CN')}  ·  服务营业额 ${svcTotal.toLocaleString('zh-CN')}  ${diff < 1 ? '正常' : '差额 '+diff.toFixed(2)}`;
   }
 
   const p168 = calcTotal(dates,'168项目数');
@@ -1875,16 +1880,16 @@ function renderPieCharts(dates) {
   projPie.setOption({
     backgroundColor:'transparent',
     tooltip:{formatter:p=>`${p.name}: ${p.value.toLocaleString('zh-CN')} (${p.percent.toFixed(1)}%)`},
-    legend:{orient:'vertical',right:10,top:'center',textStyle:{color:'#667085',fontSize:11},itemWidth:10,itemHeight:10},
+    legend:{orient:'vertical',right:10,top:'center',textStyle:{color:'#8b949e',fontSize:11},itemWidth:10,itemHeight:10},
     series:[{
       type:'pie', radius:['40%','70%'], center:['35%','50%'],
       data:[
-        {value:p168,name:'168元',itemStyle:{color:'#14a37f'}},
-        {value:p298,name:'298元',itemStyle:{color:'#6c5ce7'}},
-        {value:p358,name:'358元',itemStyle:{color:'#ef5b5b'}},
+        {value:p168,name:'168元',itemStyle:{color:'#35b779'}},
+        {value:p298,name:'298元',itemStyle:{color:'#4c8cf5'}},
+        {value:p358,name:'358元',itemStyle:{color:'#4c8cf5'}},
       ],
-      label:{show:true,formatter:'{b}\n{d}%',fontSize:11,color:'#344054'},
-      labelLine:{lineStyle:{color:'#d7dce3'}}
+      label:{show:true,formatter:'{b}\n{d}%',fontSize:11,color:'#e6edf3'},
+      labelLine:{lineStyle:{color:'#30363d'}}
     }]
   });
 }
@@ -1911,8 +1916,10 @@ function renderOverviewAlerts(dates) {
     if (!r) return;
     const dy = safeNum(r['抖音评分']);
     const mt = safeNum(r['美团评分']);
+    const dzdp = safeNum(r['大众点评']);
     if (dy > 0 && dy < 4.3) scoreWarns.push({ store:s, platform:'抖音', score:dy });
     if (mt > 0 && mt < 4.3) scoreWarns.push({ store:s, platform:'美团', score:mt });
+    if (dzdp > 0 && dzdp < 4.0) scoreWarns.push({ store:s, platform:'大众点评', score:dzdp });
   });
 
   // 2) 差评率 > 3%
@@ -1947,7 +1954,16 @@ function renderOverviewAlerts(dates) {
     if (free > 2000) freeWarns.push({ store:s, free });
   });
 
-  // 5) 充值低于卡金消耗
+  // 5) 美团经营分 < 75
+  const mtOpsWarns = [];
+  stores.forEach(s => {
+    const r = records.find(rr => rr['门店'] === s);
+    if (!r) return;
+    const score = safeNum(r['美团经营分']);
+    if (score > 0 && score < 75) mtOpsWarns.push({ store:s, score });
+  });
+
+  // 6) 充值低于卡金消耗
   const cardGapWarns = [];
   stores.forEach(s => {
     const r = records.find(rr => rr['门店'] === s);
@@ -1957,11 +1973,11 @@ function renderOverviewAlerts(dates) {
     if (card > recharge) cardGapWarns.push({ store:s, gap:card - recharge, card, recharge });
   });
 
-  const totalWarns = scoreWarns.length + badRateWarns.length + badCountWarns.length + freeWarns.length + cardGapWarns.length;
+  const totalWarns = scoreWarns.length + badRateWarns.length + badCountWarns.length + freeWarns.length + mtOpsWarns.length + cardGapWarns.length;
 
   if (totalWarns === 0) {
-    container.innerHTML = `<div class="alert-section" style="border-color:var(--green);background:rgba(20,163,127,0.05);">
-      <div class="alert-header" style="background:rgba(20,163,127,0.1);color:var(--green);border-color:rgba(20,163,127,0.15);">正常 本月无异常警告</div>
+    container.innerHTML = `<div class="alert-section" style="border-color:var(--green);background:rgba(53,183,121,0.05);">
+      <div class="alert-header" style="background:rgba(53,183,121,0.1);color:var(--green);border-color:rgba(53,183,121,0.15);">正常 本月无异常警告</div>
     </div>`;
     return;
   }
@@ -2014,6 +2030,16 @@ function renderOverviewAlerts(dates) {
       ${freeWarns.map(w => `<div class="alert-store">
         <span class="name">${w.store}</span>
         <span class="val">${fmtY(w.free)}</span>
+      </div>`).join('')}
+    </div>`;
+  }
+
+  if (mtOpsWarns.length > 0) {
+    html += `<div class="alert-group">
+      <div class="alert-group-title">美团经营分低于75</div>
+      ${mtOpsWarns.map(w => `<div class="alert-store">
+        <span class="name">${w.store}</span>
+        <span class="val">${w.score.toFixed(1)}</span>
       </div>`).join('')}
     </div>`;
   }
@@ -2343,11 +2369,11 @@ function renderCompareChart(dates) {
 
   chart.setOption({
     backgroundColor:'transparent',
-    title: chartSub ? {show:true,text:chartSub,left:12,top:4,textStyle:{color:'#667085',fontSize:11,fontWeight:'normal'}} : {show:false,text:''},
+    title: chartSub ? {show:true,text:chartSub,left:12,top:4,textStyle:{color:'#8b949e',fontSize:11,fontWeight:'normal'}} : {show:false,text:''},
     tooltip:{trigger:'axis', formatter: p => p.map(pt=>`${pt.seriesName}: ${pt.value}${isP?'%':''}`).join('<br>')},
-    legend:{data:[METRIC_LABELS[chartMetric]||chartMetric],textStyle:{color:'#667085',fontSize:10},itemWidth:12,itemHeight:8,top:chartSub?24:5},
-    xAxis:{type:'category',data:sortedStores,axisLine:{lineStyle:{color:'#d7dce3'}},axisLabel:{color:'#667085',fontSize:10,rotate:15},splitLine:{show:false}},
-    yAxis:{type:'value',max:isP?pctMax:null,axisLine:{show:false},splitLine:{lineStyle:{color:'#eceff3'}},axisLabel:{color:'#667085',fontSize:10,formatter:v=>isP ? v+'%' : v}},
+    legend:{data:[METRIC_LABELS[chartMetric]||chartMetric],textStyle:{color:'#8b949e',fontSize:10},itemWidth:12,itemHeight:8,top:chartSub?24:5},
+    xAxis:{type:'category',data:sortedStores,axisLine:{lineStyle:{color:'#30363d'}},axisLabel:{color:'#8b949e',fontSize:10,rotate:15},splitLine:{show:false}},
+    yAxis:{type:'value',max:isP?pctMax:null,axisLine:{show:false},splitLine:{lineStyle:{color:'#21262d'}},axisLabel:{color:'#8b949e',fontSize:10,formatter:v=>isP ? v+'%' : v}},
     series,
     grid:{left:50,right:20,top:chartSub?54:30,bottom:30}
   }, true);
@@ -2641,15 +2667,18 @@ function renderDetailPieCharts(store, dates) {
   pie.setOption({
     backgroundColor:'transparent',
     tooltip:{formatter:p=>`${p.name}: ${p.value.toLocaleString('zh-CN')} (${p.percent.toFixed(1)}%) · 占服务营业额 ${(p.value/svcTotal*100).toFixed(1)}%`},
-    legend:{orient:'vertical',right:5,top:'center',textStyle:{color:'#667085',fontSize:10},itemWidth:8,itemHeight:8},
+    legend:{orient:'vertical',right:5,top:'center',textStyle:{color:'#8b949e',fontSize:10},itemWidth:8,itemHeight:8},
     series:[{
       type:'pie',radius:['35%','65%'],center:['40%','50%'],
       data:[
-        {value:dy,name:'抖音',itemStyle:{color:'#ef5b5b'}},
-        {value:mt,name:'美团',itemStyle:{color:'#6c5ce7'}},
-        {value:Math.max(0,svcTotal-dy-mt),name:'其它',itemStyle:{color:'#14a37f'}},
+        {value:dy,name:'抖音',itemStyle:{color:'#ef5b64'}},
+        {value:mt,name:'美团',itemStyle:{color:'#4c8cf5'}},
+        {value:kj,name:'卡金',itemStyle:{color:'#4c8cf5'}},
+        {value:free,name:'免单减免',itemStyle:{color:'#ef5b64'}},
+        {value:prod,name:'商品',itemStyle:{color:'#4c8cf5'}},
+        {value:Math.max(0,cashPay),name:'现金支付',itemStyle:{color:'#35b779'}},
       ],
-      label:{show:true,formatter:'{b}\n{d}%',fontSize:10,color:'#344054'},labelLine:{lineStyle:{color:'#d7dce3'}}
+      label:{show:true,formatter:'{b}\n{d}%',fontSize:10,color:'#e6edf3'},labelLine:{lineStyle:{color:'#30363d'}}
     }]
   });
 
@@ -2661,11 +2690,11 @@ function renderDetailPieCharts(store, dates) {
   projPie.setOption({
     backgroundColor:'transparent',
     tooltip:{formatter:p=>`${p.name}: ${p.value.toLocaleString('zh-CN')} (${p.percent.toFixed(1)}%)`},
-    legend:{orient:'vertical',right:5,top:'center',textStyle:{color:'#667085',fontSize:10},itemWidth:8,itemHeight:8},
+    legend:{orient:'vertical',right:5,top:'center',textStyle:{color:'#8b949e',fontSize:10},itemWidth:8,itemHeight:8},
     series:[{
       type:'pie',radius:['35%','65%'],center:['40%','50%'],
-      data:[{value:p168,name:'168元',itemStyle:{color:'#14a37f'}},{value:p298,name:'298元',itemStyle:{color:'#6c5ce7'}},{value:p358,name:'358元',itemStyle:{color:'#ef5b5b'}}],
-      label:{show:true,formatter:'{b}\n{d}%',fontSize:10,color:'#344054'},labelLine:{lineStyle:{color:'#d7dce3'}}
+      data:[{value:p168,name:'168元',itemStyle:{color:'#35b779'}},{value:p298,name:'298元',itemStyle:{color:'#4c8cf5'}},{value:p358,name:'358元',itemStyle:{color:'#4c8cf5'}}],
+      label:{show:true,formatter:'{b}\n{d}%',fontSize:10,color:'#e6edf3'},labelLine:{lineStyle:{color:'#30363d'}}
     }]
   });
 }
@@ -2696,9 +2725,9 @@ function renderDetailTrendCharts(store) {
   revChart.setOption({
     backgroundColor:'transparent',
     tooltip:{trigger:'axis',formatter:p=>`${p[0].name}<br>${p[0].value.toLocaleString('zh-CN')}`},
-    xAxis:{type:'category',data:revLabels.map(periodLabel),axisLine:{lineStyle:{color:'#d7dce3'}},axisLabel:{color:'#667085',fontSize:10},splitLine:{show:false}},
-    yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:'#eceff3'}},axisLabel:{color:'#667085',fontSize:10}},
-    series:[{data:revLabels.map(p=>safeNum(periodAgg[p]['服务营业额'])),type:'line',smooth:true,symbol:'circle',symbolSize:4,areaStyle:{color:{type:'linear',x:0,y:0,x2:0,y2:1,colorStops:[{offset:0,color:'rgba(108,92,231,0.4)'},{offset:1,color:'rgba(108,92,231,0)'}]}},lineStyle:{color:'#6c5ce7',width:2},itemStyle:{color:'#6c5ce7'}}],
+    xAxis:{type:'category',data:revLabels.map(periodLabel),axisLine:{lineStyle:{color:'#30363d'}},axisLabel:{color:'#8b949e',fontSize:10},splitLine:{show:false}},
+    yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:'#21262d'}},axisLabel:{color:'#8b949e',fontSize:10}},
+    series:[{data:revLabels.map(p=>safeNum(periodAgg[p]['服务营业额'])),type:'line',smooth:true,symbol:'circle',symbolSize:4,areaStyle:{color:{type:'linear',x:0,y:0,x2:0,y2:1,colorStops:[{offset:0,color:'rgba(76,140,245,0.4)'},{offset:1,color:'rgba(76,140,245,0)'}]}},lineStyle:{color:'#4c8cf5',width:2},itemStyle:{color:'#4c8cf5'}}],
     grid:{left:50,right:15,top:10,bottom:25}
   });
 
@@ -2708,13 +2737,13 @@ function renderDetailTrendCharts(store) {
   projChart.setOption({
     backgroundColor:'transparent',
     tooltip:{trigger:'axis'},
-    legend:{data:['168项目','298项目','358项目'],textStyle:{color:'#667085',fontSize:10},itemWidth:12,itemHeight:8,top:5},
-    xAxis:{type:'category',data:projLabels.map(periodLabel),axisLine:{lineStyle:{color:'#d7dce3'}},axisLabel:{color:'#667085',fontSize:10},splitLine:{show:false}},
-    yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:'#eceff3'}},axisLabel:{color:'#667085',fontSize:10}},
+    legend:{data:['168项目','298项目','358项目'],textStyle:{color:'#8b949e',fontSize:10},itemWidth:12,itemHeight:8,top:5},
+    xAxis:{type:'category',data:projLabels.map(periodLabel),axisLine:{lineStyle:{color:'#30363d'}},axisLabel:{color:'#8b949e',fontSize:10},splitLine:{show:false}},
+    yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:'#21262d'}},axisLabel:{color:'#8b949e',fontSize:10}},
     series:[
-      {name:'168项目',data:projLabels.map(p=>safeNum(periodAgg[p]['168项目数'])),type:'line',smooth:true,symbol:'circle',symbolSize:3,lineStyle:{color:'#14a37f',width:2},itemStyle:{color:'#14a37f'}},
-      {name:'298项目',data:projLabels.map(p=>safeNum(periodAgg[p]['298项目数'])),type:'line',smooth:true,symbol:'circle',symbolSize:3,lineStyle:{color:'#6c5ce7',width:2},itemStyle:{color:'#6c5ce7'}},
-      {name:'358项目',data:projLabels.map(p=>safeNum(periodAgg[p]['358项目数'])),type:'line',smooth:true,symbol:'circle',symbolSize:3,lineStyle:{color:'#6c5ce7',width:2},itemStyle:{color:'#6c5ce7'}},
+      {name:'168项目',data:projLabels.map(p=>safeNum(periodAgg[p]['168项目数'])),type:'line',smooth:true,symbol:'circle',symbolSize:3,lineStyle:{color:'#35b779',width:2},itemStyle:{color:'#35b779'}},
+      {name:'298项目',data:projLabels.map(p=>safeNum(periodAgg[p]['298项目数'])),type:'line',smooth:true,symbol:'circle',symbolSize:3,lineStyle:{color:'#4c8cf5',width:2},itemStyle:{color:'#4c8cf5'}},
+      {name:'358项目',data:projLabels.map(p=>safeNum(periodAgg[p]['358项目数'])),type:'line',smooth:true,symbol:'circle',symbolSize:3,lineStyle:{color:'#4c8cf5',width:2},itemStyle:{color:'#4c8cf5'}},
     ],
     grid:{left:40,right:15,top:30,bottom:25}
   });
@@ -2725,13 +2754,13 @@ function renderDetailTrendCharts(store) {
   comChart.setOption({
     backgroundColor:'transparent',
     tooltip:{trigger:'axis'},
-    legend:{data:['抖音评论','美团评论','差评'],textStyle:{color:'#667085',fontSize:10},itemWidth:12,itemHeight:8,top:5},
-    xAxis:{type:'category',data:comLabels.map(periodLabel),axisLine:{lineStyle:{color:'#d7dce3'}},axisLabel:{color:'#667085',fontSize:10},splitLine:{show:false}},
-    yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:'#eceff3'}},axisLabel:{color:'#667085',fontSize:10}},
+    legend:{data:['抖音评论','美团评论','差评'],textStyle:{color:'#8b949e',fontSize:10},itemWidth:12,itemHeight:8,top:5},
+    xAxis:{type:'category',data:comLabels.map(periodLabel),axisLine:{lineStyle:{color:'#30363d'}},axisLabel:{color:'#8b949e',fontSize:10},splitLine:{show:false}},
+    yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:'#21262d'}},axisLabel:{color:'#8b949e',fontSize:10}},
     series:[
-      {name:'抖音评论',data:comLabels.map(p=>safeNum(periodAgg[p]['抖音新增评论'])),type:'line',smooth:true,symbol:'circle',symbolSize:3,lineStyle:{color:'#ef5b5b',width:2},itemStyle:{color:'#ef5b5b'}},
-      {name:'美团评论',data:comLabels.map(p=>safeNum(periodAgg[p]['美团新增评论'])),type:'line',smooth:true,symbol:'circle',symbolSize:3,lineStyle:{color:'#6c5ce7',width:2},itemStyle:{color:'#6c5ce7'}},
-      {name:'差评',data:comLabels.map(p=>safeNum(periodAgg[p]['综合新增差评'])),type:'line',smooth:true,symbol:'circle',symbolSize:3,lineStyle:{color:'#ef5b5b',width:2,type:'dashed'},itemStyle:{color:'#ef5b5b'}},
+      {name:'抖音评论',data:comLabels.map(p=>safeNum(periodAgg[p]['抖音新增评论'])),type:'line',smooth:true,symbol:'circle',symbolSize:3,lineStyle:{color:'#ef5b64',width:2},itemStyle:{color:'#ef5b64'}},
+      {name:'美团评论',data:comLabels.map(p=>safeNum(periodAgg[p]['美团新增评论'])),type:'line',smooth:true,symbol:'circle',symbolSize:3,lineStyle:{color:'#4c8cf5',width:2},itemStyle:{color:'#4c8cf5'}},
+      {name:'差评',data:comLabels.map(p=>safeNum(periodAgg[p]['综合新增差评'])),type:'line',smooth:true,symbol:'circle',symbolSize:3,lineStyle:{color:'#ef5b64',width:2,type:'dashed'},itemStyle:{color:'#ef5b64'}},
     ],
     grid:{left:40,right:15,top:30,bottom:25}
   });
@@ -2742,12 +2771,12 @@ function renderDetailTrendCharts(store) {
   trafChart.setOption({
     backgroundColor:'transparent',
     tooltip:{trigger:'axis'},
-    legend:{data:['美团访问','抖音访问'],textStyle:{color:'#667085',fontSize:10},itemWidth:12,itemHeight:8,top:5},
-    xAxis:{type:'category',data:trafLabels.map(periodLabel),axisLine:{lineStyle:{color:'#d7dce3'}},axisLabel:{color:'#667085',fontSize:10},splitLine:{show:false}},
-    yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:'#eceff3'}},axisLabel:{color:'#667085',fontSize:10}},
+    legend:{data:['美团访问','抖音访问'],textStyle:{color:'#8b949e',fontSize:10},itemWidth:12,itemHeight:8,top:5},
+    xAxis:{type:'category',data:trafLabels.map(periodLabel),axisLine:{lineStyle:{color:'#30363d'}},axisLabel:{color:'#8b949e',fontSize:10},splitLine:{show:false}},
+    yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:'#21262d'}},axisLabel:{color:'#8b949e',fontSize:10}},
     series:[
-      {name:'美团访问',data:trafLabels.map(p=>safeNum(periodAgg[p]['美团访问人数'])),type:'line',smooth:true,symbol:'circle',symbolSize:3,areaStyle:{color:{type:'linear',x:0,y:0,x2:0,y2:1,colorStops:[{offset:0,color:'rgba(108,92,231,0.3)'},{offset:1,color:'rgba(108,92,231,0)'}]}},lineStyle:{color:'#6c5ce7',width:2},itemStyle:{color:'#6c5ce7'}},
-      {name:'抖音访问',data:trafLabels.map(p=>safeNum(periodAgg[p]['抖音门店页访问人数'])),type:'line',smooth:true,symbol:'circle',symbolSize:3,areaStyle:{color:{type:'linear',x:0,y:0,x2:0,y2:1,colorStops:[{offset:0,color:'rgba(239,91,91,0.3)'},{offset:1,color:'rgba(239,91,91,0)'}]}},lineStyle:{color:'#ef5b5b',width:2},itemStyle:{color:'#ef5b5b'}},
+      {name:'美团访问',data:trafLabels.map(p=>safeNum(periodAgg[p]['美团访问人数'])),type:'line',smooth:true,symbol:'circle',symbolSize:3,areaStyle:{color:{type:'linear',x:0,y:0,x2:0,y2:1,colorStops:[{offset:0,color:'rgba(76,140,245,0.3)'},{offset:1,color:'rgba(76,140,245,0)'}]}},lineStyle:{color:'#4c8cf5',width:2},itemStyle:{color:'#4c8cf5'}},
+      {name:'抖音访问',data:trafLabels.map(p=>safeNum(periodAgg[p]['抖音门店页访问人数'])),type:'line',smooth:true,symbol:'circle',symbolSize:3,areaStyle:{color:{type:'linear',x:0,y:0,x2:0,y2:1,colorStops:[{offset:0,color:'rgba(239,91,100,0.3)'},{offset:1,color:'rgba(239,91,100,0)'}]}},lineStyle:{color:'#ef5b64',width:2},itemStyle:{color:'#ef5b64'}},
     ],
     grid:{left:40,right:15,top:30,bottom:25}
   });
@@ -2763,12 +2792,12 @@ function renderDetailTrendCharts(store) {
         .map(x => `${x.seriesName}: ${(x.value*100).toFixed(1)}%`);
       return `${p[0]?.name || ''}<br>${rows.join('<br>')}`;
     }},
-    legend:{data:['美团意向转化率','抖音转化率'],textStyle:{color:'#667085',fontSize:10},itemWidth:12,itemHeight:8,top:5},
-    xAxis:{type:'category',data:convLabels.map(periodLabel),axisLine:{lineStyle:{color:'#d7dce3'}},axisLabel:{color:'#667085',fontSize:10},splitLine:{show:false}},
-    yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:'#eceff3'}},axisLabel:{color:'#667085',fontSize:10,formatter:v=>(v*100).toFixed(0)+'%'}},
+    legend:{data:['美团意向转化率','抖音转化率'],textStyle:{color:'#8b949e',fontSize:10},itemWidth:12,itemHeight:8,top:5},
+    xAxis:{type:'category',data:convLabels.map(periodLabel),axisLine:{lineStyle:{color:'#30363d'}},axisLabel:{color:'#8b949e',fontSize:10},splitLine:{show:false}},
+    yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:'#21262d'}},axisLabel:{color:'#8b949e',fontSize:10,formatter:v=>(v*100).toFixed(0)+'%'}},
     series:[
-      {name:'美团意向转化率',data:convLabels.map(p=>{const v=safeNum(periodAgg[p]['美团意向转化率']);return v>0?v:null}),type:'line',smooth:true,connectNulls:false,showSymbol:true,symbol:'circle',symbolSize:5,lineStyle:{color:'#6c5ce7',width:2},itemStyle:{color:'#6c5ce7'}},
-      {name:'抖音转化率',data:convLabels.map(p=>{const v=safeNum(periodAgg[p]['抖音转化率']);return v>0?v:null}),type:'line',smooth:true,connectNulls:false,showSymbol:true,symbol:'circle',symbolSize:5,lineStyle:{color:'#ef5b5b',width:2},itemStyle:{color:'#ef5b5b'}},
+      {name:'美团意向转化率',data:convLabels.map(p=>{const v=safeNum(periodAgg[p]['美团意向转化率']);return v>0?v:null}),type:'line',smooth:true,connectNulls:false,showSymbol:true,symbol:'circle',symbolSize:5,lineStyle:{color:'#4c8cf5',width:2},itemStyle:{color:'#4c8cf5'}},
+      {name:'抖音转化率',data:convLabels.map(p=>{const v=safeNum(periodAgg[p]['抖音转化率']);return v>0?v:null}),type:'line',smooth:true,connectNulls:false,showSymbol:true,symbol:'circle',symbolSize:5,lineStyle:{color:'#ef5b64',width:2},itemStyle:{color:'#ef5b64'}},
     ],
     grid:{left:50,right:15,top:30,bottom:25}
   }, true);
@@ -2779,9 +2808,9 @@ function renderDetailTrendCharts(store) {
   newChart.setOption({
     backgroundColor:'transparent',
     tooltip:{trigger:'axis',formatter:p=>`${p[0].name}<br>${(p[0].value*100).toFixed(1)}%`},
-    xAxis:{type:'category',data:newLabels.map(periodLabel),axisLine:{lineStyle:{color:'#d7dce3'}},axisLabel:{color:'#667085',fontSize:10},splitLine:{show:false}},
-    yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:'#eceff3'}},axisLabel:{color:'#667085',fontSize:10,formatter:v=>(v*100).toFixed(0)+'%'},max:1},
-    series:[{data:newLabels.map(p=>safeNum(periodAgg[p]['新客占比'])),type:'line',smooth:true,symbol:'circle',symbolSize:3,areaStyle:{color:{type:'linear',x:0,y:0,x2:0,y2:1,colorStops:[{offset:0,color:'rgba(20,163,127,0.4)'},{offset:1,color:'rgba(20,163,127,0)'}]}},lineStyle:{color:'#14a37f',width:2},itemStyle:{color:'#14a37f'}}],
+    xAxis:{type:'category',data:newLabels.map(periodLabel),axisLine:{lineStyle:{color:'#30363d'}},axisLabel:{color:'#8b949e',fontSize:10},splitLine:{show:false}},
+    yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:'#21262d'}},axisLabel:{color:'#8b949e',fontSize:10,formatter:v=>(v*100).toFixed(0)+'%'},max:1},
+    series:[{data:newLabels.map(p=>safeNum(periodAgg[p]['新客占比'])),type:'line',smooth:true,symbol:'circle',symbolSize:3,areaStyle:{color:{type:'linear',x:0,y:0,x2:0,y2:1,colorStops:[{offset:0,color:'rgba(53,183,121,0.4)'},{offset:1,color:'rgba(53,183,121,0)'}]}},lineStyle:{color:'#35b779',width:2},itemStyle:{color:'#35b779'}}],
     grid:{left:50,right:15,top:10,bottom:25}
   });
 }
@@ -2814,9 +2843,9 @@ function renderCardGold(store) {
     return {
       value: conVals[i],
       symbolSize: isWarn ? 12 : 3,
-      itemStyle: { color: isWarn ? '#ef5b5b' : '#14a37f' },
+      itemStyle: { color: isWarn ? '#ef5b64' : '#35b779' },
       label: isWarn ? {
-        show: true, position:'top', color:'#ef5b5b', fontSize:10,
+        show: true, position:'top', color:'#ef5b64', fontSize:10,
         fontWeight:'bold',
         formatter: (diff >= 10000 ? (diff/10000).toFixed(1)+'万' : diff.toFixed(0)) + ''
       } : undefined
@@ -2828,12 +2857,12 @@ function renderCardGold(store) {
   chart.setOption({
     backgroundColor:'transparent',
     tooltip:{trigger:'axis',formatter:p=>`${p[0].name}<br>${p[0].seriesName}: ${p[0].value.toLocaleString('zh-CN')}<br>${p[1].seriesName}: ${p[1].value.toLocaleString('zh-CN')}`},
-    legend:{data:['卡金消耗','充值'],textStyle:{color:'#667085',fontSize:10},itemWidth:12,itemHeight:8,top:5},
-    xAxis:{type:'category',data:glabels.map(periodLabel),axisLine:{lineStyle:{color:'#d7dce3'}},axisLabel:{color:'#667085',fontSize:10},splitLine:{show:false}},
-    yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:'#eceff3'}},axisLabel:{color:'#667085',fontSize:10}},
+    legend:{data:['卡金消耗','充值'],textStyle:{color:'#8b949e',fontSize:10},itemWidth:12,itemHeight:8,top:5},
+    xAxis:{type:'category',data:glabels.map(periodLabel),axisLine:{lineStyle:{color:'#30363d'}},axisLabel:{color:'#8b949e',fontSize:10},splitLine:{show:false}},
+    yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:'#21262d'}},axisLabel:{color:'#8b949e',fontSize:10}},
     series:[
-      { name:'卡金消耗', data:seriesData1, type:'line', smooth:true, symbol:'circle', symbolSize:3, lineStyle:{color:'#ef5b5b',width:2}, label:{ show:false } },
-      { name:'充值', data:rechVals, type:'line', smooth:true, symbol:'circle', symbolSize:3, lineStyle:{color:'#14a37f',width:2}, itemStyle:{color:'#14a37f'} },
+      { name:'卡金消耗', data:seriesData1, type:'line', smooth:true, symbol:'circle', symbolSize:3, lineStyle:{color:'#ef5b64',width:2}, label:{ show:false } },
+      { name:'充值', data:rechVals, type:'line', smooth:true, symbol:'circle', symbolSize:3, lineStyle:{color:'#35b779',width:2}, itemStyle:{color:'#35b779'} },
     ],
     grid:{left:60,right:15,top:40,bottom:25}
   });
