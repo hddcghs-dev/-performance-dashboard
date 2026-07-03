@@ -2139,43 +2139,32 @@ function renderDetailKPIs(store, date) {
     return `<div class="kpi-change ${cls}"><span class="arrow">${arrow}</span>${sign}${(delta*100).toFixed(1)}% <span style="font-size:9px;color:var(--text2)">${label}</span></div>`;
   }
 
+  const svcVal = getSum('服务营业额');
+  const prodVal = getSum('商品营业额');
   const sections = [
     {
       title: '营收', open: true, items: [
-        { label:'服务营业额', val:fmtY(getSum('服务营业额')), sub:'元', color:'gold', m:'服务营业额', isSum:true, mom:true },
+        { label:'营业额', val:fmtY(svcVal), sub:`服务${fmtY(svcVal)}  ·  商品${fmtY(prodVal)}`, color:'gold', m:'服务营业额', isSum:true, mom:true },
         { label:'现金流营业额', val:fmtY(getSum('现金流营业额')), sub:'元', color:'', m:'现金流营业额', isSum:true },
         { label:'抖音营业额', val:fmtY(getSum('抖音')), sub:'元', color:'', m:'抖音', isSum:true, mom:true },
         { label:'美团营业额', val:fmtY(getSum('美团')), sub:'元', color:'', m:'美团', isSum:true, mom:true },
         { label:'卡金', val:fmtY(getSum('卡金')), sub:'元', color:'', m:'卡金', isSum:true },
+        { label:'充值', val:fmtY(getSum('充值')), sub:'元', color:'', m:'充值', isSum:true },
         { label:'免单减免', val:fmtY(getSum('免单减免')), sub:'元', color:'', m:'免单减免', isSum:true },
-        { label:'开卡', val:fmtY(getSum('开卡')), sub:'元', color:'green', m:'开卡', isSum:true },
-        { label:'续充', val:fmtY(getSum('续充')), sub:'元', color:'', m:'续充', isSum:true },
-        { label:'商品营业额', val:fmtY(getSum('商品营业额')), sub:'元', color:'', m:'商品营业额', isSum:true },
       ]
     },
     {
       title: '评分', open: true, items: [
-        { label:'抖音评分', val:fmtScore(getVal('抖音评分')), sub:'分', color: Number(getVal('抖音评分'))>4.5?'green':'', m:'抖音评分' },
-        { label:'美团评分', val:fmtScore(getVal('美团评分')), sub:'分', color: Number(getVal('美团评分'))>4.5?'green':'', m:'美团评分' },
-        { label:'大众点评', val:fmtScore(getVal('大众点评')), sub:'分', color:'', m:'大众点评' },
-        { label:'美团经营分', val:fmtScore(getVal('美团经营分')), sub:'分', color:'', m:'美团经营分' },
+        { label:'评分', val:noData ? '—' : `抖音 ${fmtScore(getVal('抖音评分'))}  ·  美团 ${fmtScore(getVal('美团评分'))}  ·  大众点评 ${fmtScore(getVal('大众点评'))}`, color:'', m:'抖音评分', merged:true },
       ]
     },
     {
-      title: '评价', open: true, items: [
+      title: '线上', open: true, items: [
         { label:'新增评论', val:fmtN(getSum('综合新增评论')), sub:'条', color:'green', m:'综合新增评论', isSum:true },
         { label:'差评数', val:fmtN(getSum('综合新增差评')), sub:'条', color: getSum('综合新增差评')>0?'red':'', m:'综合新增差评', isSum:true },
         { label:'差评率', val:fmtPct(getVal('差评率')), sub:'', color: getVal('差评率')>0.05?'red':'', m:'差评率' },
-      ]
-    },
-    {
-      title: '流量', open: true, items: [
         { label:'美团访问', val:fmtN(getSum('美团访问人数')), sub:'人', color:'', m:'美团访问人数', isSum:true },
         { label:'抖音访问', val:fmtN(getSum('抖音门店页访问人数')), sub:'人', color:'', m:'抖音门店页访问人数', isSum:true },
-      ]
-    },
-    {
-      title: '转化', open: true, items: [
         { label:'美团转化率', val:fmtPct(getVal('美团意向转化率')), sub:'', color:'', m:'美团意向转化率' },
         { label:'抖音转化率', val:fmtPct(getVal('抖音转化率')), sub:'', color:'', m:'抖音转化率' },
       ]
