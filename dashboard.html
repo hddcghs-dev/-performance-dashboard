@@ -154,6 +154,7 @@ button:hover { background: rgba(108,92,231,0.25); }
 .kpi-value.gold { color: var(--gold); }
 .kpi-value.green { color: var(--green); }
 .kpi-value.red { color: var(--red); }
+.kpi-value.small { font-size: 14px; font-weight: 500; }
 .kpi-change {
   font-size: 11px;
   margin-top: 2px;
@@ -2192,7 +2193,7 @@ function renderDetailKPIs(store, date) {
             : '';
           return `<div class="kpi-card${noData?' no-data':''}">
             <div class="kpi-label">${it.label}</div>
-            <div class="kpi-value ${noData ? '' : it.color}">${noData ? '—' : it.val}</div>
+            <div class="kpi-value ${noData ? '' : it.color}${it.merged ? ' small' : ''}">${noData ? '—' : it.val}</div>
             ${it.sub && !['元','分','条','人'].includes(it.sub) ? `<div class="kpi-sub">${noData ? '—' : it.sub}</div>` : ''}
             ${noData ? '' : changeEl}
           </div>`;
