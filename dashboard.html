@@ -791,9 +791,15 @@ tr:hover td { background: rgba(255,255,255,0.03); }
       <select id="detail-store"></select>
     </div>
     <div class="filter-group">
-      <span class="filter-label">月份</span>
-      <select id="detail-month"></select>
+      <span class="filter-label">周期</span>
+      <select id="detail-period">
+        <option value="month">月度</option>
+        <option value="quarter">季度</option>
+        <option value="year">年度</option>
+        <option value="range">自定义区间</option>
+      </select>
     </div>
+    <div class="filter-group" id="detail-period-ui"></div>
     <button class="export-btn" onclick="detailExportCSV()" style="margin-left:auto;">导出CSV</button>
   </div>
 
@@ -1141,8 +1147,9 @@ function initFilters() {
   presetDates = sortedDates.length ? [sortedDates[sortedDates.length - 1]] : null;
   monthSelect.disabled = true;
 
-  // 单店月份（智能筛选：只显示该门店有数据的月份）
-  const dm = document.getElementById('detail-month');
+  // 单店详情 - 周期选择
+  const dp = document.getElementById('detail-period');
+  const dpUi = document.getElementById('detail-period-ui');
   const storeSelect = document.getElementById('detail-store');
   const sortedStores = [...STORES].sort((a, b) => {
     const ia = STORE_ORDER.indexOf(a);
@@ -1150,32 +1157,58 @@ function initFilters() {
     return ia - ib;
   });
 
-  function updateDetailMonths(store) {
-    const storeDates = [...new Set(
+  function getStoreDates(store) {
+    return [...new Set(
       ALL_DATA.data.filter(r => r['门店'] === store).map(r => r['日期'])
-    )].sort((a, b) => b.localeCompare(a));
-    const prevVal = dm.value;
-    dm.innerHTML = storeDates.map(d => {
-      const label = d.substring(0,7).replace('-','年')+'月';
-      return `<option value="${d}">${label}</option>`;
-    }).join('');
-    // Keep previous selection if valid, else default to latest
-    if (storeDates.includes(prevVal)) {
-      dm.value = prevVal;
-    }
+    )].sort();
   }
 
-  storeSelect.innerHTML = sortedStores.map(s => `<option value="${s}">${s}</option>`).join('');
+  function updateDetailPeriodUI(store) {
+    const storeDates = getStoreDates(store);
+    const years = [...new Set(storeDates.map(d => d.substring(0,4)))].sort();
+    const sortedStoreDates = [...storeDates].sort((a,b) => b.localeCompare(a));
+    const period = dp.value;
 
-  storeSelect.onchange = () => {
-    updateDetailMonths(storeSelect.value);
+    let html = '';
+    if (period === 'month') {
+      const lastVal = document.getElementById('detail-month')?.value;
+      html = `<select id="detail-month">${sortedStoreDates.map(d => {
+        const label = d.substring(0,7).replace('-','年')+'月';
+        return `<option value="${d}" ${d === lastVal ? 'selected' : ''}>${label}</option>`;
+      }).join('')}</select>`;
+    } else if (period === 'quarter') {
+      const lastY = document.getElementById('detail-q-year')?.value || years[years.length-1] || '';
+      const lastQ = document.getElementById('detail-q-quarter')?.value || '';
+      html = `<select id="detail-q-year">${years.map(y => `<option value="${y}" ${y===lastY?'selected':''}>${y}年</option>`).join('')}</select>
+        <select id="detail-q-quarter">${['Q1','Q2','Q3','Q4'].map(q => `<option value="${q}" ${q===lastQ?'selected':''}>${q}</option>`).join('')}</select>`;
+    } else if (period === 'year') {
+      const lastY = document.getElementById('detail-year')?.value || years[years.length-1] || '';
+      html = `<select id="detail-year">${years.map(y => `<option value="${y}" ${y===lastY?'selected':''}>${y}年</option>`).join('')}</select>`;
+    } else if (period === 'range') {
+      const lastFrom = document.getElementById('detail-from')?.value || sortedStoreDates[sortedStoreDates.length-1] || '';
+      const lastTo = document.getElementById('detail-to')?.value || sortedStoreDates[0] || '';
+      const opts = sortedStoreDates.map(d => `<option value="${d}" ${d===lastFrom||d===lastTo?'selected':''}>${d.substring(0,7).replace('-','年')+'月'}</option>`).join('');
+      html = `<select id="detail-from">${opts}</select><span class="filter-label" style="margin:0 4px">至</span><select id="detail-to">${opts}</select>`;
+    }
+    dpUi.innerHTML = html;
+    // Bind change events to dynamic selects
+    dpUi.querySelectorAll('select').forEach(s => s.onchange = () => renderDetail());
+  }
+
+  dp.onchange = () => {
+    const store = storeSelect.value;
+    if (store) updateDetailPeriodUI(store);
     renderDetail();
   };
-  dm.onchange = () => renderDetail();
 
-  // Initialize with first store's months
+  storeSelect.innerHTML = sortedStores.map(s => `<option value="${s}">${s}</option>`).join('');
+  storeSelect.onchange = () => {
+    updateDetailPeriodUI(storeSelect.value);
+    renderDetail();
+  };
+
   if (sortedStores.length > 0) {
-    updateDetailMonths(sortedStores[0]);
+    updateDetailPeriodUI(sortedStores[0]);
   }
   renderDetail();
 }
@@ -2090,33 +2123,56 @@ function detailExportCSV() {
 // ============================================================
 function renderDetail() {
   const store = document.getElementById('detail-store').value;
-  const date = document.getElementById('detail-month').value;
+  const dates = getDetailDates(store);
 
-  renderDetailKPIs(store, date);
-  renderDetailPieCharts(store, date);
+  renderDetailKPIs(store, dates);
+  renderDetailPieCharts(store);
   renderDetailTrendCharts(store);
   renderCardGold(store);
 }
 
 function getDetailDates(store) {
-  const date = document.getElementById('detail-month').value;
-  if (date) return [date];
-  return DATES;
+  const period = document.getElementById('detail-period').value;
+  const storeDates = getStoreDates(store);
+  if (!storeDates.length) return [];
+
+  if (period === 'month') {
+    const el = document.getElementById('detail-month');
+    return el && el.value ? [el.value] : storeDates;
+  }
+  if (period === 'quarter') {
+    const y = document.getElementById('detail-q-year')?.value;
+    const q = document.getElementById('detail-q-quarter')?.value;
+    const months = {Q1:['01','02','03'], Q2:['04','05','06'], Q3:['07','08','09'], Q4:['10','11','12']}[q] || [];
+    return storeDates.filter(d => d.startsWith(y+'-') && months.includes(d.substring(5,7)));
+  }
+  if (period === 'year') {
+    const y = document.getElementById('detail-year')?.value;
+    return storeDates.filter(d => d.startsWith(y+'-'));
+  }
+  if (period === 'range') {
+    const from = document.getElementById('detail-from')?.value;
+    const to = document.getElementById('detail-to')?.value;
+    if (from && to) return storeDates.filter(d => d >= from && d <= to);
+    return storeDates;
+  }
+  return storeDates;
 }
 
-function renderDetailKPIs(store, date) {
-  const dates = date ? [date] : DATES;
-  const isAll = dates.length > 1;
+function renderDetailKPIs(store, dates) {
+  if (!dates.length) {
+    document.getElementById('detail-kpi').innerHTML = `<div class="data-missing">该门店在所选周期内无数据记录</div>`;
+    return;
+  }
+  const isAll = dates.length !== 1;
 
-  // Get prev month for MoM & prev year for YoY
-  const curDate = dates[0];
-  const dateParts = curDate.split('-');
-  const year = parseInt(dateParts[0]);
-  const month = parseInt(dateParts[1]);
-  const prevMonth = (month === 1 ? `${year-1}-12` : `${year}-${String(month-1).padStart(2,'0')}`) + '-01';
-  const prevYearMonth = `${year-1}-${String(month).padStart(2,'0')}-01`;
-  const prevRecord = getRecord(prevMonth, store) || {};
-  const pyRecord = getRecord(prevYearMonth, store) || {};
+  // MoM & YoY only for single-month mode
+  const singleDate = dates.length === 1 ? dates[0] : null;
+  const dateParts = singleDate ? singleDate.split('-') : null;
+  const prevMonth = dateParts ? ((parseInt(dateParts[1]) === 1 ? `${parseInt(dateParts[0])-1}-12` : `${dateParts[0]}-${String(parseInt(dateParts[1])-1).padStart(2,'0')}`) + '-01') : '';
+  const prevYearMonth = dateParts ? `${parseInt(dateParts[0])-1}-${dateParts[1]}-01` : '';
+  const prevRecord = dateParts ? (getRecord(prevMonth, store) || {}) : {};
+  const pyRecord = dateParts ? (getRecord(prevYearMonth, store) || {}) : {};
   const foundRecord = !isAll ? getRecord(dates[0], store) : null;
   const noData = !isAll && !foundRecord;
   const curRecord = foundRecord || {};
