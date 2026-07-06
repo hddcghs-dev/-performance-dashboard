@@ -1123,6 +1123,12 @@ function init() {
 // ============================================================
 // 筛选器初始化
 // ============================================================
+function getStoreDates(store) {
+  return [...new Set(
+    ALL_DATA.data.filter(r => r['门店'] === store).map(r => r['日期'])
+  )].sort();
+}
+
 function initFilters() {
   const years = [...new Set(DATES.map(d => d.substring(0,4)))].sort();
   const yearSelect = document.getElementById('filter-year');
@@ -1156,12 +1162,6 @@ function initFilters() {
     const ib = STORE_ORDER.indexOf(b);
     return ia - ib;
   });
-
-  function getStoreDates(store) {
-    return [...new Set(
-      ALL_DATA.data.filter(r => r['门店'] === store).map(r => r['日期'])
-    )].sort();
-  }
 
   function updateDetailPeriodUI(store) {
     const storeDates = getStoreDates(store);
@@ -2126,7 +2126,7 @@ function renderDetail() {
   const dates = getDetailDates(store);
 
   renderDetailKPIs(store, dates);
-  renderDetailPieCharts(store);
+  renderDetailPieCharts(store, dates);
   renderDetailTrendCharts(store);
   renderCardGold(store);
 }
