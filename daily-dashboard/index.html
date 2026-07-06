@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>民德时代 · 日报看板</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="responsive.css">
+  <script src="assets/echarts.min.js"></script>
+  <script src="data/dashboard_data.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">民</span><div><h1>日报经营看板</h1><small>MINDE DAILY OPERATIONS</small></div></div>
+    <nav id="tabs"><button class="tab active" data-tab="overview">整体总览</button><button class="tab" data-tab="compare">门店对比</button><button class="tab" data-tab="detail">单店详情</button></nav>
+    <div class="freshness" id="freshness">数据加载中</div>
+  </header>
+
+  <section class="toolbar">
+    <div class="quick" id="quick-range"><button data-days="1" class="active">最新日</button><button data-days="7">近7日</button><button data-days="30">近30日</button><button data-days="0">全部</button></div>
+    <label>起始日<input type="date" id="start-date"></label>
+    <label>截止日<input type="date" id="end-date"></label>
+    <label>门店<select id="store-filter"><option value="">全部门店</option></select></label>
+    <button class="secondary" id="export-btn">导出当前明细</button>
+  </section>
+
+  <main>
+    <section id="overview" class="page active">
+      <div class="section-head"><div><span class="eyebrow">核心经营结果</span><h2 id="overview-title">最新日报</h2></div><p id="overview-subtitle"></p></div>
+      <div class="kpi-grid" id="kpis"></div>
+      <div class="insight-grid" id="insights"></div>
+      <div class="chart-grid wide-left">
+        <article class="card"><div class="card-head"><h3>营业额与客流趋势</h3><span>按日汇总</span></div><div class="chart" id="trend-chart"></div></article>
+        <article class="card"><div class="card-head"><h3>收入与项目结构</h3><span>筛选周期</span></div><div class="chart" id="mix-chart"></div></article>
+      </div>
+      <div class="chart-grid">
+        <article class="card"><div class="card-head"><h3>门店营业额排行</h3><span>点击柱形查看单店</span></div><div class="chart tall" id="rank-chart"></div></article>
+        <article class="card"><div class="card-head"><h3>经营预警</h3><span>优先处理异常</span></div><div id="alerts" class="alert-list"></div></article>
+      </div>
+    </section>
+
+    <section id="compare" class="page">
+      <div class="section-head"><div><span class="eyebrow">横向比较</span><h2>门店对比</h2></div><p>同周期比较规模、效率与口碑</p></div>
+      <div class="metric-pills" id="metric-pills"></div>
+      <article class="card"><div class="card-head"><h3 id="compare-chart-title">门店指标排行</h3><span>点击指标切换</span></div><div class="chart tall" id="compare-chart"></div></article>
+      <article class="card table-card"><div class="card-head"><h3>门店经营明细</h3><span id="compare-count"></span></div><div class="table-wrap"><table><thead id="compare-head"></thead><tbody id="compare-body"></tbody></table></div></article>
+    </section>
+
+    <section id="detail" class="page">
+      <div class="section-head"><div><span class="eyebrow">单店诊断</span><h2 id="detail-title">单店详情</h2></div><p>趋势、项目结构、线上渠道与服务质量</p></div>
+      <div class="detail-toolbar">
+        <div class="detail-period-tabs" id="detail-period-tabs">
+          <button class="active" data-mode="week">按周</button>
+          <button data-mode="month">按月</button>
+        </div>
+        <label><span id="detail-period-label">选择周</span><select id="detail-period-value"></select></label>
+        <span class="detail-period-summary" id="detail-period-summary"></span>
+      </div>
+      <div class="kpi-grid" id="detail-kpis"></div>
+      <div class="chart-grid">
+        <article class="card"><div class="card-head"><h3>营业额趋势</h3><span>含平台核销</span></div><div class="chart" id="detail-revenue"></div></article>
+        <article class="card"><div class="card-head"><h3>项目结构</h3><span>168 / 298 / 358</span></div><div class="chart" id="detail-project"></div></article>
+        <article class="card"><div class="card-head"><h3>线上流量与核销</h3><span>抖音 / 美团</span></div><div class="chart" id="detail-channel"></div></article>
+        <article class="card"><div class="card-head"><h3>口碑与回复</h3><span>评分及回复率</span></div><div class="chart" id="detail-service"></div></article>
+      </div>
+    </section>
+  </main>
+  <div class="toast" id="toast"></div>
+  <script src="app.js"></script>
+</body>
+</html>
