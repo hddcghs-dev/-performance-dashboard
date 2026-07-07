@@ -35,9 +35,9 @@ while (true) {
     const record = Object.fromEntries(fields.map((field, index) => [field, page.data[i][index]]));
     record._record_id = page.record_id_list[i];
     if (record['日期']) record['日期'] = String(record['日期']).slice(0, 10);
-    // 计算字段: 核销 = 前厅 + 平台
-    record['美团核销'] = (Number(record['美团-前厅']) || 0) + (Number(record['美团-平台']) || 0);
-    record['抖音核销'] = (Number(record['抖音-前厅']) || 0) + (Number(record['抖音-平台']) || 0);
+    // 核销 = 平台收入（前厅和平台是同一笔数据的不同口径，不重复加）
+    record['美团核销'] = Number(record['美团-平台']) || 0;
+    record['抖音核销'] = Number(record['抖音-平台']) || 0;
     records.push(record);
   }
   if (!page.has_more || page.data.length === 0) break;
