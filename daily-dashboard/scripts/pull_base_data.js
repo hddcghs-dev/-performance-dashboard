@@ -35,12 +35,16 @@ while (true) {
     const record = Object.fromEntries(fields.map((field, index) => [field, page.data[i][index]]));
     record._record_id = page.record_id_list[i];
     if (record['日期']) record['日期'] = String(record['日期']).slice(0, 10);
+    // 计算字段: 核销 = 前厅 + 平台
+    record['美团核销'] = (Number(record['美团-前厅']) || 0) + (Number(record['美团-平台']) || 0);
+    record['抖音核销'] = (Number(record['抖音-前厅']) || 0) + (Number(record['抖音-平台']) || 0);
     records.push(record);
   }
   if (!page.has_more || page.data.length === 0) break;
   offset += page.data.length;
 }
 
+fields.push('美团核销', '抖音核销');
 const dates = [...new Set(records.map(r => r['日期']).filter(Boolean))].sort();
 const stores = [...new Set(records.map(r => r['门店']).filter(Boolean))];
 const payload = {
