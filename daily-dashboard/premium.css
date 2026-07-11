@@ -10,8 +10,8 @@
   --primary: #6d5dfc;
   --primary-dark: #5547dc;
   --primary-soft: #f0eefe;
-  --green: #159a75;
-  --red: #e85c64;
+  --green: #5f8f88;
+  --red: #b8756c;
   --shadow-sm: 0 1px 2px rgba(20, 22, 35, .03), 0 6px 18px rgba(20, 22, 35, .035);
   --shadow-md: 0 16px 40px rgba(36, 30, 88, .08);
 }
@@ -84,10 +84,30 @@ body {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #21a77b;
+  background: #5f8f88;
   transform: translateY(-50%);
-  box-shadow: 0 0 0 4px rgba(33,167,123,.10);
+  box-shadow: 0 0 0 4px rgba(95,143,136,.12);
 }
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  margin-left: auto;
+  padding: 0 11px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: #656977;
+  background: rgba(255,255,255,.72);
+  font-size: 11px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: border-color .18s ease, background .18s ease, color .18s ease;
+}
+.theme-toggle:hover { color: var(--primary-dark); border-color: #d5d0f4; background: #fff; }
+.theme-toggle-icon { color: var(--primary); font-size: 15px; line-height: 1; }
+.theme-toggle + .freshness { margin-left: 0; }
 
 .toolbar {
   position: sticky;
@@ -260,6 +280,8 @@ tbody tr:hover td { background: #f8f7ff; }
   body { background: var(--bg); }
   .topbar { height: auto; min-height: 64px; padding: 10px 16px; flex-wrap: wrap; }
   .brand { flex: 1; }
+  .theme-toggle { margin-left: 0; }
+  #theme-toggle-label { display: none; }
   .topbar nav { width: 100%; order: 3; }
   .tab { flex: 1; min-width: 0; }
   .toolbar { position: static; width: calc(100% - 24px); margin-top: 12px; padding: 10px; }
@@ -279,6 +301,82 @@ tbody tr:hover td { background: #f8f7ff; }
   .card-head { height: 54px; padding: 0 15px; }
   .chart { height: 280px; }
 }
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #11141c;
+  --panel: #1a1e28;
+  --panel-soft: #202531;
+  --line: #2c3240;
+  --line-strong: #394151;
+  --text: #eef0f4;
+  --muted: #989fad;
+  --muted-light: #6f7786;
+  --primary: #9187e4;
+  --primary-dark: #aca4ee;
+  --primary-soft: #292641;
+  --green: #79a9a1;
+  --red: #c98780;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.18), 0 10px 26px rgba(0,0,0,.12);
+  --shadow-md: 0 18px 44px rgba(0,0,0,.22);
+}
+html[data-theme="dark"] body {
+  background:
+    radial-gradient(circle at 8% -5%, rgba(111,99,217,.16), transparent 30rem),
+    radial-gradient(circle at 96% 0%, rgba(95,143,136,.07), transparent 28rem),
+    var(--bg);
+}
+html[data-theme="dark"] .topbar { background: rgba(17,20,28,.9); border-bottom-color: #292f3b; box-shadow: none; }
+html[data-theme="dark"] .brand h1 { color: #f2f3f6; }
+html[data-theme="dark"] .brand small { color: #737b8b; }
+html[data-theme="dark"] .topbar nav,
+html[data-theme="dark"] .quick,
+html[data-theme="dark"] .detail-period-tabs { background: #202530; }
+html[data-theme="dark"] .tab { color: #8f97a7; }
+html[data-theme="dark"] .tab:hover { color: #e4e7ec; background: #262c38; }
+html[data-theme="dark"] .tab.active { color: #f4f5f7; background: #303644; box-shadow: none; }
+html[data-theme="dark"] .theme-toggle { color: #b0b6c2; background: #1d222c; border-color: #343b49; }
+html[data-theme="dark"] .theme-toggle:hover { color: #fff; background: #252b37; border-color: #4a5262; }
+html[data-theme="dark"] .freshness { color: #8db8ae; background: #1b302e; }
+html[data-theme="dark"] .toolbar { background: rgba(25,29,39,.9); border-color: #303746; }
+html[data-theme="dark"] .toolbar label { color: #858e9d; background: #202530; border-color: #343b49; }
+html[data-theme="dark"] .toolbar input,
+html[data-theme="dark"] .toolbar select { color: #e8eaf0; }
+html[data-theme="dark"] .quick button { color: #949cab; }
+html[data-theme="dark"] .quick button:hover { background: #292f3b; }
+html[data-theme="dark"] .quick button.active { color: #fff; background: #756bd5; box-shadow: none; }
+html[data-theme="dark"] .secondary { color: #c7c1f3; background: #292641; border-color: #47416a; }
+html[data-theme="dark"] .section-head h2,
+html[data-theme="dark"] .card-head h3 { color: var(--text); }
+html[data-theme="dark"] .section-head p,
+html[data-theme="dark"] .card-head span { color: #858d9c; }
+html[data-theme="dark"] .kpi,
+html[data-theme="dark"] .card,
+html[data-theme="dark"] .insight,
+html[data-theme="dark"] .detail-toolbar { color: var(--text); background: var(--panel); border-color: var(--line); }
+html[data-theme="dark"] .kpi:hover,
+html[data-theme="dark"] .card:hover,
+html[data-theme="dark"] .insight:hover { border-color: #454c5c; }
+html[data-theme="dark"] #kpis .kpi:first-child,
+html[data-theme="dark"] #detail-kpis .kpi:first-child { background: linear-gradient(135deg,#746bd0,#5148a3); box-shadow: 0 18px 38px rgba(24,19,66,.32); }
+html[data-theme="dark"] .kpi .label { color: #969eac; }
+html[data-theme="dark"] .insight { background: #181c25; }
+html[data-theme="dark"] .insight::before { border-color: #4c476f; }
+html[data-theme="dark"] .insight strong { color: #b0a8ec; }
+html[data-theme="dark"] .card-head { border-bottom-color: #2b313e; }
+html[data-theme="dark"] .alert { border-bottom-color: #2b313e; }
+html[data-theme="dark"] .alert-badge.high,
+html[data-theme="dark"] .alert-badge.mid { color: #d49791; background: #352527; }
+html[data-theme="dark"] .metric-pills button { color: #9da4b2; background: #1a1e28; border-color: #343b49; }
+html[data-theme="dark"] .metric-pills button:hover,
+html[data-theme="dark"] .metric-pills button.active { color: #c7c1f3; background: #292641; border-color: #4c4571; }
+html[data-theme="dark"] .detail-toolbar select { color: #e8eaf0; background: #202530; border-color: #394151; }
+html[data-theme="dark"] th { color: #a0a7b4; background: #202530; border-bottom-color: #343b49; }
+html[data-theme="dark"] td { color: #d7dae1; background: #1a1e28; border-bottom-color: #292f3b; }
+html[data-theme="dark"] th:first-child,
+html[data-theme="dark"] td:first-child { background: #1a1e28; }
+html[data-theme="dark"] tbody tr:hover td { background: #232835; }
+html[data-theme="dark"] .toast { color: #e9ebef; background: #252b37; border-color: #3d4554; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }

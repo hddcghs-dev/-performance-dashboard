@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>民德时代 · 日报看板</title>
+  <script>try{document.documentElement.dataset.theme=localStorage.getItem('dashboard-theme')||'light'}catch(e){document.documentElement.dataset.theme='light'}</script>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><rect width=%2264%22 height=%2264%22 rx=%2218%22 fill=%22%236d5dfc%22/><text x=%2232%22 y=%2242%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22white%22>民</text></svg>">
   <link rel="stylesheet" href="styles.css?v=20260710">
   <link rel="stylesheet" href="responsive.css?v=20260710">
@@ -15,6 +16,7 @@
   <header class="topbar">
     <div class="brand"><span class="brand-mark">民</span><div><h1>日报经营看板</h1><small>MINDE DAILY OPERATIONS</small></div></div>
     <nav id="tabs"><button class="tab active" data-tab="overview">整体总览</button><button class="tab" data-tab="compare">门店对比</button><button class="tab" data-tab="detail">单店详情</button></nav>
+    <button class="theme-toggle" id="theme-toggle" type="button" aria-label="切换明暗主题"><span class="theme-toggle-icon" aria-hidden="true">◐</span><span id="theme-toggle-label">暗夜</span></button>
     <div class="freshness" id="freshness">数据加载中</div>
   </header>
 
