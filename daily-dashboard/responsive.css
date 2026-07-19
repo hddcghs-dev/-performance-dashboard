@@ -1,5 +1,0 @@
-@media (max-width: 680px) {
-  .detail-toolbar label { width: 100%; }
-  .detail-toolbar label span { white-space: nowrap; }
-  .detail-toolbar select { width: auto; min-width: 0; flex: 1; }
-}
