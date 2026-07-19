@@ -33,6 +33,8 @@
   --grid: rgba(170,205,184,.05);
   --glow: rgba(61,220,159,.30);
   --ring: rgba(61,220,159,.42);
+  --halo: rgba(61,220,159,.20);
+  --halo-glow: rgba(61,220,159,.09);
   --shadow: 0 26px 70px rgba(0,0,0,.46);
   --on-accent: #05231a;
   --radius-card: 20px;
@@ -78,6 +80,8 @@ body[data-theme="light"] {
   --grid: rgba(20,62,43,.05);
   --glow: rgba(14,138,95,.22);
   --ring: rgba(14,138,95,.38);
+  --halo: rgba(14,138,95,.16);
+  --halo-glow: rgba(14,138,95,.07);
   --shadow: 0 20px 54px rgba(34,62,46,.13);
   --on-accent: #ffffff;
   --bg: #f6f8f4;
@@ -337,48 +341,31 @@ body[data-theme="light"] select option { color: #15231b; background: #ffffff; }
 /* ===== 主区域 ===== */
 .main { position: relative; z-index: 1; padding: 24px 28px 48px; max-width: 1600px; margin: 0 auto; }
 
-/* ===== 玻璃卡片通用基底 ===== */
+/* ===== 玻璃卡片通用基底（整圈翡翠发光描边） ===== */
 .kpi-card, .chart-card, .table-card, .insight-card, .compare-summary, .store-selector {
   position: relative;
   background: var(--paper);
   border: 1px solid var(--line);
   border-radius: var(--radius-card);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow), 0 0 0 1px var(--halo), 0 0 26px var(--halo-glow);
   backdrop-filter: blur(18px) saturate(140%);
   -webkit-backdrop-filter: blur(18px) saturate(140%);
   overflow: hidden;
   animation: rise .6s cubic-bezier(.22,.9,.3,1) backwards;
   transition: transform .24s cubic-bezier(.22,.9,.3,1), box-shadow .24s ease, border-color .24s ease;
 }
-/* 顶部高光（自上而下渐隐） */
-.kpi-card::before, .chart-card::before, .table-card::before, .insight-card::before, .compare-summary::before, .store-selector::before {
-  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
-  background: linear-gradient(180deg, rgba(255,255,255,.06), transparent 34%);
-}
-body[data-theme="light"] .kpi-card::before, body[data-theme="light"] .chart-card::before,
-body[data-theme="light"] .table-card::before, body[data-theme="light"] .insight-card::before,
-body[data-theme="light"] .compare-summary::before, body[data-theme="light"] .store-selector::before {
-  background: linear-gradient(180deg, rgba(255,255,255,.55), transparent 40%);
-}
 .kpi-card > *, .chart-card > *, .table-card > *, .insight-card > * { position: relative; }
 
 /* ===== KPI 指标卡 ===== */
 .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 22px; }
 .kpi-card { min-height: 140px; padding: 18px 18px 16px; }
-/* 顶部翡翠→青渐变细线：默认 40% 透明，悬停全亮 */
-.kpi-card::after {
-  content: ""; position: absolute; top: 0; left: 20px; right: 20px; height: 2px; border-radius: 2px;
-  background: linear-gradient(90deg, transparent, var(--jade), var(--cyan), transparent);
-  opacity: .40; transition: opacity .24s ease;
-}
 .kpi-card:hover {
   transform: translateY(-6px) scale(1.025);
   border-color: var(--ring);
-  box-shadow: 0 30px 80px rgba(0,0,0,.50), 0 0 0 1px var(--ring), 0 0 46px rgba(61,220,159,.14);
+  box-shadow: 0 30px 80px rgba(0,0,0,.50), 0 0 0 1px var(--ring), 0 0 46px rgba(61,220,159,.22);
   z-index: 3;
 }
-body[data-theme="light"] .kpi-card:hover { box-shadow: 0 24px 60px rgba(34,62,46,.20), 0 0 0 1px var(--ring); }
-.kpi-card:hover::after { opacity: 1; }
+body[data-theme="light"] .kpi-card:hover { box-shadow: 0 24px 60px rgba(34,62,46,.20), 0 0 0 1px var(--ring), 0 0 34px rgba(14,138,95,.16); }
 .kpi-card.no-data { opacity: .4; }
 /* 同组卡片 .04s 步进错峰入场（backwards 填充，动画结束即释放 transform） */
 .kpi-card:nth-child(1) { animation-delay: .04s; }
@@ -1226,6 +1213,11 @@ function fmtY(n) {
   if (n == null || isNaN(n)) return '—';
   if (Math.abs(n) >= 10000) return (n/10000).toFixed(1) + '万';
   return n.toLocaleString('zh-CN');
+}
+// 金额取整到个位（单店详情卡使用）：四舍五入 + 千分位，不带小数与“万”缩写
+function fmtYInt(n) {
+  if (n == null || isNaN(n)) return '—';
+  return Math.round(Number(n)).toLocaleString('zh-CN');
 }
 function fmtN(n) {
   if (n == null || isNaN(n)) return '—';
@@ -2332,13 +2324,13 @@ function renderDetailKPIs(store, dates) {
   const sections = [
     {
       title: '营收', open: true, items: [
-        { label:'营业额', val:fmtY(svcVal), sub:`服务${fmtY(svcVal)}  ·  商品${fmtY(prodVal)}`, color:'gold', m:'服务营业额', isSum:true, mom:true },
-        { label:'现金流营业额', val:fmtY(getSum('现金流营业额')), sub:'元', color:'', m:'现金流营业额', isSum:true },
-        { label:'抖音营业额', val:fmtY(getSum('抖音')), sub:'元', color:'', m:'抖音', isSum:true, mom:true },
-        { label:'美团营业额', val:fmtY(getSum('美团')), sub:'元', color:'', m:'美团', isSum:true, mom:true },
-        { label:'卡金', val:fmtY(getSum('卡金')), sub:'元', color:'', m:'卡金', isSum:true },
-        { label:'充值', val:fmtY(getSum('充值')), sub:'元', color:'', m:'充值', isSum:true },
-        { label:'免单减免', val:fmtY(getSum('免单减免')), sub:'元', color:'', m:'免单减免', isSum:true },
+        { label:'营业额', val:fmtYInt(svcVal), sub:`服务${fmtYInt(svcVal)}  ·  商品${fmtYInt(prodVal)}`, color:'gold', m:'服务营业额', isSum:true, mom:true },
+        { label:'现金流营业额', val:fmtYInt(getSum('现金流营业额')), sub:'元', color:'', m:'现金流营业额', isSum:true },
+        { label:'抖音营业额', val:fmtYInt(getSum('抖音')), sub:'元', color:'', m:'抖音', isSum:true, mom:true },
+        { label:'美团营业额', val:fmtYInt(getSum('美团')), sub:'元', color:'', m:'美团', isSum:true, mom:true },
+        { label:'卡金', val:fmtYInt(getSum('卡金')), sub:'元', color:'', m:'卡金', isSum:true },
+        { label:'充值', val:fmtYInt(getSum('充值')), sub:'元', color:'', m:'充值', isSum:true },
+        { label:'免单减免', val:fmtYInt(getSum('免单减免')), sub:'元', color:'', m:'免单减免', isSum:true },
       ]
     },
     {
