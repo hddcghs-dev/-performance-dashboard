@@ -1048,7 +1048,7 @@ function renderTrendMetricTags() {
   }
 }
 
-fetch('dashboard_data.json')
+fetch('dashboard_data.json?v=2026-07-22T08%3A29%3A21.856Z')
   .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
   .then(data => {
     ROOT_DATA = data;
