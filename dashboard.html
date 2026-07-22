@@ -713,6 +713,13 @@ body[data-theme="light"] .median-box { border-color: rgba(169,127,69,.30); backg
     <button class="tab" data-tab="compare">门店对比</button>
     <button class="tab" data-tab="detail">单店详情</button>
   </div>
+  <div class="filter-group" title="切换同一 Base 中的日/月数据颗粒度">
+    <span class="filter-label">颗粒度</span>
+    <select id="grain-select" aria-label="数据颗粒度">
+      <option value="monthly">月</option>
+      <option value="daily">日</option>
+    </select>
+  </div>
   <div class="global-search">
     <span class="search-icon">⌕</span>
     <input id="global-search-input" type="search" autocomplete="off" placeholder="搜索门店并直达详情" aria-label="搜索门店">
@@ -799,11 +806,11 @@ body[data-theme="light"] .median-box { border-color: rgba(169,127,69,.30); backg
       </div>
     </div>
     <div class="filter-group">
-      <span class="filter-label">起始月</span>
+      <span class="filter-label" id="compare-start-label">起始月</span>
       <select id="compare-start"></select>
     </div>
     <div class="filter-group">
-      <span class="filter-label">截止月</span>
+      <span class="filter-label" id="compare-end-label">截止月</span>
       <select id="compare-end"></select>
     </div>
     <div class="filter-group">
@@ -854,6 +861,8 @@ body[data-theme="light"] .median-box { border-color: rgba(169,127,69,.30); backg
     <div class="filter-group">
       <span class="filter-label">周期</span>
       <select id="detail-period">
+        <option value="day">单日</option>
+        <option value="week">近7日</option>
         <option value="month">月度</option>
         <option value="quarter">季度</option>
         <option value="year">年度</option>
@@ -872,7 +881,7 @@ body[data-theme="light"] .median-box { border-color: rgba(169,127,69,.30); backg
       <div class="chart-card"><div class="chart-card-title">项目占比</div><div class="chart" id="chart-detail-project-pie"></div></div>
     </div>
     <div class="chart-grid">
-      <div class="chart-card"><div class="chart-card-title">各月营业额趋势</div><div class="chart" id="chart-detail-revenue-trend"></div></div>
+      <div class="chart-card"><div class="chart-card-title">营业额趋势</div><div class="chart" id="chart-detail-revenue-trend"></div></div>
       <div class="chart-card"><div class="chart-card-title">项目数趋势</div><div class="chart" id="chart-detail-project-trend"></div></div>
     </div>
     <div class="chart-grid">
@@ -895,22 +904,25 @@ body[data-theme="light"] .median-box { border-color: rgba(169,127,69,.30); backg
 // 数据加载
 // ============================================================
 let ALL_DATA = {};
+let ROOT_DATA = {};
 let STORES = [];
 let DATES = [];
 let METRICS = [];
+let DATA_GRAIN = new URLSearchParams(location.search).get('grain') === 'daily' ? 'daily' : 'monthly';
 
 // 门店显示顺序（按门店列表-2024.xlsx）
 const STORE_ORDER = [
-  '民德路店','红谷滩店','抚河桥店','抚州高新加盟店','朝阳店','京东天虹店',
-  '赣州章贡加盟店','上饶万年加盟店','九江中航城店','九江万达店','上饶婺源加盟店',
-  '杭州西湖店','新余渝水店','台州椒江店','赣州南康店','青岛北区店','萍乡安源店',
-  '温州时代店','台州路桥店','鹰潭月湖店','宜春袁州店','杭州市中心店','合肥经开店','泉州兴贤路店'
+  '民德路店','红谷滩店','抚河桥店','抚州高新店','朝阳店','京东天虹店',
+  '赣州店','万年店','九江中航城店','九江万达店','婺源店','杭州西溪天街店',
+  '新余渝水店','台州椒江店','南康店','青岛市北区店','萍乡安源店',
+  '温州时代店','台州路桥店','鹰潭月湖店','宜春袁州店','杭州市中心店','合肥经开店',
+  '泉州兴贤路店','福州世欧王庄五里亭店','南通山姆店'
 ];
 
 // spec指标名 → JSON字段名 映射
 const FIELD_MAP = {
-  '服务营业额':'服务营业额','现金流营业额':'现金流营业额',
-  '抖音营业额':'抖音','美团营业额':'美团','卡金':'卡金','充值':'充值','商品营业额':'商品营业额',
+  '总营业额':'总营业额','服务营业额':'服务营业额','现金流营业额':'现金流营业额',
+  '抖音营业额':'抖音-可聚集','美团营业额':'美团-可聚集','抖音':'抖音-可聚集','美团':'美团-可聚集','卡金':'卡金','充值':'充值','商品营业额':'商品营业额',
   '开卡':'开卡','续充':'续充','免单减免':'免单+减免',
   '项目数':'项目数','168项目数':'168项目数','298项目数':'298项目数','358项目数':'358项目数','大钟占比':'大钟占比（298+358）',
   '抖音新增评论':'抖音新增评论','抖音总评论':'抖音总评论数','抖音新增差评':'抖音新增差评','抖音总中差评':'抖音总中差评数','抖音评价回复率':'抖音评价回复率',
@@ -918,15 +930,16 @@ const FIELD_MAP = {
   '综合新增评论':'综合新增评论','综合新增差评':'综合新增差评','总评论数':'总评论数','总差评数':'总差评数','差评率':'差评率',
   '抖音评分':'抖音评分','美团评分':'美团评分','大众点评':'大众点评','美团经营分':'美团经营分',
   '美团曝光人数':'美团曝光人数','美团访问人数':'美团访问人数','美团下单人数':'美团下单人数',
-  '抖音访问人数':'抖音门店页访问人数','抖音成交人数':'抖音门店页成交人数',
-  '曝光-访问转化率':'美团曝光-访问转化率','意向转化率':'美团意向转化率','抖音转化率':'抖音转化率',
+  '抖音访问人数':'抖音门店页访问人数','抖音成交人数':'抖音门店页成交人数','美团成交人数':'美团核销总数',
+  '抖音成交金额':'抖音成交金额','抖音平台核销金额':'抖音-平台','美团平台核销金额':'美团-平台',
+  '曝光-访问转化率':'美团曝光-访问转化率','意向转化率':'美团意向转化率','美团转化率':'美团转化率','抖音转化率':'抖音转化率','抖音核销率':'抖音核销率',
   '核销新客数':'核销新客数','核销老客数':'核销老客数','核销总数':'美团核销总数',
   '美团核销新客':'美团核销新客','美团核销老客':'美团核销老客','新客占比':'新客占比',
 };
 
 const METRIC_LABELS = {
-  '服务营业额':'服务营业额','现金流营业额':'现金流营业额',
-  '抖音营业额':'抖音营业额','美团营业额':'美团营业额','卡金':'卡金','充值':'充值','商品营业额':'商品营业额',
+  '总营业额':'总营业额','服务营业额':'服务营业额','现金流营业额':'现金流营业额',
+  '抖音营业额':'抖音-可聚集','美团营业额':'美团-可聚集','卡金':'卡金','充值':'充值','商品营业额':'商品营业额',
   '开卡':'开卡','续充':'续充','免单减免':'免单减免',
   '项目数':'总项目数','168项目数':'168项目数','298项目数':'298项目数','358项目数':'358项目数','大钟占比':'大钟占比',
   '抖音新增评论':'新增评论(抖音)','抖音总评论':'总评论(抖音)','抖音新增差评':'新增差评(抖音)','抖音总中差评':'总中差评(抖音)','抖音评价回复率':'评价回复率(抖音)',
@@ -934,21 +947,22 @@ const METRIC_LABELS = {
   '综合新增评论':'综合新增评论','综合新增差评':'综合新增差评','总评论数':'总评论数','总差评数':'总差评数','差评率':'差评率',
   '抖音评分':'抖音评分','美团评分':'美团评分','大众点评':'大众点评','美团经营分':'美团经营分',
   '美团曝光人数':'美团曝光人数','美团访问人数':'美团访问人数','美团下单人数':'美团下单人数',
-  '抖音访问人数':'抖音访问人数','抖音成交人数':'抖音成交人数',
-  '曝光-访问转化率':'曝光-访问转化率','意向转化率':'美团转化率','抖音转化率':'抖音转化率',
+  '抖音访问人数':'抖音访问人数','抖音成交人数':'抖音成交人数','美团成交人数':'美团成交人数',
+  '抖音成交金额':'抖音成交金额','抖音平台核销金额':'抖音-平台','美团平台核销金额':'美团-平台',
+  '曝光-访问转化率':'曝光-访问转化率','意向转化率':'美团下单转化率','美团转化率':'美团转化率','抖音转化率':'抖音转化率','抖音核销率':'抖音核销率',
   '核销新客数':'核销新客数','核销老客数':'核销老客数','核销总数':'核销总数',
   '美团核销新客':'美团核销新客','美团核销老客':'美团核销老客','新客占比':'新客占比'
 };
 
 // 7大维度 × 38指标
 const METRIC_GROUPS = {
-  '营收':['服务营业额','现金流营业额','抖音营业额','美团营业额','卡金','充值','开卡','续充','商品营业额','免单减免'],
+  '营收':['总营业额','服务营业额','现金流营业额','抖音营业额','美团营业额','卡金','充值','开卡','续充','商品营业额','免单减免'],
   '📦 项目':['项目数','168项目数','298项目数','358项目数','大钟占比'],
   '评价':['抖音新增评论','抖音总评论','抖音新增差评','抖音总中差评','抖音评价回复率','美团新增评论','美团总评价','美团新增差评','美团总差评','综合新增评论','综合新增差评','总评论数','总差评数','差评率'],
   '评分':['抖音评分','美团评分','大众点评','美团经营分'],
-  '流量':['美团曝光人数','美团访问人数','美团下单人数','抖音访问人数','抖音成交人数'],
-  '转化':['曝光-访问转化率','意向转化率','抖音转化率'],
-  '核销':['核销新客数','核销老客数','核销总数','美团核销新客','美团核销老客','新客占比']
+  '流量':['美团曝光人数','美团访问人数','美团下单人数','美团成交人数','抖音访问人数','抖音成交人数'],
+  '转化':['曝光-访问转化率','意向转化率','美团转化率','抖音转化率','抖音核销率'],
+  '核销':['抖音成交金额','抖音平台核销金额','美团平台核销金额','核销新客数','核销老客数','核销总数','美团核销新客','美团核销老客','新客占比']
 };
 
 const KPI_METRICS_OVERVIEW = ['服务营业额','项目数','综合新增评论','综合新增差评','差评率','核销总数','新客占比','抖音评分','美团评分'];
@@ -1037,10 +1051,13 @@ function renderTrendMetricTags() {
 fetch('dashboard_data.json')
   .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
   .then(data => {
-    ALL_DATA = data;
-    STORES = data.stores;
-    DATES = data.dates;
-    METRICS = data.metrics;
+    ROOT_DATA = data;
+    const selected = data[DATA_GRAIN] || data.monthly || data;
+    ALL_DATA = { ...data, ...selected };
+    STORES = data.stores || selected.stores || [];
+    DATES = selected.dates || [];
+    METRICS = selected.metrics || [];
+    configureGrainUI();
     buildIndex();
     init();
   })
@@ -1048,6 +1065,45 @@ fetch('dashboard_data.json')
     console.error('数据加载失败:', err);
     document.body.innerHTML = '<div style="color:#fff;padding:40px;font-size:18px">数据加载失败: ' + escapeHtml(err.message) + '<br><br>请确保 HTTP 服务器正在运行（双击 启动看板.bat）<br>或检查浏览器控制台(F12)获取详细错误</div>';
   });
+
+function configureGrainUI() {
+  const grainSelect = document.getElementById('grain-select');
+  grainSelect.value = DATA_GRAIN;
+  grainSelect.onchange = () => {
+    const url = new URL(location.href);
+    url.searchParams.set('grain', grainSelect.value);
+    location.href = url.toString();
+  };
+  const detailPeriod = document.getElementById('detail-period');
+  detailPeriod.innerHTML = DATA_GRAIN === 'daily'
+    ? '<option value="day">单日</option><option value="week">近7日</option><option value="month">月度</option><option value="quarter">季度</option><option value="year">年度</option><option value="range">自定义区间</option>'
+    : '<option value="month">月度</option><option value="quarter">季度</option><option value="year">年度</option><option value="range">自定义区间</option>';
+  document.querySelectorAll('[data-preset="latestMonth"]').forEach((button) => { button.textContent = DATA_GRAIN === 'daily' ? '最近一天' : '最近一月'; });
+  document.querySelectorAll('[data-preset="latestQuarter"]').forEach((button) => { button.textContent = DATA_GRAIN === 'daily' ? '最近7天' : '最近一季'; });
+  document.querySelectorAll('[data-preset="ytd"]').forEach((button) => { button.textContent = DATA_GRAIN === 'daily' ? '本月' : '今年'; });
+  document.getElementById('compare-start-label').textContent = DATA_GRAIN === 'daily' ? '起始日' : '起始月';
+  document.getElementById('compare-end-label').textContent = DATA_GRAIN === 'daily' ? '截止日' : '截止月';
+  if (DATA_GRAIN === 'daily') {
+    trendSelectedMetrics = ['总营业额'];
+    compareSelectedMetrics = ['总营业额'];
+  } else {
+    METRIC_GROUPS['营收'] = METRIC_GROUPS['营收'].filter(metric => metric !== '总营业额');
+  }
+}
+
+function displayDate(date) {
+  return DATA_GRAIN === 'daily' ? date : date.substring(0, 7).replace('-', '年') + '月';
+}
+
+function axisDate(date) {
+  return DATA_GRAIN === 'daily' ? date.substring(5) : date.substring(5, 7) + '月';
+}
+
+function shiftIsoDate(date, days) {
+  const value = new Date(date + 'T12:00:00');
+  value.setDate(value.getDate() + days);
+  return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
+}
 
 function getRecord(date, store) {
   return IDX_BY_DS[date + '_' + store];
@@ -1059,6 +1115,7 @@ function safeNum(v) {
   return isNaN(n) ? 0 : n;
 }
 function metricField(m) { return FIELD_MAP[m] || m; }
+function primaryRevenueMetric() { return DATA_GRAIN === 'daily' ? '总营业额' : '服务营业额'; }
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, ch => ({
     '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
@@ -1077,7 +1134,7 @@ function csvCell(value) {
 }
 
 // 百分比指标判定
-const PCT_METRICS = new Set(['差评率','新客占比','曝光-访问转化率','意向转化率','抖音转化率','大钟占比']);
+const PCT_METRICS = new Set(['差评率','新客占比','曝光-访问转化率','意向转化率','美团转化率','抖音转化率','抖音核销率','大钟占比']);
 function isPct(m) { return PCT_METRICS.has(m); }
 
 // ============================================================
@@ -1161,8 +1218,7 @@ function buildIndex() {
   // Update freshness badge
   const badge = document.getElementById('freshness-badge');
   if (badge && LATEST_DATE) {
-    const ym = LATEST_DATE.substring(0,7).replace('-','年');
-    badge.textContent = '数据截止: ' + ym + '月';
+    badge.textContent = '数据截止: ' + displayDate(LATEST_DATE);
   }
 }
 
@@ -1174,9 +1230,13 @@ function setPreset(name) {
   const sorted = [...DATES].sort();
   switch (name) {
     case 'latestMonth': presetDates = [sorted[sorted.length - 1]]; break;
-    case 'latestQuarter': presetDates = sorted.slice(-3); break;
+    case 'latestQuarter': presetDates = sorted.slice(DATA_GRAIN === 'daily' ? -7 : -3); break;
     case 'ytd':
-      presetDates = sorted.filter(d => d.startsWith(sorted[sorted.length-1].substring(0,4)));
+      presetDates = sorted.filter(d => d.startsWith(
+        DATA_GRAIN === 'daily'
+          ? sorted[sorted.length - 1].substring(0, 7)
+          : sorted[sorted.length - 1].substring(0, 4)
+      ));
       break;
     default: presetDates = null; break;
   }
@@ -1293,9 +1353,16 @@ function initFilters() {
     const period = dp.value;
 
     let html = '';
-    if (period === 'month') {
+    if (period === 'day' || period === 'week') {
+      const controlId = period === 'day' ? 'detail-day' : 'detail-week-end';
+      const lastVal = document.getElementById(controlId)?.value || sortedStoreDates[0] || '';
+      html = `<select id="${controlId}">${sortedStoreDates.map(d => `<option value="${d}" ${d === lastVal ? 'selected' : ''}>${d}</option>`).join('')}</select>`;
+    } else if (period === 'month') {
       const lastVal = document.getElementById('detail-month')?.value;
-      html = `<select id="detail-month">${sortedStoreDates.map(d => {
+      const monthValues = DATA_GRAIN === 'daily'
+        ? [...new Set(sortedStoreDates.map(d => d.substring(0, 7)))]
+        : sortedStoreDates;
+      html = `<select id="detail-month">${monthValues.map(d => {
         const label = d.substring(0,7).replace('-','年')+'月';
         return `<option value="${d}" ${d === lastVal ? 'selected' : ''}>${label}</option>`;
       }).join('')}</select>`;
@@ -1310,8 +1377,9 @@ function initFilters() {
     } else if (period === 'range') {
       const lastFrom = document.getElementById('detail-from')?.value || sortedStoreDates[sortedStoreDates.length-1] || '';
       const lastTo = document.getElementById('detail-to')?.value || sortedStoreDates[0] || '';
-      const opts = sortedStoreDates.map(d => `<option value="${d}" ${d===lastFrom||d===lastTo?'selected':''}>${d.substring(0,7).replace('-','年')+'月'}</option>`).join('');
-      html = `<select id="detail-from">${opts}</select><span class="filter-label" style="margin:0 4px">至</span><select id="detail-to">${opts}</select>`;
+      const fromOpts = sortedStoreDates.map(d => `<option value="${d}" ${d===lastFrom?'selected':''}>${displayDate(d)}</option>`).join('');
+      const toOpts = sortedStoreDates.map(d => `<option value="${d}" ${d===lastTo?'selected':''}>${displayDate(d)}</option>`).join('');
+      html = `<select id="detail-from">${fromOpts}</select><span class="filter-label" style="margin:0 4px">至</span><select id="detail-to">${toOpts}</select>`;
     }
     dpUi.innerHTML = html;
     // Bind change events to dynamic selects
@@ -1350,6 +1418,12 @@ function getFilteredDates() {
 }
 
 function calcTotal(dates, metric) {
+  const parts = RATIO_METRICS[metric];
+  if (parts) {
+    const numerator = calcTotal(dates, parts[0]);
+    const denominator = calcTotal(dates, parts[1]);
+    return denominator ? numerator / denominator : 0;
+  }
   const f = metricField(metric);
   let sum = 0;
   dates.forEach(d => {
@@ -1367,15 +1441,26 @@ function calcStoreAgg(dates, store, metric) {
   });
   return sum;
 }
-// 比率/评分型指标用均值，累加型指标用求和
-const AVG_METRICS = new Set(['差评率','新客占比','曝光-访问转化率','意向转化率','抖音转化率','大钟占比','抖音评价回复率','抖音评分','美团评分','大众点评','美团经营分']);
+const RATIO_METRICS = {
+  '美团转化率':['美团核销总数','美团曝光人数'],
+  '抖音转化率':['抖音门店页成交人数','抖音门店页访问人数'],
+  '抖音核销率':['抖音-平台','抖音成交金额'],
+};
+// 评分和已有比率沿用均值；明确分子分母的新比率按合计重算。
+const AVG_METRICS = new Set(['差评率','新客占比','曝光-访问转化率','意向转化率','大钟占比','抖音评价回复率','抖音评分','美团评分','大众点评','美团经营分']);
 function isAvgMetric(m) { return AVG_METRICS.has(m); }
-const MONEY_METRICS = new Set(['服务营业额','现金流营业额','抖音营业额','美团营业额','卡金','充值','商品营业额','免单减免']);
+const MONEY_METRICS = new Set(['总营业额','服务营业额','现金流营业额','抖音营业额','美团营业额','抖音成交金额','抖音平台核销金额','美团平台核销金额','抖音-平台','美团-平台','卡金','充值','开卡','续充','商品营业额','免单减免']);
 function fmtMean(v, m) {
   if (MONEY_METRICS.has(m)) return fmtY(v);
   return fmtN(Math.round(v));
 }
 function calcStoreValue(dates, store, metric) {
+  const parts = RATIO_METRICS[metric];
+  if (parts) {
+    const numerator = calcStoreAgg(dates, store, parts[0]);
+    const denominator = calcStoreAgg(dates, store, parts[1]);
+    return denominator ? numerator / denominator : 0;
+  }
   if (isAvgMetric(metric)) return calcStoreAvg(dates, store, metric);
   return calcStoreAgg(dates, store, metric);
 }
@@ -1389,6 +1474,9 @@ function calcStoreAvg(dates, store, metric) {
 }
 
 function getMonthlyData(dates, metric) {
+  if (RATIO_METRICS[metric]) {
+    return Object.fromEntries(dates.map(d => [d, calcTotal([d], metric)]));
+  }
   const f = metricField(metric);
   const monthly = {};
   dates.forEach(d => {
@@ -1400,6 +1488,9 @@ function getMonthlyData(dates, metric) {
 }
 
 function getStoreMonthlyData(store, metric, dates) {
+  if (RATIO_METRICS[metric]) {
+    return Object.fromEntries(dates.map(d => [d, calcStoreValue([d], store, metric)]));
+  }
   const f = metricField(metric);
   const result = {};
   dates.forEach(d => {
@@ -1434,7 +1525,8 @@ function renderOverviewKPIs(dates) {
     return `<div class="kpi-change ${colorCls}"><span class="arrow">${arrow}</span>${(chg*100).toFixed(1)}%</div>`;
   }
 
-  const totalRev = calcTotal(dates,'服务营业额');
+  const revenueMetric = primaryRevenueMetric();
+  const totalRev = calcTotal(dates,revenueMetric);
   const totalCashflow = calcTotal(dates,'现金流营业额');
   const dyAmt = calcTotal(dates,'抖音营业额');
   const mtAmt = calcTotal(dates,'美团营业额');
@@ -1468,7 +1560,7 @@ function renderOverviewKPIs(dates) {
   const mtScore = avgNonZero('美团评分');
 
   const kpis = [
-    { label:'服务营业额', val:fmtY(totalRev), raw:totalRev, color:'gold', m:'服务营业额' },
+    { label:METRIC_LABELS[revenueMetric], val:fmtY(totalRev), raw:totalRev, color:'gold', m:revenueMetric },
     { label:'现金流营业额', val:fmtY(totalCashflow), raw:totalCashflow, color:'', m:'现金流营业额' },
     { label:'现金流率', val:fmtPct(cashflowRate), raw:cashflowRate, color: cashflowRate>=1?'green':'', m:null },
     { label:'项目均价', val:fmtY(Math.round(avgTicket)), raw:avgTicket, color:'', m:null },
@@ -1513,8 +1605,9 @@ function renderOverviewInsights(dates) {
   const rows = records.map(r => {
     const store = r['门店'];
     const prev = prevDate ? IDX_BY_DS[prevDate + '_' + store] : null;
-    const rev = safeNum(r['服务营业额']);
-    const prevRev = prev ? safeNum(prev['服务营业额']) : 0;
+    const revenueField = metricField(primaryRevenueMetric());
+    const rev = safeNum(r[revenueField]);
+    const prevRev = prev ? safeNum(prev[revenueField]) : 0;
     const revChange = prevRev > 0 ? (rev - prevRev) / prevRev : null;
     const ticket = safeNum(r['项目数']) > 0 ? rev / safeNum(r['项目数']) : 0;
     const cardGap = safeNum(r['充值']) - safeNum(r['卡金']);
@@ -1564,7 +1657,7 @@ function renderOverviewInsights(dates) {
 function renderTrendChart(dates, metrics) {
   const chart = getChart('chart-trend');
   if (!chart) return;
-  const labels = dates.map(d => d.substring(5,7)+'月');
+  const labels = dates.map(axisDate);
 
   const series = metrics.map((m, i) => {
     const monthly = getMonthlyData(dates, m);
@@ -1600,7 +1693,8 @@ function renderPieCharts(dates) {
   const dy = calcTotal(dates,'抖音');
   const mt = calcTotal(dates,'美团');
   const kj = calcTotal(dates,'卡金');
-  const svcTotal = calcTotal(dates,'服务营业额');
+  const revenueMetric = primaryRevenueMetric();
+  const svcTotal = calcTotal(dates,revenueMetric);
   const free = calcTotal(dates,'免单减免');
   const prod = calcTotal(dates,'商品营业额');
   const cashPay = svcTotal - dy - mt - kj - free - prod;
@@ -1609,7 +1703,7 @@ function renderPieCharts(dates) {
   if (!pie) return;
   pie.setOption({
     backgroundColor:'transparent',
-    tooltip:{...T.tip,formatter:p=>`${p.name}: ${p.value.toLocaleString('zh-CN')} (${p.percent.toFixed(1)}%) · 占服务营业额 ${(p.value/svcTotal*100).toFixed(1)}%`},
+    tooltip:{...T.tip,formatter:p=>`${p.name}: ${p.value.toLocaleString('zh-CN')} (${p.percent.toFixed(1)}%) · 占${DATA_GRAIN === 'daily' ? '总营业额' : '服务营业额'} ${(p.value/svcTotal*100).toFixed(1)}%`},
     legend:{orient:'vertical',right:10,top:'center',textStyle:{color:T.text,fontSize:11},itemWidth:10,itemHeight:10},
     series:[{
       type:'pie', radius:['40%','70%'], center:['35%','50%'],
@@ -1622,12 +1716,12 @@ function renderPieCharts(dates) {
       labelLine:{lineStyle:{color:T.axis}}
     }]
   });
-  // 核验: 各成分之和 = 服务营业额
+  // 核验: 各成分之和 = 当前主营业额口径
   const checkEl = document.getElementById('revenue-check');
   if (checkEl) {
     const checkSum = dy + mt + Math.max(0,svcTotal-dy-mt);
     const diff = Math.abs(svcTotal - checkSum);
-    checkEl.textContent = `抖音 + 美团 + 其它 = ${checkSum.toLocaleString('zh-CN')}  ·  服务营业额 ${svcTotal.toLocaleString('zh-CN')}  ${diff < 1 ? '正常' : '差额 '+diff.toFixed(2)}`;
+    checkEl.textContent = `抖音 + 美团 + 其它 = ${checkSum.toLocaleString('zh-CN')}  ·  ${DATA_GRAIN === 'daily' ? '总营业额' : '服务营业额'} ${svcTotal.toLocaleString('zh-CN')}  ${diff < 1 ? '正常' : '差额 '+diff.toFixed(2)}`;
   }
 
   const p168 = calcTotal(dates,'168项目数');
@@ -1823,11 +1917,11 @@ function initCompare() {
   const startSel = document.getElementById('compare-start');
   const endSel = document.getElementById('compare-end');
   startSel.innerHTML = sortedAsc.map(d => {
-    const label = d.substring(0,7).replace('-','年')+'月';
+    const label = displayDate(d);
     return `<option value="${d}">${label}</option>`;
   }).join('');
   endSel.innerHTML = sortedDesc.map(d => {
-    const label = d.substring(0,7).replace('-','年')+'月';
+    const label = displayDate(d);
     return `<option value="${d}">${label}</option>`;
   }).join('');
   // 默认：起始月=截止月=最新
@@ -1938,12 +2032,12 @@ function setComparePreset(name) {
       endSel.value = sorted[sorted.length - 1];
       break;
     case 'latestQuarter':
-      startSel.value = sorted[Math.max(0, sorted.length - 3)];
+      startSel.value = sorted[Math.max(0, sorted.length - (DATA_GRAIN === 'daily' ? 7 : 3))];
       endSel.value = sorted[sorted.length - 1];
       break;
     case 'ytd': {
-      const curYear = sorted[sorted.length - 1].substring(0,4);
-      const ytd = sorted.filter(d => d.startsWith(curYear));
+      const currentPrefix = sorted[sorted.length - 1].substring(0, DATA_GRAIN === 'daily' ? 7 : 4);
+      const ytd = sorted.filter(d => d.startsWith(currentPrefix));
       startSel.value = ytd[0];
       endSel.value = ytd[ytd.length - 1];
       break;
@@ -2049,7 +2143,7 @@ function renderCompareSummary(dates) {
   const metricName = METRIC_LABELS[metric] || metric;
   const topRows = rows.slice(0, 5);
   const bottomRows = rows.slice(-5).reverse();
-  const periodText = `${dates[0].substring(0,7).replace('-','年')}月 - ${dates[dates.length - 1].substring(0,7).replace('-','年')}月`;
+  const periodText = `${displayDate(dates[0])} - ${displayDate(dates[dates.length - 1])}`;
 
   function list(title, items, cls) {
     return `<div class="insight-card">
@@ -2259,9 +2353,19 @@ function getDetailDates(store) {
   const storeDates = getStoreDates(store);
   if (!storeDates.length) return [];
 
+  if (period === 'day') {
+    const value = document.getElementById('detail-day')?.value;
+    return value ? storeDates.filter(d => d === value) : [storeDates[storeDates.length - 1]];
+  }
+  if (period === 'week') {
+    const end = document.getElementById('detail-week-end')?.value || storeDates[storeDates.length - 1];
+    const endIndex = storeDates.indexOf(end);
+    return endIndex >= 0 ? storeDates.slice(Math.max(0, endIndex - 6), endIndex + 1) : [];
+  }
   if (period === 'month') {
     const el = document.getElementById('detail-month');
-    return el && el.value ? [el.value] : storeDates;
+    if (!el || !el.value) return storeDates;
+    return DATA_GRAIN === 'daily' ? storeDates.filter(d => d.startsWith(el.value)) : [el.value];
   }
   if (period === 'quarter') {
     const y = document.getElementById('detail-q-year')?.value;
@@ -2292,8 +2396,10 @@ function renderDetailKPIs(store, dates) {
   // MoM & YoY only for single-month mode
   const singleDate = dates.length === 1 ? dates[0] : null;
   const dateParts = singleDate ? singleDate.split('-') : null;
-  const prevMonth = dateParts ? ((parseInt(dateParts[1]) === 1 ? `${parseInt(dateParts[0])-1}-12` : `${dateParts[0]}-${String(parseInt(dateParts[1])-1).padStart(2,'0')}`) + '-01') : '';
-  const prevYearMonth = dateParts ? `${parseInt(dateParts[0])-1}-${dateParts[1]}-01` : '';
+  const prevMonth = dateParts ? (DATA_GRAIN === 'daily'
+    ? shiftIsoDate(singleDate, -1)
+    : ((parseInt(dateParts[1]) === 1 ? `${parseInt(dateParts[0])-1}-12` : `${dateParts[0]}-${String(parseInt(dateParts[1])-1).padStart(2,'0')}`) + '-01')) : '';
+  const prevYearMonth = dateParts ? `${parseInt(dateParts[0])-1}-${dateParts[1]}-${DATA_GRAIN === 'daily' ? dateParts[2] : '01'}` : '';
   const prevRecord = dateParts ? (getRecord(prevMonth, store) || {}) : {};
   const pyRecord = dateParts ? (getRecord(prevYearMonth, store) || {}) : {};
   const foundRecord = !isAll ? getRecord(dates[0], store) : null;
@@ -2301,11 +2407,10 @@ function renderDetailKPIs(store, dates) {
   const curRecord = foundRecord || {};
 
   const getVal = m => {
-    if (isAll) return calcStoreAgg(dates, store, m) / dates.length;
-    return safeNum(curRecord[m]);
+    return calcStoreValue(dates, store, m);
   };
-  const getPrevVal = m => safeNum(prevRecord[m]);
-  const getPyVal = m => safeNum(pyRecord[m]);
+  const getPrevVal = m => calcStoreValue([prevMonth], store, m);
+  const getPyVal = m => calcStoreValue([prevYearMonth], store, m);
   const getSum = m => calcStoreAgg(dates, store, m);
   const getPrevSum = m => calcStoreAgg([prevMonth], store, m);
   const getPySum = m => calcStoreAgg([prevYearMonth], store, m);
@@ -2319,12 +2424,14 @@ function renderDetailKPIs(store, dates) {
     return `<div class="kpi-change ${cls}"><span class="arrow">${arrow}</span>${sign}${(delta*100).toFixed(1)}% <span style="font-size:9px;color:var(--text2)">${label}</span></div>`;
   }
 
+  const revenueMetric = primaryRevenueMetric();
+  const totalVal = getSum(revenueMetric);
   const svcVal = getSum('服务营业额');
   const prodVal = getSum('商品营业额');
   const sections = [
     {
       title: '营收', open: true, items: [
-        { label:'营业额', val:fmtYInt(svcVal), sub:`服务${fmtYInt(svcVal)}  ·  商品${fmtYInt(prodVal)}`, color:'gold', m:'服务营业额', isSum:true, mom:true },
+        { label:METRIC_LABELS[revenueMetric], val:fmtYInt(totalVal), sub:`服务${fmtYInt(svcVal)}  ·  商品${fmtYInt(prodVal)}`, color:'gold', m:revenueMetric, isSum:true, mom:true },
         { label:'现金流营业额', val:fmtYInt(getSum('现金流营业额')), sub:'元', color:'', m:'现金流营业额', isSum:true },
         { label:'抖音营业额', val:fmtYInt(getSum('抖音')), sub:'元', color:'', m:'抖音', isSum:true, mom:true },
         { label:'美团营业额', val:fmtYInt(getSum('美团')), sub:'元', color:'', m:'美团', isSum:true, mom:true },
@@ -2345,12 +2452,15 @@ function renderDetailKPIs(store, dates) {
         { label:'差评率', val:fmtPct(getVal('差评率')), sub:'', color: getVal('差评率')>0.05?'red':'', m:'差评率' },
         { label:'美团访问', val:fmtN(getSum('美团访问人数')), sub:'人', color:'', m:'美团访问人数', isSum:true },
         { label:'抖音访问', val:fmtN(getSum('抖音门店页访问人数')), sub:'人', color:'', m:'抖音门店页访问人数', isSum:true },
-        { label:'美团转化率', val:fmtPct(getVal('美团意向转化率')), sub:'', color:'', m:'美团意向转化率' },
+        { label:'美团转化率', val:fmtPct(getVal('美团转化率')), sub:'成交人数 / 曝光人数', color:'', m:'美团转化率' },
         { label:'抖音转化率', val:fmtPct(getVal('抖音转化率')), sub:'', color:'', m:'抖音转化率' },
       ]
     },
     {
       title: '核销', open: true, items: [
+        { label:'抖音平台核销', val:fmtYInt(getSum('抖音-平台')), sub:'元', color:'', m:'抖音-平台', isSum:true },
+        { label:'美团平台核销', val:fmtYInt(getSum('美团-平台')), sub:'元', color:'', m:'美团-平台', isSum:true },
+        { label:'抖音核销率', val:fmtPct(getVal('抖音核销率')), sub:'平台核销金额 / 成交金额', color:'', m:'抖音核销率' },
         { label:'新客占比', val:fmtPct(getVal('新客占比')), sub:'', color:'', m:'新客占比' },
       ]
     }
@@ -2367,7 +2477,7 @@ function renderDetailKPIs(store, dates) {
         ${sec.items.map(it => {
           const isPMetric = isPct(it.m);
           const changeEl = it.mom && !isAll
-            ? (renderDelta(it.isSum ? getSum(it.m) : getVal(it.m), it.isSum ? getPrevSum(it.m) : getPrevVal(it.m), isPMetric, '环比') || '')
+            ? (renderDelta(it.isSum ? getSum(it.m) : getVal(it.m), it.isSum ? getPrevSum(it.m) : getPrevVal(it.m), isPMetric, DATA_GRAIN === 'daily' ? '较昨日' : '环比') || '')
             + (renderDelta(it.isSum ? getSum(it.m) : getVal(it.m), it.isSum ? getPySum(it.m) : getPyVal(it.m), isPMetric, '同比') || '')
             : '';
           return `<div class="kpi-card${noData?' no-data':''}">
@@ -2383,7 +2493,7 @@ function renderDetailKPIs(store, dates) {
 
 function renderDetailPieCharts(store) {
   const dates = getDetailDates(store);
-  const svcTotal = calcStoreAgg(dates, store, '服务营业额');
+  const svcTotal = calcStoreAgg(dates, store, primaryRevenueMetric());
   const dy = calcStoreAgg(dates, store, '抖音');
   const mt = calcStoreAgg(dates, store, '美团');
   const kj = calcStoreAgg(dates, store, '卡金');
@@ -2395,7 +2505,7 @@ function renderDetailPieCharts(store) {
   if (!pie) return;
   pie.setOption({
     backgroundColor:'transparent',
-    tooltip:{...T.tip,formatter:p=>`${p.name}: ${p.value.toLocaleString('zh-CN')} (${p.percent.toFixed(1)}%) · 占服务营业额 ${(p.value/svcTotal*100).toFixed(1)}%`},
+    tooltip:{...T.tip,formatter:p=>`${p.name}: ${p.value.toLocaleString('zh-CN')} (${p.percent.toFixed(1)}%) · 占${DATA_GRAIN === 'daily' ? '总营业额' : '服务营业额'} ${(p.value/svcTotal*100).toFixed(1)}%`},
     legend:{orient:'vertical',right:5,top:'center',textStyle:{color:T.text,fontSize:10},itemWidth:8,itemHeight:8},
     series:[{
       type:'pie',radius:['35%','65%'],center:['40%','50%'],
@@ -2429,7 +2539,7 @@ function renderDetailTrendCharts(store, dates) {
   const m168 = getStoreMonthlyData(store,'168项目数',dates);
   const m298 = getStoreMonthlyData(store,'298项目数',dates);
   const m358 = getStoreMonthlyData(store,'358项目数',dates);
-  const mRev = getStoreMonthlyData(store,'服务营业额',dates);
+  const mRev = getStoreMonthlyData(store,primaryRevenueMetric(),dates);
   const labels = Object.keys(mRev).sort();
 
   const hasData = (obj, d) => (obj[d] || 0) > 0;
@@ -2441,7 +2551,7 @@ function renderDetailTrendCharts(store, dates) {
   revChart.setOption({
     backgroundColor:'transparent',
     tooltip:{...T.tip,trigger:'axis',formatter:p=>`${p[0].name}<br>${p[0].value.toLocaleString('zh-CN')}`},
-    xAxis:{type:'category',data:revLabels.map(d=>d.substring(5,7)+'月'),axisLine:{lineStyle:{color:T.axis}},axisLabel:{color:T.text,fontSize:10},splitLine:{show:false}},
+    xAxis:{type:'category',data:revLabels.map(axisDate),axisLine:{lineStyle:{color:T.axis}},axisLabel:{color:T.text,fontSize:10},splitLine:{show:false}},
     yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:T.split}},axisLabel:{color:T.text,fontSize:10}},
     series:[{data:revLabels.map(d=>mRev[d]),type:'line',smooth:true,symbol:'circle',symbolSize:4,areaStyle:{color:{type:'linear',x:0,y:0,x2:0,y2:1,colorStops:[{offset:0,color:T.mt+'1F'},{offset:1,color:T.mt+'00'}]}},lineStyle:{color:T.mt,width:2},itemStyle:{color:T.mt}}],
     grid:{left:50,right:15,top:10,bottom:25}
@@ -2454,7 +2564,7 @@ function renderDetailTrendCharts(store, dates) {
     backgroundColor:'transparent',
     tooltip:{...T.tip,trigger:'axis'},
     legend:{data:['168项目','298项目','358项目'],textStyle:{color:T.text,fontSize:10},itemWidth:12,itemHeight:8,top:5},
-    xAxis:{type:'category',data:projLabels.map(d=>d.substring(5,7)+'月'),axisLine:{lineStyle:{color:T.axis}},axisLabel:{color:T.text,fontSize:10},splitLine:{show:false}},
+    xAxis:{type:'category',data:projLabels.map(axisDate),axisLine:{lineStyle:{color:T.axis}},axisLabel:{color:T.text,fontSize:10},splitLine:{show:false}},
     yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:T.split}},axisLabel:{color:T.text,fontSize:10}},
     series:[
       {name:'168项目',data:projLabels.map(d=>m168[d]),type:'line',smooth:true,symbol:'circle',symbolSize:3,lineStyle:{color:T.mt,width:2},itemStyle:{color:T.mt}},
@@ -2474,7 +2584,7 @@ function renderDetailTrendCharts(store, dates) {
     backgroundColor:'transparent',
     tooltip:{...T.tip,trigger:'axis'},
     legend:{data:['抖音评论','美团评论','差评'],textStyle:{color:T.text,fontSize:10},itemWidth:12,itemHeight:8,top:5},
-    xAxis:{type:'category',data:comLabels.map(d=>d.substring(5,7)+'月'),axisLine:{lineStyle:{color:T.axis}},axisLabel:{color:T.text,fontSize:10},splitLine:{show:false}},
+    xAxis:{type:'category',data:comLabels.map(axisDate),axisLine:{lineStyle:{color:T.axis}},axisLabel:{color:T.text,fontSize:10},splitLine:{show:false}},
     yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:T.split}},axisLabel:{color:T.text,fontSize:10}},
     series:[
       {name:'抖音评论',data:comLabels.map(d=>comDy[d]),type:'line',smooth:true,symbol:'circle',symbolSize:3,lineStyle:{color:T.dy,width:2},itemStyle:{color:T.dy}},
@@ -2493,7 +2603,7 @@ function renderDetailTrendCharts(store, dates) {
     backgroundColor:'transparent',
     tooltip:{...T.tip,trigger:'axis'},
     legend:{data:['美团访问','抖音访问'],textStyle:{color:T.text,fontSize:10},itemWidth:12,itemHeight:8,top:5},
-    xAxis:{type:'category',data:trafLabels.map(d=>d.substring(5,7)+'月'),axisLine:{lineStyle:{color:T.axis}},axisLabel:{color:T.text,fontSize:10},splitLine:{show:false}},
+    xAxis:{type:'category',data:trafLabels.map(axisDate),axisLine:{lineStyle:{color:T.axis}},axisLabel:{color:T.text,fontSize:10},splitLine:{show:false}},
     yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:T.split}},axisLabel:{color:T.text,fontSize:10}},
     series:[
       {name:'美团访问',data:trafLabels.map(d=>mtVis[d]),type:'line',smooth:true,symbol:'circle',symbolSize:3,areaStyle:{color:{type:'linear',x:0,y:0,x2:0,y2:1,colorStops:[{offset:0,color:T.mt+'1F'},{offset:1,color:T.mt+'00'}]}},lineStyle:{color:T.mt,width:2},itemStyle:{color:T.mt}},
@@ -2503,9 +2613,10 @@ function renderDetailTrendCharts(store, dates) {
   });
 
   // 转化率趋势
-  const conv1 = getStoreMonthlyData(store,'美团意向转化率',dates);
+  const conv1 = getStoreMonthlyData(store,'美团转化率',dates);
   const conv2 = getStoreMonthlyData(store,'抖音转化率',dates);
-  const convLabels = labels.filter(d => hasData(conv1,d) || hasData(conv2,d));
+  const conv3 = getStoreMonthlyData(store,'抖音核销率',dates);
+  const convLabels = labels.filter(d => hasData(conv1,d) || hasData(conv2,d) || hasData(conv3,d));
   const convChart = getChart('chart-detail-convert-trend');
   convChart.setOption({
     backgroundColor:'transparent',
@@ -2515,12 +2626,13 @@ function renderDetailTrendCharts(store, dates) {
         .map(x => `${x.seriesName}: ${(x.value*100).toFixed(1)}%`);
       return `${p[0]?.name || ''}<br>${rows.join('<br>')}`;
     }},
-    legend:{data:['美团意向转化率','抖音转化率'],textStyle:{color:T.text,fontSize:10},itemWidth:12,itemHeight:8,top:5},
-    xAxis:{type:'category',data:convLabels.map(d=>d.substring(5,7)+'月'),axisLine:{lineStyle:{color:T.axis}},axisLabel:{color:T.text,fontSize:10},splitLine:{show:false}},
+    legend:{data:['美团转化率','抖音转化率','抖音核销率'],textStyle:{color:T.text,fontSize:10},itemWidth:12,itemHeight:8,top:5},
+    xAxis:{type:'category',data:convLabels.map(axisDate),axisLine:{lineStyle:{color:T.axis}},axisLabel:{color:T.text,fontSize:10},splitLine:{show:false}},
     yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:T.split}},axisLabel:{color:T.text,fontSize:10,formatter:v=>(v*100).toFixed(0)+'%'}},
     series:[
-      {name:'美团意向转化率',data:convLabels.map(d=>conv1[d] > 0 ? conv1[d] : null),type:'line',smooth:true,connectNulls:false,showSymbol:true,symbol:'circle',symbolSize:5,lineStyle:{color:T.mt,width:2},itemStyle:{color:T.mt}},
+      {name:'美团转化率',data:convLabels.map(d=>conv1[d] > 0 ? conv1[d] : null),type:'line',smooth:true,connectNulls:false,showSymbol:true,symbol:'circle',symbolSize:5,lineStyle:{color:T.mt,width:2},itemStyle:{color:T.mt}},
       {name:'抖音转化率',data:convLabels.map(d=>conv2[d] > 0 ? conv2[d] : null),type:'line',smooth:true,connectNulls:false,showSymbol:true,symbol:'circle',symbolSize:5,lineStyle:{color:T.dy,width:2},itemStyle:{color:T.dy}},
+      {name:'抖音核销率',data:convLabels.map(d=>conv3[d] > 0 ? conv3[d] : null),type:'line',smooth:true,connectNulls:false,showSymbol:true,symbol:'circle',symbolSize:5,lineStyle:{color:T.gold,width:2},itemStyle:{color:T.gold}},
     ],
     grid:{left:50,right:15,top:30,bottom:25}
   }, true);
@@ -2532,7 +2644,7 @@ function renderDetailTrendCharts(store, dates) {
   newChart.setOption({
     backgroundColor:'transparent',
     tooltip:{...T.tip,trigger:'axis',formatter:p=>`${p[0].name}<br>${(p[0].value*100).toFixed(1)}%`},
-    xAxis:{type:'category',data:newLabels.map(d=>d.substring(5,7)+'月'),axisLine:{lineStyle:{color:T.axis}},axisLabel:{color:T.text,fontSize:10},splitLine:{show:false}},
+    xAxis:{type:'category',data:newLabels.map(axisDate),axisLine:{lineStyle:{color:T.axis}},axisLabel:{color:T.text,fontSize:10},splitLine:{show:false}},
     yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:T.split}},axisLabel:{color:T.text,fontSize:10,formatter:v=>(v*100).toFixed(0)+'%'},max:1},
     series:[{data:newLabels.map(d=>newRate[d]),type:'line',smooth:true,symbol:'circle',symbolSize:3,areaStyle:{color:{type:'linear',x:0,y:0,x2:0,y2:1,colorStops:[{offset:0,color:T.mt+'1F'},{offset:1,color:T.mt+'00'}]}},lineStyle:{color:T.mt,width:2},itemStyle:{color:T.mt}}],
     grid:{left:50,right:15,top:10,bottom:25}
@@ -2568,7 +2680,7 @@ function renderCardGold(store, dates) {
     backgroundColor:'transparent',
     tooltip:{...T.tip,trigger:'axis',formatter:p=>`${p[0].name}<br>${p[0].seriesName}: ${p[0].value.toLocaleString('zh-CN')}<br>${p[1].seriesName}: ${p[1].value.toLocaleString('zh-CN')}`},
     legend:{data:['卡金消耗','充值'],textStyle:{color:T.text,fontSize:10},itemWidth:12,itemHeight:8,top:5},
-    xAxis:{type:'category',data:glabels.map(d=>d.substring(5,7)+'月'),axisLine:{lineStyle:{color:T.axis}},axisLabel:{color:T.text,fontSize:10},splitLine:{show:false}},
+    xAxis:{type:'category',data:glabels.map(axisDate),axisLine:{lineStyle:{color:T.axis}},axisLabel:{color:T.text,fontSize:10},splitLine:{show:false}},
     yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:T.split}},axisLabel:{color:T.text,fontSize:10}},
     series:[
       {
@@ -2691,7 +2803,12 @@ setInterval(() => {
       if (!_lastDataHash) { _lastDataHash = h; return; }
       if (h !== _lastDataHash) {
         _lastDataHash = h;
-        ALL_DATA = data; STORES = data.stores; DATES = data.dates; METRICS = data.metrics;
+        ROOT_DATA = data;
+        const selected = data[DATA_GRAIN] || data.monthly || data;
+        ALL_DATA = { ...data, ...selected };
+        STORES = data.stores || selected.stores || [];
+        DATES = selected.dates || [];
+        METRICS = selected.metrics || [];
         buildIndex();
         renderOverview();
         renderCompare();
