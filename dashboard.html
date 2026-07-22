@@ -2250,8 +2250,8 @@ function renderDetail() {
 
   renderDetailKPIs(store, dates);
   renderDetailPieCharts(store, dates);
-  renderDetailTrendCharts(store);
-  renderCardGold(store);
+  renderDetailTrendCharts(store, dates);
+  renderCardGold(store, dates);
 }
 
 function getDetailDates(store) {
@@ -2425,8 +2425,7 @@ function renderDetailPieCharts(store) {
   });
 }
 
-function renderDetailTrendCharts(store) {
-  const dates = DATES;
+function renderDetailTrendCharts(store, dates) {
   const m168 = getStoreMonthlyData(store,'168项目数',dates);
   const m298 = getStoreMonthlyData(store,'298项目数',dates);
   const m358 = getStoreMonthlyData(store,'358项目数',dates);
@@ -2540,8 +2539,7 @@ function renderDetailTrendCharts(store) {
   });
 }
 
-function renderCardGold(store) {
-  const dates = DATES;
+function renderCardGold(store, dates) {
   const consume = getStoreMonthlyData(store,'卡金',dates);
   const recharge = getStoreMonthlyData(store,'充值',dates);
   const labels = Object.keys(consume).sort();
