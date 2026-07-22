@@ -741,13 +741,10 @@ body[data-theme="light"] .median-box { border-color: rgba(169,127,69,.30); backg
       <button class="preset-btn" data-preset="all">全部</button>
     </div>
     <div class="filter-group">
-      <span class="filter-label">年份</span>
-      <select id="filter-year"></select>
+      <span class="filter-label">时间维度</span>
+      <select id="overview-period" aria-label="整体概览时间维度"></select>
     </div>
-    <div class="filter-group">
-      <span class="filter-label">月份</span>
-      <select id="filter-month"></select>
-    </div>
+    <div class="filter-group" id="overview-period-ui"></div>
     <div class="filter-group">
       <span class="filter-label">指标</span>
       <div class="dropdown" id="trend-metric-dropdown">
@@ -1048,7 +1045,7 @@ function renderTrendMetricTags() {
   }
 }
 
-fetch('dashboard_data.json?v=2026-07-22T08%3A29%3A21.856Z')
+fetch('dashboard_data.json?v=2026-07-22T09%3A57%3A19.749Z')
   .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
   .then(data => {
     ROOT_DATA = data;
@@ -1078,6 +1075,10 @@ function configureGrainUI() {
   detailPeriod.innerHTML = DATA_GRAIN === 'daily'
     ? '<option value="day">单日</option><option value="week">近7日</option><option value="month">月度</option><option value="quarter">季度</option><option value="year">年度</option><option value="range">自定义区间</option>'
     : '<option value="month">月度</option><option value="quarter">季度</option><option value="year">年度</option><option value="range">自定义区间</option>';
+  const overviewPeriod = document.getElementById('overview-period');
+  overviewPeriod.innerHTML = DATA_GRAIN === 'daily'
+    ? '<option value="day">按日</option><option value="week">按周</option><option value="month">按月</option><option value="quarter">按季度</option><option value="year">按年</option><option value="range">自定义</option>'
+    : '<option value="month">按月</option><option value="quarter">按季度</option><option value="year">按年</option><option value="range">自定义</option>';
   document.querySelectorAll('[data-preset="latestMonth"]').forEach((button) => { button.textContent = DATA_GRAIN === 'daily' ? '最近一天' : '最近一月'; });
   document.querySelectorAll('[data-preset="latestQuarter"]').forEach((button) => { button.textContent = DATA_GRAIN === 'daily' ? '最近7天' : '最近一季'; });
   document.querySelectorAll('[data-preset="ytd"]').forEach((button) => { button.textContent = DATA_GRAIN === 'daily' ? '本月' : '今年'; });
@@ -1238,17 +1239,8 @@ function setPreset(name) {
           : sorted[sorted.length - 1].substring(0, 4)
       ));
       break;
+    case 'all': presetDates = sorted; break;
     default: presetDates = null; break;
-  }
-  // Sync year/month selects to match preset for visual consistency
-  const yearSel = document.getElementById('filter-year');
-  const monthSel = document.getElementById('filter-month');
-  if (presetDates) {
-    yearSel.value = 'all';
-    monthSel.value = '';
-    monthSel.disabled = true;
-  } else {
-    monthSel.disabled = false;
   }
   renderOverview();
 }
@@ -1313,28 +1305,72 @@ function getStoreDates(store) {
 }
 
 function initFilters() {
-  const years = [...new Set(DATES.map(d => d.substring(0,4)))].sort();
-  const yearSelect = document.getElementById('filter-year');
-  yearSelect.innerHTML = '<option value="all">全部时间</option>' +
-    years.map(y => `<option value="${y}">${y}年</option>`).join('');
-
-  const monthSelect = document.getElementById('filter-month');
-  monthSelect.innerHTML = '<option value="">全部月份</option>' +
-    Array.from({length:12}, (_,i) => `<option value="${String(i+1).padStart(2,'0')}">${i+1}月</option>`).join('');
-
-  document.getElementById('filter-year').onchange = () => {
-    const y = document.getElementById('filter-year').value;
-    monthSelect.disabled = (y === 'all');
-    if (y === 'all') monthSelect.value = '';
-    renderOverview();
-  };
-  document.getElementById('filter-month').onchange = renderOverview;
-
   // 初始化趋势指标多选下拉
   renderTrendMetricDropdown();
   const sortedDates = [...DATES].sort();
   presetDates = sortedDates.length ? [sortedDates[sortedDates.length - 1]] : null;
-  monthSelect.disabled = true;
+
+  // 整体概览 - 统一时间维度选择
+  const overviewPeriod = document.getElementById('overview-period');
+  const overviewPeriodUi = document.getElementById('overview-period-ui');
+
+  function clearOverviewPreset() {
+    presetDates = null;
+    document.querySelectorAll('#preset-btns .preset-btn').forEach(button => button.classList.remove('active'));
+  }
+
+  function updateOverviewPeriodUI() {
+    const sortedAsc = [...DATES].sort();
+    const sortedDesc = [...sortedAsc].reverse();
+    const years = [...new Set(sortedAsc.map(d => d.substring(0, 4)))];
+    const latest = sortedAsc[sortedAsc.length - 1] || '';
+    const period = overviewPeriod.value;
+    let html = '';
+
+    if (period === 'day' || period === 'week') {
+      const controlId = period === 'day' ? 'overview-day' : 'overview-week-end';
+      const current = document.getElementById(controlId)?.value || latest;
+      html = `<select id="${controlId}" aria-label="${period === 'day' ? '日期' : '周截止日'}">${sortedDesc.map(d => `<option value="${d}" ${d === current ? 'selected' : ''}>${d}</option>`).join('')}</select>`;
+    } else if (period === 'month') {
+      const months = DATA_GRAIN === 'daily'
+        ? [...new Set(sortedDesc.map(d => d.substring(0, 7)))]
+        : sortedDesc;
+      const current = document.getElementById('overview-month')?.value || months[0] || '';
+      html = `<select id="overview-month" aria-label="月份">${months.map(m => `<option value="${m}" ${m === current ? 'selected' : ''}>${m.substring(0, 7).replace('-', '年')}月</option>`).join('')}</select>`;
+    } else if (period === 'quarter') {
+      const currentYear = document.getElementById('overview-quarter-year')?.value || latest.substring(0, 4);
+      const latestQuarter = latest ? `Q${Math.floor((Number(latest.substring(5, 7)) - 1) / 3) + 1}` : 'Q1';
+      const currentQuarter = document.getElementById('overview-quarter')?.value || latestQuarter;
+      html = `<select id="overview-quarter-year" aria-label="季度年份">${[...years].reverse().map(y => `<option value="${y}" ${y === currentYear ? 'selected' : ''}>${y}年</option>`).join('')}</select>
+        <select id="overview-quarter" aria-label="季度">${['Q1','Q2','Q3','Q4'].map(q => `<option value="${q}" ${q === currentQuarter ? 'selected' : ''}>${q}</option>`).join('')}</select>`;
+    } else if (period === 'year') {
+      const current = document.getElementById('overview-year')?.value || latest.substring(0, 4);
+      html = `<select id="overview-year" aria-label="年份">${[...years].reverse().map(y => `<option value="${y}" ${y === current ? 'selected' : ''}>${y}年</option>`).join('')}</select>`;
+    } else if (period === 'range') {
+      const currentFrom = document.getElementById('overview-from')?.value || sortedAsc[0] || '';
+      const currentTo = document.getElementById('overview-to')?.value || latest;
+      const options = sortedDesc.map(d => `<option value="${d}">${displayDate(d)}</option>`).join('');
+      html = `<select id="overview-from" aria-label="起始时间">${options}</select><span class="filter-label" style="margin:0 4px">至</span><select id="overview-to" aria-label="截止时间">${options}</select>`;
+      overviewPeriodUi.innerHTML = html;
+      document.getElementById('overview-from').value = currentFrom;
+      document.getElementById('overview-to').value = currentTo;
+    }
+
+    if (period !== 'range') overviewPeriodUi.innerHTML = html;
+    overviewPeriodUi.querySelectorAll('select').forEach(select => {
+      select.onchange = () => {
+        clearOverviewPreset();
+        renderOverview();
+      };
+    });
+  }
+
+  overviewPeriod.onchange = () => {
+    updateOverviewPeriodUI();
+    clearOverviewPreset();
+    renderOverview();
+  };
+  updateOverviewPeriodUI();
 
   // 单店详情 - 周期选择
   const dp = document.getElementById('detail-period');
@@ -1409,12 +1445,38 @@ function initFilters() {
 // ============================================================
 function getFilteredDates() {
   if (presetDates) return presetDates;
-  const year = document.getElementById('filter-year').value;
-  const month = document.getElementById('filter-month').value;
-  if (year === 'all') return DATES;
-  let dates = DATES.filter(d => d.startsWith(year));
-  if (month) dates = dates.filter(d => d.substring(5,7) === month);
-  return dates;
+  const sorted = [...DATES].sort();
+  const period = document.getElementById('overview-period')?.value;
+  if (!period) return sorted;
+  if (period === 'day') {
+    const date = document.getElementById('overview-day')?.value;
+    return date ? sorted.filter(d => d === date) : sorted.slice(-1);
+  }
+  if (period === 'week') {
+    const end = document.getElementById('overview-week-end')?.value || sorted[sorted.length - 1];
+    const endIndex = sorted.indexOf(end);
+    return endIndex >= 0 ? sorted.slice(Math.max(0, endIndex - 6), endIndex + 1) : [];
+  }
+  if (period === 'month') {
+    const month = document.getElementById('overview-month')?.value;
+    return month ? (DATA_GRAIN === 'daily' ? sorted.filter(d => d.startsWith(month)) : sorted.filter(d => d === month)) : [];
+  }
+  if (period === 'quarter') {
+    const year = document.getElementById('overview-quarter-year')?.value;
+    const quarter = document.getElementById('overview-quarter')?.value;
+    const months = {Q1:['01','02','03'], Q2:['04','05','06'], Q3:['07','08','09'], Q4:['10','11','12']}[quarter] || [];
+    return sorted.filter(d => d.startsWith(year + '-') && months.includes(d.substring(5, 7)));
+  }
+  if (period === 'year') {
+    const year = document.getElementById('overview-year')?.value;
+    return year ? sorted.filter(d => d.startsWith(year)) : [];
+  }
+  if (period === 'range') {
+    const from = document.getElementById('overview-from')?.value;
+    const to = document.getElementById('overview-to')?.value;
+    return from && to ? sorted.filter(d => d >= from && d <= to) : sorted;
+  }
+  return sorted;
 }
 
 function calcTotal(dates, metric) {
@@ -2341,11 +2403,21 @@ function detailExportCSV() {
 function renderDetail() {
   const store = document.getElementById('detail-store').value;
   const dates = getDetailDates(store);
+  const trendDates = getDetailTrendDates(store, dates);
 
   renderDetailKPIs(store, dates);
   renderDetailPieCharts(store, dates);
-  renderDetailTrendCharts(store, dates);
-  renderCardGold(store, dates);
+  renderDetailTrendCharts(store, trendDates);
+  renderCardGold(store, trendDates);
+}
+
+function getDetailTrendDates(store, selectedDates) {
+  const period = document.getElementById('detail-period').value;
+  if (DATA_GRAIN !== 'daily' || period !== 'day') return selectedDates;
+  const storeDates = getStoreDates(store);
+  const end = selectedDates[selectedDates.length - 1] || storeDates[storeDates.length - 1];
+  const endIndex = storeDates.indexOf(end);
+  return endIndex >= 0 ? storeDates.slice(Math.max(0, endIndex - 6), endIndex + 1) : selectedDates;
 }
 
 function getDetailDates(store) {
@@ -2428,10 +2500,14 @@ function renderDetailKPIs(store, dates) {
   const totalVal = getSum(revenueMetric);
   const svcVal = getSum('服务营业额');
   const prodVal = getSum('商品营业额');
+  const projectCount = getSum('项目数');
+  const ticketRevenue = getSum('总营业额') || totalVal;
+  const avgTicket = projectCount > 0 ? ticketRevenue / projectCount : 0;
   const sections = [
     {
       title: '营收', open: true, items: [
         { label:METRIC_LABELS[revenueMetric], val:fmtYInt(totalVal), sub:`服务${fmtYInt(svcVal)}  ·  商品${fmtYInt(prodVal)}`, color:'gold', m:revenueMetric, isSum:true, mom:true },
+        { label:'客单价', val:fmtYInt(avgTicket), sub:'总营业额 / 项目数', color:'', m:null },
         { label:'现金流营业额', val:fmtYInt(getSum('现金流营业额')), sub:'元', color:'', m:'现金流营业额', isSum:true },
         { label:'抖音营业额', val:fmtYInt(getSum('抖音')), sub:'元', color:'', m:'抖音', isSum:true, mom:true },
         { label:'美团营业额', val:fmtYInt(getSum('美团')), sub:'元', color:'', m:'美团', isSum:true, mom:true },
