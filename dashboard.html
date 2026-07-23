@@ -713,13 +713,6 @@ body[data-theme="light"] .median-box { border-color: rgba(169,127,69,.30); backg
     <button class="tab" data-tab="compare">门店对比</button>
     <button class="tab" data-tab="detail">单店详情</button>
   </div>
-  <div class="filter-group" title="切换同一 Base 中的日/月数据颗粒度">
-    <span class="filter-label">颗粒度</span>
-    <select id="grain-select" aria-label="数据颗粒度">
-      <option value="monthly">月</option>
-      <option value="daily">日</option>
-    </select>
-  </div>
   <div class="global-search">
     <span class="search-icon">⌕</span>
     <input id="global-search-input" type="search" autocomplete="off" placeholder="搜索门店并直达详情" aria-label="搜索门店">
@@ -906,6 +899,14 @@ let STORES = [];
 let DATES = [];
 let METRICS = [];
 let DATA_GRAIN = new URLSearchParams(location.search).get('grain') === 'daily' ? 'daily' : 'monthly';
+const VIEW_STATE_KEY = 'mindeDashboardPendingView';
+let pendingViewState = null;
+try {
+  pendingViewState = JSON.parse(sessionStorage.getItem(VIEW_STATE_KEY) || 'null');
+  sessionStorage.removeItem(VIEW_STATE_KEY);
+} catch (_) {
+  pendingViewState = null;
+}
 
 // 门店显示顺序（按门店列表-2024.xlsx）
 const STORE_ORDER = [
@@ -1045,7 +1046,7 @@ function renderTrendMetricTags() {
   }
 }
 
-fetch('dashboard_data.json?v=2026-07-22T09%3A57%3A19.749Z')
+fetch('dashboard_data.json?v=2026-07-23T01%3A51%3A06.325Z')
   .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
   .then(data => {
     ROOT_DATA = data;
@@ -1064,21 +1065,16 @@ fetch('dashboard_data.json?v=2026-07-22T09%3A57%3A19.749Z')
   });
 
 function configureGrainUI() {
-  const grainSelect = document.getElementById('grain-select');
-  grainSelect.value = DATA_GRAIN;
-  grainSelect.onchange = () => {
-    const url = new URL(location.href);
-    url.searchParams.set('grain', grainSelect.value);
-    location.href = url.toString();
-  };
   const detailPeriod = document.getElementById('detail-period');
-  detailPeriod.innerHTML = DATA_GRAIN === 'daily'
-    ? '<option value="day">单日</option><option value="week">近7日</option><option value="month">月度</option><option value="quarter">季度</option><option value="year">年度</option><option value="range">自定义区间</option>'
-    : '<option value="month">月度</option><option value="quarter">季度</option><option value="year">年度</option><option value="range">自定义区间</option>';
+  detailPeriod.innerHTML = '<option value="day">按日</option><option value="week">按周</option><option value="month">按月</option><option value="quarter">按季度</option><option value="year">按年</option><option value="range">自定义区间</option>';
   const overviewPeriod = document.getElementById('overview-period');
-  overviewPeriod.innerHTML = DATA_GRAIN === 'daily'
-    ? '<option value="day">按日</option><option value="week">按周</option><option value="month">按月</option><option value="quarter">按季度</option><option value="year">按年</option><option value="range">自定义</option>'
-    : '<option value="month">按月</option><option value="quarter">按季度</option><option value="year">按年</option><option value="range">自定义</option>';
+  overviewPeriod.innerHTML = '<option value="day">按日</option><option value="week">按周</option><option value="month">按月</option><option value="quarter">按季度</option><option value="year">按年</option><option value="range">自定义</option>';
+  overviewPeriod.value = pendingViewState?.tab === 'overview'
+    ? pendingViewState.period
+    : (DATA_GRAIN === 'daily' ? 'day' : 'month');
+  detailPeriod.value = pendingViewState?.tab === 'detail'
+    ? pendingViewState.period
+    : (DATA_GRAIN === 'daily' ? 'day' : 'month');
   document.querySelectorAll('[data-preset="latestMonth"]').forEach((button) => { button.textContent = DATA_GRAIN === 'daily' ? '最近一天' : '最近一月'; });
   document.querySelectorAll('[data-preset="latestQuarter"]').forEach((button) => { button.textContent = DATA_GRAIN === 'daily' ? '最近7天' : '最近一季'; });
   document.querySelectorAll('[data-preset="ytd"]').forEach((button) => { button.textContent = DATA_GRAIN === 'daily' ? '本月' : '今年'; });
@@ -1090,6 +1086,22 @@ function configureGrainUI() {
   } else {
     METRIC_GROUPS['营收'] = METRIC_GROUPS['营收'].filter(metric => metric !== '总营业额');
   }
+}
+
+function grainForPeriod(period, fallback = DATA_GRAIN) {
+  if (period === 'day' || period === 'week') return 'daily';
+  if (period === 'month' || period === 'quarter' || period === 'year') return 'monthly';
+  return fallback;
+}
+
+function switchGrainForPeriod(period, state) {
+  const nextGrain = grainForPeriod(period);
+  if (nextGrain === DATA_GRAIN) return false;
+  sessionStorage.setItem(VIEW_STATE_KEY, JSON.stringify({ ...state, period }));
+  const url = new URL(location.href);
+  url.searchParams.set('grain', nextGrain);
+  location.href = url.toString();
+  return true;
 }
 
 function displayDate(date) {
@@ -1293,6 +1305,7 @@ function init() {
   initGlobalSearch();
   renderOverview();
   setupTabListeners();
+  if (pendingViewState?.tab) activateTab(pendingViewState.tab);
 }
 
 // ============================================================
@@ -1309,6 +1322,10 @@ function initFilters() {
   renderTrendMetricDropdown();
   const sortedDates = [...DATES].sort();
   presetDates = sortedDates.length ? [sortedDates[sortedDates.length - 1]] : null;
+  if (pendingViewState?.tab === 'overview') {
+    presetDates = null;
+    document.querySelectorAll('#preset-btns .preset-btn').forEach(button => button.classList.remove('active'));
+  }
 
   // 整体概览 - 统一时间维度选择
   const overviewPeriod = document.getElementById('overview-period');
@@ -1366,6 +1383,7 @@ function initFilters() {
   }
 
   overviewPeriod.onchange = () => {
+    if (switchGrainForPeriod(overviewPeriod.value, { tab:'overview' })) return;
     updateOverviewPeriodUI();
     clearOverviewPreset();
     renderOverview();
@@ -1424,18 +1442,22 @@ function initFilters() {
 
   dp.onchange = () => {
     const store = storeSelect.value;
+    if (switchGrainForPeriod(dp.value, { tab:'detail', store })) return;
     if (store) updateDetailPeriodUI(store);
     renderDetail();
   };
 
   storeSelect.innerHTML = sortedStores.map(s => `<option value="${s}">${s}</option>`).join('');
+  if (pendingViewState?.tab === 'detail' && sortedStores.includes(pendingViewState.store)) {
+    storeSelect.value = pendingViewState.store;
+  }
   storeSelect.onchange = () => {
     updateDetailPeriodUI(storeSelect.value);
     renderDetail();
   };
 
   if (sortedStores.length > 0) {
-    updateDetailPeriodUI(sortedStores[0]);
+    updateDetailPeriodUI(storeSelect.value || sortedStores[0]);
   }
   renderDetail();
 }
