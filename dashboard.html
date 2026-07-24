@@ -1948,6 +1948,12 @@ function renderTrendChart(dates, metrics) {
   const chart = getChart('chart-trend');
   if (!chart) return;
   const labels = dates.map(axisDate);
+  const showAllPointLabels = dates.length <= 14;
+  const formatTrendValue = (value, metric) => {
+    const number = safeNum(value);
+    if (isPct(metric)) return `${(number * 100).toFixed(1)}%`;
+    return number.toLocaleString('zh-CN', { maximumFractionDigits: 1 });
+  };
 
   const series = metrics.map((m, i) => {
     const monthly = getMonthlyData(dates, m);
@@ -1955,11 +1961,27 @@ function renderTrendChart(dates, metrics) {
     const pctFlag = isPct(m);
     return {
       name: METRIC_LABELS[m]||m,
-      data: values,
+      data: values.map((value, index) => ({
+        value,
+        label: { show: showAllPointLabels || index === values.length - 1 },
+      })),
       type:'line', smooth:true,
       yAxisIndex: pctFlag ? 1 : 0,
+      symbol: 'circle',
+      symbolSize: 4,
       lineStyle:{color:CHART_COLORS[i % CHART_COLORS.length], width:2},
       itemStyle:{color:CHART_COLORS[i % CHART_COLORS.length]},
+      label:{
+        show: true,
+        position:'top',
+        distance:5,
+        color:CHART_COLORS[i % CHART_COLORS.length],
+        fontSize:9,
+        fontWeight:500,
+        formatter:params => formatTrendValue(params.value, m),
+      },
+      labelLayout:{hideOverlap:true, moveOverlap:'shiftY'},
+      emphasis:{focus:'series', scale:true, label:{show:true}},
       areaStyle: !pctFlag ? {color:{type:'linear',x:0,y:0,x2:0,y2:1,colorStops:[{offset:0,color:CHART_COLORS[i % CHART_COLORS.length]+'1F'},{offset:1,color:CHART_COLORS[i % CHART_COLORS.length]+'00'}]}} : null
     };
   });
@@ -2760,6 +2782,7 @@ function renderDetailKPIs(store, dates) {
     {
       title: '评分', open: true, items: [
         { label:'评分', val:noData ? '—' : `抖音 ${fmtScore(getVal('抖音评分'))}  ·  美团 ${fmtScore(getVal('美团评分'))}  ·  大众点评 ${fmtScore(getVal('大众点评'))}`, color:'', m:'抖音评分', merged:true },
+        { label:'美团经营分', val:noData ? '—' : fmtScore(getVal('美团经营分')), color:'', m:'美团经营分' },
       ]
     },
     {
