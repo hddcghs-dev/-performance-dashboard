@@ -935,6 +935,8 @@ let DATES = [];
 let METRICS = [];
 let DATA_GRAIN = new URLSearchParams(location.search).get('grain') === 'daily' ? 'daily' : 'monthly';
 let DATA_VERSION = '';
+let DATA_MANIFEST = null;
+const DAILY_YEAR_LOADS = new Map();
 const {
   averageMetrics: AVG_METRICS,
   channelRevenueFields: CHANNEL_REVENUE_FIELDS,
@@ -1161,6 +1163,7 @@ function prepareMonthlyViewData(data) {
 
   const monthDate = `${latestMonth}-01`;
   const rows = dailyMonthRows(data, latestMonth);
+  if (!rows.length) return monthly;
   const storeNames = data.stores || [...new Set(rows.map(row => row['门店']))];
   const partialRows = storeNames.map(store => {
     const storeRows = rows.filter(row => row['门店'] === store);
@@ -1185,11 +1188,43 @@ async function fetchDashboardManifest() {
   return response.json();
 }
 
-async function fetchDashboardData(version) {
+async function fetchDashboardFile(name, version) {
   const suffix = version ? `v=${encodeURIComponent(version)}` : `t=${Date.now()}`;
-  const response = await fetch(`dashboard_data.json?${suffix}`);
+  const response = await fetch(`${name}?${suffix}`);
   if (!response.ok) throw new Error(`Data HTTP ${response.status}`);
   return response.json();
+}
+
+async function fetchDashboardData(manifest) {
+  if (DATA_GRAIN === 'monthly' && manifest?.files?.core) {
+    const core = manifest.files.core;
+    return fetchDashboardFile(core.name, core.version);
+  }
+  return fetchDashboardFile('dashboard_data.json', manifest?.version || '');
+}
+
+function hasDailyMonth(month) {
+  return (ROOT_DATA.daily?.data || []).some((row) => String(row.日期 || '').startsWith(month));
+}
+
+async function ensureDailyYear(year) {
+  const file = DATA_MANIFEST?.files?.dailyByYear?.[year];
+  if (!file) return false;
+  if (DAILY_YEAR_LOADS.has(year)) return DAILY_YEAR_LOADS.get(year);
+  const load = fetchDashboardFile(file.name, file.version).then((shard) => {
+    const existing = ROOT_DATA.daily?.data || [];
+    const keys = new Set(existing.map((row) => `${row.日期}|${row.门店}`));
+    const additions = (shard.data || []).filter((row) => !keys.has(`${row.日期}|${row.门店}`));
+    ROOT_DATA.daily = {
+      ...ROOT_DATA.daily,
+      metrics: shard.metrics || ROOT_DATA.daily?.metrics || [],
+      data: existing.concat(additions),
+    };
+    buildIndex();
+    return true;
+  });
+  DAILY_YEAR_LOADS.set(year, load);
+  return load;
 }
 
 function applyDashboardData(data, initialize) {
@@ -1214,8 +1249,9 @@ function applyDashboardData(data, initialize) {
 Promise.resolve()
   .then(async () => {
     const manifest = await fetchDashboardManifest().catch(() => null);
+    DATA_MANIFEST = manifest;
     DATA_VERSION = manifest?.version || '';
-    const data = await fetchDashboardData(DATA_VERSION);
+    const data = await fetchDashboardData(manifest);
     applyDashboardData(data, true);
   })
   .catch(err => {
@@ -1684,8 +1720,9 @@ function calcTotal(dates, metric) {
   if (metric === '美团刷单金额') return calcFraudRecharge(dates);
   if (DATA_GRAIN === 'monthly' && rule.kind === 'daily-sum') {
     const field = metricField(metric);
-    return getDailyRowsForViewDates(dates)
-      .reduce((sum, row) => sum + safeNum(row[field]), 0);
+    const dailyRows = getDailyRowsForViewDates(dates);
+    const rows = dailyRows.length ? dailyRows : dates.flatMap((date) => IDX_BY_DATE[date] || []);
+    return rows.reduce((sum, row) => sum + safeNum(row[field]), 0);
   }
   const parts = rule.parts;
   if (parts) {
@@ -1749,12 +1786,15 @@ function calcChannelRevenueRows(rows, metric) {
 }
 
 function calcChannelRevenue(dates, metric) {
-  return calcChannelRevenueRows(getDailyRowsForViewDates(dates), metric);
+  const dailyRows = getDailyRowsForViewDates(dates);
+  const rows = dailyRows.length ? dailyRows : dates.flatMap((date) => IDX_BY_DATE[date] || []);
+  return calcChannelRevenueRows(rows, metric);
 }
 
 function calcFraudRecharge(dates) {
-  return getDailyRowsForViewDates(dates)
-    .reduce((sum, row) => sum + safeNum(row['美团刷单金额']), 0);
+  const dailyRows = getDailyRowsForViewDates(dates);
+  const rows = dailyRows.length ? dailyRows : dates.flatMap((date) => IDX_BY_DATE[date] || []);
+  return rows.reduce((sum, row) => sum + safeNum(row['美团刷单金额']), 0);
 }
 
 function getOverviewComparison(dates) {
@@ -1764,6 +1804,13 @@ function getOverviewComparison(dates) {
     const latestDailyDate = [...(ROOT_DATA.daily?.dates || [])].sort().at(-1) || '';
     const latestDailyMonth = latestDailyDate.substring(0, 7);
     if (selectedMonth === latestDailyMonth && latestDailyDate) {
+      const prepared = ROOT_DATA.monthlyComparison;
+      if (prepared?.month === selectedMonth) {
+        return {
+          prev: { rows: prepared.previous.rows, label: '环比同期' },
+          yoy: { rows: prepared.previousYear.rows, label: '同比同期' },
+        };
+      }
       const dayLimit = Number(latestDailyDate.substring(8, 10));
       const clipMonth = month => (ROOT_DATA.daily?.dates || []).filter(date =>
         date.startsWith(month) && Number(date.substring(8, 10)) <= dayLimit
@@ -1792,21 +1839,26 @@ function calcOverviewRangeTotal(range, metric) {
 function calcStoreAgg(dates, store, metric) {
   const rule = metricRule(metric);
   if (rule.kind === 'channel') {
-    return calcChannelRevenueRows(
-      getDailyRowsForViewDates(dates).filter(row => row['门店'] === store),
-      metric,
-    );
+    const dailyRows = getDailyRowsForViewDates(dates).filter(row => row['门店'] === store);
+    const rows = dailyRows.length
+      ? dailyRows
+      : dates.map((date) => IDX_BY_DS[`${date}_${store}`]).filter(Boolean);
+    return calcChannelRevenueRows(rows, metric);
   }
   if (metric === '美团刷单金额') {
-    return getDailyRowsForViewDates(dates)
-      .filter(row => row['门店'] === store)
-      .reduce((sum, row) => sum + safeNum(row['美团刷单金额']), 0);
+    const dailyRows = getDailyRowsForViewDates(dates).filter(row => row['门店'] === store);
+    const rows = dailyRows.length
+      ? dailyRows
+      : dates.map((date) => IDX_BY_DS[`${date}_${store}`]).filter(Boolean);
+    return rows.reduce((sum, row) => sum + safeNum(row['美团刷单金额']), 0);
   }
   if (DATA_GRAIN === 'monthly' && rule.kind === 'daily-sum') {
     const field = metricField(metric);
-    return getDailyRowsForViewDates(dates)
-      .filter(row => row['门店'] === store)
-      .reduce((sum, row) => sum + safeNum(row[field]), 0);
+    const dailyRows = getDailyRowsForViewDates(dates).filter(row => row['门店'] === store);
+    const rows = dailyRows.length
+      ? dailyRows
+      : dates.map((date) => IDX_BY_DS[`${date}_${store}`]).filter(Boolean);
+    return rows.reduce((sum, row) => sum + safeNum(row[field]), 0);
   }
   const f = metricField(metric);
   let sum = 0;
@@ -2773,6 +2825,15 @@ function detailExportCSV() {
 function renderDetail() {
   const store = document.getElementById('detail-store').value;
   const dates = getDetailDates(store);
+  const detailActive = document.getElementById('tab-detail')?.classList.contains('active');
+  if (detailActive && DATA_GRAIN === 'monthly' && document.getElementById('detail-period').value === 'month') {
+    const month = String(dates[0] || '').substring(0, 7);
+    if (month && !hasDailyMonth(month)) {
+      ensureDailyYear(month.substring(0, 4))
+        .then((loaded) => { if (loaded) renderDetail(); })
+        .catch((error) => console.error('日度趋势加载失败:', error));
+    }
+  }
   const trendDates = getDetailTrendDates(store, dates);
 
   renderDetailKPIs(store, dates);
@@ -3203,6 +3264,7 @@ function renderCardGold(store, dates) {
 function activateTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
   document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === 'tab-' + name));
+  if (name === 'detail') renderDetail();
   setTimeout(() => {
     const activeTab = document.querySelector('.tab-content.active');
     if (!activeTab) return;
@@ -3298,7 +3360,9 @@ setInterval(async () => {
   try {
     const manifest = await fetchDashboardManifest();
     if (!manifest?.version || manifest.version === DATA_VERSION) return;
-    const data = await fetchDashboardData(manifest.version);
+    DATA_MANIFEST = manifest;
+    DAILY_YEAR_LOADS.clear();
+    const data = await fetchDashboardData(manifest);
     DATA_VERSION = manifest.version;
     applyDashboardData(data, false);
     console.log('[auto-refresh] 数据已更新');
