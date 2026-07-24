@@ -477,6 +477,7 @@ body[data-theme="light"] .kpi-card:hover { box-shadow: 0 24px 60px rgba(34,62,46
 }
 .chart { height: 280px; }
 .chart-sm { height: 220px; }
+#chart-compare-bar { height: 340px; }
 
 /* ===== 数据表 ===== */
 .table-card { overflow: hidden; }
@@ -2687,10 +2688,16 @@ function renderCompareChart(dates) {
     title: chartSub ? {show:true,text:chartSub,left:12,top:4,textStyle:{color:T.text,fontSize:11,fontWeight:'normal'}} : {show:false,text:''},
     tooltip:{...T.tip,trigger:'axis', formatter: p => p.map(pt=>`${pt.seriesName}: ${pt.value}${isP?'%':''}`).join('<br>')},
     legend:{data:[METRIC_LABELS[chartMetric]||chartMetric],textStyle:{color:T.text,fontSize:10},itemWidth:12,itemHeight:8,top:chartSub?24:5},
-    xAxis:{type:'category',data:sortedStores,axisLine:{lineStyle:{color:T.axis}},axisLabel:{color:T.text,fontSize:10,rotate:15},splitLine:{show:false}},
+    xAxis:{
+      type:'category',
+      data:sortedStores,
+      axisLine:{lineStyle:{color:T.axis}},
+      axisLabel:{color:T.text,fontSize:9,interval:0,hideOverlap:false,rotate:45,margin:12,align:'right'},
+      splitLine:{show:false}
+    },
     yAxis:{type:'value',max:isP?pctMax:null,axisLine:{show:false},splitLine:{lineStyle:{color:T.split}},axisLabel:{color:T.text,fontSize:10,formatter:v=>isP ? v+'%' : v}},
     series,
-    grid:{left:50,right:20,top:chartSub?54:30,bottom:30}
+    grid:{left:50,right:20,top:chartSub?54:30,bottom:16,containLabel:true}
   }, true);
 }
 
