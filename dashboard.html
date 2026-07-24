@@ -1980,27 +1980,27 @@ function renderTrendChart(dates, metrics) {
 }
 
 function renderPieCharts(dates) {
-  const dy = calcTotal(dates,'抖音');
-  const mt = calcTotal(dates,'美团');
-  const kj = calcTotal(dates,'卡金');
+  const dy = calcTotal(dates, '抖音营业额');
+  const meituanGross = calcTotal(dates, '美团营业额');
+  const fraudRechargeAmount = calcTotal(dates, '美团刷单金额');
+  const mt = Math.max(0, meituanGross - fraudRechargeAmount);
   const revenueMetric = primaryRevenueMetric();
   const svcTotal = calcTotal(dates,revenueMetric);
-  const free = calcTotal(dates,'免单减免');
-  const prod = calcTotal(dates,'商品营业额');
-  const cashPay = svcTotal - dy - mt - kj - free - prod;
+  const other = Math.max(0, svcTotal - dy - mt);
+  const pieTotal = dy + mt + other;
 
   const pie = getChart('chart-revenue-pie');
   if (!pie) return;
   pie.setOption({
     backgroundColor:'transparent',
-    tooltip:{...T.tip,formatter:p=>`${p.name}: ${p.value.toLocaleString('zh-CN')} (${p.percent.toFixed(1)}%) · 占${DATA_GRAIN === 'daily' ? '总营业额' : '服务营业额'} ${(p.value/svcTotal*100).toFixed(1)}%`},
+    tooltip:{...T.tip,formatter:p=>`${p.name}: ${p.value.toLocaleString('zh-CN')} (${p.percent.toFixed(1)}%) · 占营业结构 ${(p.value/(pieTotal || 1)*100).toFixed(1)}%`},
     legend:{orient:'vertical',right:10,top:'center',textStyle:{color:T.text,fontSize:11},itemWidth:10,itemHeight:10},
     series:[{
       type:'pie', radius:['40%','70%'], center:['35%','50%'],
       data:[
         {value:dy,name:'抖音',itemStyle:{color:T.dy}},
         {value:mt,name:'美团',itemStyle:{color:T.mt}},
-        {value:Math.max(0,svcTotal-dy-mt),name:'其它',itemStyle:{color:T.gold}},
+        {value:other,name:'其它',itemStyle:{color:T.gold}},
       ],
       label:{show:true,formatter:'{b}\n{d}%',fontSize:11,color:T.label},
       labelLine:{lineStyle:{color:T.axis}}
@@ -2009,7 +2009,7 @@ function renderPieCharts(dates) {
   // 核验: 各成分之和 = 当前主营业额口径
   const checkEl = document.getElementById('revenue-check');
   if (checkEl) {
-    const checkSum = dy + mt + Math.max(0,svcTotal-dy-mt);
+    const checkSum = pieTotal;
     const diff = Math.abs(svcTotal - checkSum);
     checkEl.textContent = `抖音 + 美团 + 其它 = ${checkSum.toLocaleString('zh-CN')}  ·  ${DATA_GRAIN === 'daily' ? '总营业额' : '服务营业额'} ${svcTotal.toLocaleString('zh-CN')}  ${diff < 1 ? '正常' : '差额 '+diff.toFixed(2)}`;
   }
@@ -2810,17 +2810,18 @@ function renderDetailKPIs(store, dates) {
 function renderDetailPieCharts(store) {
   const dates = getDetailDates(store);
   const revenueTotal = calcStoreAgg(dates, store, primaryRevenueMetric());
-  const dy = calcStoreAgg(dates, store, '抖音-平台');
-  const meituanPlatform = calcStoreAgg(dates, store, '美团-平台');
+  const dy = calcStoreAgg(dates, store, '抖音营业额');
+  const meituanPlatform = calcStoreAgg(dates, store, '美团营业额');
   const fraudRechargeAmount = calcStoreAgg(dates, store, '美团刷单金额');
   const mt = Math.max(0, meituanPlatform - fraudRechargeAmount);
   const other = Math.max(0, revenueTotal - dy - mt);
+  const pieTotal = dy + mt + other;
 
   const pie = getChart('chart-detail-revenue-pie');
   if (!pie) return;
   pie.setOption({
     backgroundColor:'transparent',
-    tooltip:{...T.tip,formatter:p=>`${p.name}: ${p.value.toLocaleString('zh-CN')} (${p.percent.toFixed(1)}%) · 占${DATA_GRAIN === 'daily' ? '总营业额' : '服务营业额'} ${(p.value/(revenueTotal || 1)*100).toFixed(1)}%`},
+    tooltip:{...T.tip,formatter:p=>`${p.name}: ${p.value.toLocaleString('zh-CN')} (${p.percent.toFixed(1)}%) · 占营业结构 ${(p.value/(pieTotal || 1)*100).toFixed(1)}%`},
     legend:{orient:'vertical',right:5,top:'center',textStyle:{color:T.text,fontSize:10},itemWidth:8,itemHeight:8},
     series:[{
       type:'pie',radius:['35%','65%'],center:['40%','50%'],
