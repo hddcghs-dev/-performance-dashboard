@@ -1114,7 +1114,7 @@ function prepareMonthlyViewData(data) {
   };
 }
 
-fetch('dashboard_data.json?v=2026-07-24T01%3A40%3A51.148Z')
+fetch('dashboard_data.json?v=2026-07-24T02%3A00%3A01.350Z')
   .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
   .then(data => {
     ROOT_DATA = data;
@@ -1591,6 +1591,8 @@ function getFilteredDates() {
 }
 
 function calcTotal(dates, metric) {
+  if (CHANNEL_REVENUE_FIELDS[metric]) return calcChannelRevenue(dates, metric);
+  if (metric === '美团刷单金额') return calcFraudRecharge(dates);
   const parts = RATIO_METRICS[metric];
   if (parts) {
     const numerator = calcTotal(dates, parts[0]);
@@ -1606,6 +1608,8 @@ function calcTotal(dates, metric) {
 }
 
 function calcRowsTotal(rows, metric) {
+  if (CHANNEL_REVENUE_FIELDS[metric]) return calcChannelRevenueRows(rows, metric);
+  if (metric === '美团刷单金额') return rows.reduce((sum, row) => sum + safeNum(row['美团刷单金额']), 0);
   const parts = RATIO_METRICS[metric];
   if (parts) {
     const numerator = calcRowsTotal(rows, parts[0]);
@@ -1619,6 +1623,41 @@ function calcRowsTotal(rows, metric) {
 function getDailyRowsForDates(dates) {
   const dateSet = new Set(dates);
   return (ROOT_DATA.daily?.data || []).filter(row => dateSet.has(row['日期']));
+}
+
+const CHANNEL_REVENUE_FIELDS = Object.freeze({
+  '抖音营业额': { platform: '抖音-平台', fallback: '抖音-可聚集' },
+  '美团营业额': { platform: '美团-平台', fallback: '美团-可聚集' },
+});
+
+function getDailyRowsForViewDates(dates) {
+  const values = (dates || []).map(String);
+  const dailyDates = new Set(values.filter(value => /^\d{4}-\d{2}-\d{2}$/.test(value)));
+  const months = new Set(values.filter(value => /^\d{4}-\d{2}$/.test(value)));
+  return (ROOT_DATA.daily?.data || []).filter(row => {
+    const date = String(row['日期'] || '');
+    return dailyDates.has(date) || months.has(date.substring(0, 7));
+  });
+}
+
+function channelRevenueValue(row, metric) {
+  const fields = CHANNEL_REVENUE_FIELDS[metric];
+  if (!fields) return 0;
+  const platformAmount = safeNum(row[fields.platform]);
+  return platformAmount > 0 ? platformAmount : safeNum(row[fields.fallback]);
+}
+
+function calcChannelRevenueRows(rows, metric) {
+  return rows.reduce((sum, row) => sum + channelRevenueValue(row, metric), 0);
+}
+
+function calcChannelRevenue(dates, metric) {
+  return calcChannelRevenueRows(getDailyRowsForViewDates(dates), metric);
+}
+
+function calcFraudRecharge(dates) {
+  return getDailyRowsForViewDates(dates)
+    .reduce((sum, row) => sum + safeNum(row['美团刷单金额']), 0);
 }
 
 function getOverviewComparison(dates) {
@@ -1654,6 +1693,17 @@ function calcOverviewRangeTotal(range, metric) {
 }
 
 function calcStoreAgg(dates, store, metric) {
+  if (CHANNEL_REVENUE_FIELDS[metric]) {
+    return calcChannelRevenueRows(
+      getDailyRowsForViewDates(dates).filter(row => row['门店'] === store),
+      metric,
+    );
+  }
+  if (metric === '美团刷单金额') {
+    return getDailyRowsForViewDates(dates)
+      .filter(row => row['门店'] === store)
+      .reduce((sum, row) => sum + safeNum(row['美团刷单金额']), 0);
+  }
   const f = metricField(metric);
   let sum = 0;
   dates.forEach(d => {
@@ -1695,7 +1745,7 @@ function calcStoreAvg(dates, store, metric) {
 }
 
 function getMonthlyData(dates, metric) {
-  if (RATIO_METRICS[metric]) {
+  if (RATIO_METRICS[metric] || CHANNEL_REVENUE_FIELDS[metric] || metric === '美团刷单金额') {
     return Object.fromEntries(dates.map(d => [d, calcTotal([d], metric)]));
   }
   const f = metricField(metric);
@@ -1709,7 +1759,7 @@ function getMonthlyData(dates, metric) {
 }
 
 function getStoreMonthlyData(store, metric, dates) {
-  if (RATIO_METRICS[metric]) {
+  if (RATIO_METRICS[metric] || CHANNEL_REVENUE_FIELDS[metric] || metric === '美团刷单金额') {
     return Object.fromEntries(dates.map(d => [d, calcStoreValue([d], store, metric)]));
   }
   const f = metricField(metric);
@@ -1769,6 +1819,7 @@ function renderOverviewKPIs(dates) {
   const totalCashflow = calcTotal(dates,'现金流营业额');
   const dyAmt = calcTotal(dates,'抖音营业额');
   const mtAmt = calcTotal(dates,'美团营业额');
+  const mtFraud = calcTotal(dates, '美团刷单金额');
   const totalFree = calcTotal(dates,'免单减免');
   const totalCard = calcTotal(dates,'卡金');
   const totalRecharge = calcTotal(dates,'充值');
@@ -1805,7 +1856,7 @@ function renderOverviewKPIs(dates) {
     { label:'项目均价', val:fmtYInt(avgTicket), raw:avgTicket, color:'', m:null },
     { label:'总项目数', val:fmtN(totalProjects), raw:totalProjects, color:'', m:'项目数' },
     { label:'抖音营业额', val:overviewMoney(dyAmt), raw:dyAmt, color:'', m:'抖音营业额' },
-    { label:'美团营业额', val:overviewMoney(mtAmt), raw:mtAmt, color:'', m:'美团营业额' },
+    { label:'美团营业额', val:overviewMoney(mtAmt), raw:mtAmt, color:'', m:'美团营业额', sub:mtFraud > 0 ? `刷单金额 ${fmtYInt(mtFraud)} 元` : undefined },
     { label:'卡金-充值', val:overviewMoney(cardRechargeGap), raw:cardRechargeGap, color: cardRechargeGap<0?'red':'green', sub:cardRechargeGap<0?'充值少于卡金':'充值覆盖卡金', m:null },
     { label:'免单减免', val:overviewMoney(totalFree), raw:totalFree, color: totalFree>0?'red':'', m:'免单减免' },
     { label:'综合新增评论', val:fmtN(totalComments), raw:totalComments, color:'green', m:'综合新增评论' },
