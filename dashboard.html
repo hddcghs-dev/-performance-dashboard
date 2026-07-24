@@ -1647,6 +1647,11 @@ function getFilteredDates() {
 function calcTotal(dates, metric) {
   if (CHANNEL_REVENUE_FIELDS[metric]) return calcChannelRevenue(dates, metric);
   if (metric === '美团刷单金额') return calcFraudRecharge(dates);
+  if (DATA_GRAIN === 'monthly' && DAILY_SUM_METRICS.has(metric)) {
+    const field = metricField(metric);
+    return getDailyRowsForViewDates(dates)
+      .reduce((sum, row) => sum + safeNum(row[field]), 0);
+  }
   const parts = RATIO_METRICS[metric];
   if (parts) {
     const numerator = calcTotal(dates, parts[0]);
@@ -1683,6 +1688,7 @@ const CHANNEL_REVENUE_FIELDS = Object.freeze({
   '抖音营业额': { platform: '抖音-平台', fallback: '抖音-可聚集' },
   '美团营业额': { platform: '美团-平台', fallback: '美团-可聚集' },
 });
+const DAILY_SUM_METRICS = new Set(['抖音扫码', '美团扫码']);
 
 function getDailyRowsForViewDates(dates) {
   const values = (dates || []).map(String);
@@ -1765,6 +1771,12 @@ function calcStoreAgg(dates, store, metric) {
       .filter(row => row['门店'] === store)
       .reduce((sum, row) => sum + safeNum(row['美团刷单金额']), 0);
   }
+  if (DATA_GRAIN === 'monthly' && DAILY_SUM_METRICS.has(metric)) {
+    const field = metricField(metric);
+    return getDailyRowsForViewDates(dates)
+      .filter(row => row['门店'] === store)
+      .reduce((sum, row) => sum + safeNum(row[field]), 0);
+  }
   const f = metricField(metric);
   let sum = 0;
   dates.forEach(d => {
@@ -1806,7 +1818,7 @@ function calcStoreAvg(dates, store, metric) {
 }
 
 function getMonthlyData(dates, metric) {
-  if (RATIO_METRICS[metric] || CHANNEL_REVENUE_FIELDS[metric] || metric === '美团刷单金额') {
+  if (RATIO_METRICS[metric] || CHANNEL_REVENUE_FIELDS[metric] || metric === '美团刷单金额' || DAILY_SUM_METRICS.has(metric)) {
     return Object.fromEntries(dates.map(d => [d, calcTotal([d], metric)]));
   }
   const f = metricField(metric);
