@@ -938,30 +938,35 @@ const FIELD_MAP = {
 
 const METRIC_LABELS = {
   '总营业额':'总营业额','服务营业额':'服务营业额','现金流营业额':'现金流营业额',
-  '抖音营业额':'抖音营业额','美团营业额':'美团营业额','卡金':'卡金','充值':'充值','商品营业额':'商品营业额',
+  '抖音营业额':'抖音营业额','美团营业额':'美团营业额','抖音-可聚集':'抖音-客聚集','美团-可聚集':'美团-客聚集','卡金':'卡金','充值':'充值','商品营业额':'商品营业额','商品销售数量':'商品销售数量',
   '开卡':'开卡','续充':'续充','免单减免':'免单减免',
   '项目数':'总项目数','168项目数':'168项目数','298项目数':'298项目数','358项目数':'358项目数','大钟占比':'大钟占比',
   '抖音新增评论':'新增评论(抖音)','抖音总评论':'总评论(抖音)','抖音新增差评':'新增差评(抖音)','抖音总中差评':'总中差评(抖音)','抖音评价回复率':'评价回复率(抖音)',
   '美团新增评论':'新增评论(美团)','美团总评价':'总评价(美团)','美团新增差评':'新增差评(美团)','美团总差评':'总差评(美团)',
   '综合新增评论':'综合新增评论','综合新增差评':'综合新增差评','总评论数':'总评论数','总差评数':'总差评数','差评率':'差评率',
-  '抖音评分':'抖音评分','美团评分':'美团评分','大众点评':'大众点评','美团经营分':'美团经营分',
+  '抖音评分':'抖音评分','美团评分':'美团评分','大众点评':'大众点评','美团经营分':'美团经营分','美团平均回复时长（秒）':'平均响应时长',
   '美团曝光人数':'美团曝光人数','美团访问人数':'美团访问人数','美团下单人数':'美团下单人数',
   '抖音访问人数':'抖音访问人数','抖音成交人数':'抖音成交人数','美团成交人数':'美团成交人数',
   '抖音成交金额':'抖音成交金额','抖音平台核销金额':'抖音-平台','美团平台核销金额':'美团-平台',
   '曝光-访问转化率':'曝光-访问转化率','意向转化率':'美团下单转化率','美团转化率':'美团转化率','抖音转化率':'抖音转化率','抖音核销率':'抖音核销率',
-  '核销新客数':'核销新客数','核销老客数':'核销老客数','核销总数':'核销总数',
+  '核销新客数':'核销新客数','核销老客数':'核销老客数','核销总数':'核销总数','抖音扫码':'抖音扫码','美团扫码':'美团扫码',
   '美团核销新客':'美团核销新客','美团核销老客':'美团核销老客','新客占比':'新客占比'
 };
 
-// 7大维度 × 38指标
+// Only fields available from the current Base are exposed. These are kept in
+// the data for historical compatibility but are no longer current Base fields.
+const DROPDOWN_EXCLUDED_METRICS = new Set(['抖音评价回复率','抖音成交金额','抖音核销率']);
+
+// Current Base fields grouped for both overview and store comparison menus.
 const METRIC_GROUPS = {
-  '营收':['总营业额','服务营业额','现金流营业额','抖音营业额','美团营业额','卡金','充值','开卡','续充','商品营业额','免单减免'],
+  '营收':['总营业额','服务营业额','现金流营业额','抖音营业额','美团营业额','抖音-可聚集','美团-可聚集','卡金','充值','开卡','续充','商品营业额','商品销售数量','免单减免'],
   '📦 项目':['项目数','168项目数','298项目数','358项目数','大钟占比'],
-  '评价':['抖音新增评论','抖音总评论','抖音新增差评','抖音总中差评','抖音评价回复率','美团新增评论','美团总评价','美团新增差评','美团总差评','综合新增评论','综合新增差评','总评论数','总差评数','差评率'],
+  '评价':['抖音新增评论','抖音总评论','抖音新增差评','抖音总中差评','美团新增评论','美团总评价','美团新增差评','美团总差评','综合新增评论','综合新增差评','总评论数','总差评数','差评率'],
   '评分':['抖音评分','美团评分','大众点评','美团经营分'],
-  '流量':['美团曝光人数','美团访问人数','美团下单人数','美团成交人数','抖音访问人数','抖音成交人数'],
-  '转化':['曝光-访问转化率','意向转化率','美团转化率','抖音转化率','抖音核销率'],
-  '核销':['抖音成交金额','抖音平台核销金额','美团平台核销金额','核销新客数','核销老客数','核销总数','美团核销新客','美团核销老客','新客占比']
+  '流量':['美团曝光人数','美团访问人数','美团下单人数','美团成交人数','抖音访问人数','抖音成交人数','抖音扫码','美团扫码'],
+  '转化':['曝光-访问转化率','意向转化率','美团转化率','抖音转化率'],
+  '核销':['抖音平台核销金额','美团平台核销金额','核销新客数','核销老客数','核销总数','美团核销新客','美团核销老客','新客占比'],
+  '服务':['美团平均回复时长（秒）']
 };
 
 const KPI_METRICS_OVERVIEW = ['服务营业额','项目数','综合新增评论','综合新增差评','差评率','核销总数','新客占比','抖音评分','美团评分'];
@@ -990,7 +995,7 @@ document.addEventListener('click', (e) => {
 function renderTrendMetricDropdown() {
   const container = document.getElementById('trend-metric-list');
   if (!container) return;
-  container.innerHTML = Object.entries(METRIC_GROUPS).map(([grp, metrics]) => `
+  container.innerHTML = getAvailableMetricGroups().map(([grp, metrics]) => `
     <div class="metric-group">
       <div class="metric-group-header">${escapeHtml(grp)}</div>
       <div class="metric-group-items">
@@ -1002,6 +1007,23 @@ function renderTrendMetricDropdown() {
       </div>
     </div>`).join('');
   renderTrendMetricTags();
+}
+
+function isMetricAvailable(metric) {
+  if (DROPDOWN_EXCLUDED_METRICS.has(metric)) return false;
+  return METRICS.includes(metricField(metric));
+}
+
+function getAvailableMetricGroups() {
+  return Object.entries(METRIC_GROUPS)
+    .map(([group, metrics]) => [group, metrics.filter(isMetricAvailable)])
+    .filter(([, metrics]) => metrics.length > 0);
+}
+
+function keepAvailableSelectedMetrics() {
+  const available = new Set(getAvailableMetricGroups().flatMap(([, metrics]) => metrics));
+  trendSelectedMetrics = trendSelectedMetrics.filter(metric => available.has(metric));
+  compareSelectedMetrics = compareSelectedMetrics.filter(metric => available.has(metric));
 }
 
 function trendToggleMetric(m, el) {
@@ -1153,9 +1175,8 @@ function configureGrainUI() {
   if (DATA_GRAIN === 'daily') {
     trendSelectedMetrics = ['总营业额'];
     compareSelectedMetrics = ['总营业额'];
-  } else {
-    METRIC_GROUPS['营收'] = METRIC_GROUPS['营收'].filter(metric => metric !== '总营业额');
   }
+  keepAvailableSelectedMetrics();
 }
 
 function grainForPeriod(period, fallback = DATA_GRAIN) {
@@ -2259,17 +2280,11 @@ function initCompare() {
 
 function renderCompareMetricDropdown() {
   const container = document.getElementById('compare-metric-list');
-  const jsonMetrics = METRICS;
-  const availableFields = new Set(Object.values(FIELD_MAP));
-
-  container.innerHTML = Object.entries(METRIC_GROUPS).map(([grp, metrics]) => `
+  container.innerHTML = getAvailableMetricGroups().map(([grp, metrics]) => `
     <div class="metric-group">
       <div class="metric-group-header">${escapeHtml(grp)}</div>
       <div class="metric-group-items">
-        ${metrics.filter(m => {
-          const f = metricField(m);
-          return jsonMetrics.includes(f);
-        }).map(m => `
+        ${metrics.map(m => `
           <div class="metric-item ${compareSelectedMetrics.includes(m)?'selected':''}" data-metric="${escapeHtml(m)}">
             <input type="checkbox" ${compareSelectedMetrics.includes(m)?'checked':''} onclick="event.stopPropagation();compareToggleMetric('${jsString(m)}',this.parentElement)">
             ${escapeHtml(METRIC_LABELS[m]||m)}
