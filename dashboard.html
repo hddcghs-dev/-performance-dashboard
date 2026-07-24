@@ -2781,7 +2781,7 @@ function renderDetailKPIs(store, dates) {
     },
     {
       title: '评分', open: true, items: [
-        { label:'评分', val:noData ? '—' : `抖音 ${fmtScore(getVal('抖音评分'))}  ·  美团 ${fmtScore(getVal('美团评分'))}  ·  大众点评 ${fmtScore(getVal('大众点评'))}`, color:'', m:'抖音评分', merged:true },
+        { label:'评分', val:noData ? '—' : `抖音 ${fmtScore(getVal('抖音评分'))}<br>美团 ${fmtScore(getVal('美团评分'))}<br>大众点评 ${fmtScore(getVal('大众点评'))}`, color:'', m:'抖音评分', merged:true },
         { label:'美团经营分', val:noData ? '—' : fmtScore(getVal('美团经营分')), color:'', m:'美团经营分' },
       ]
     },
