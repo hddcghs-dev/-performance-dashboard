@@ -416,6 +416,7 @@ body[data-theme="light"] .kpi-card:hover { box-shadow: 0 24px 60px rgba(34,62,46
 .kpi-change.up { color: var(--up); background: var(--up-bg); }     /* 红涨 */
 .kpi-change.down { color: var(--down); background: var(--down-bg); } /* 绿跌 */
 .kpi-change .arrow { font-size: 10px; margin-right: 2px; }
+.kpi-change-label { margin-left: 4px; font-size: 9px; color: var(--text2); font-weight: 500; }
 .kpi-sub { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.6; }
 
 /* KPI 分区 */
@@ -1046,11 +1047,79 @@ function renderTrendMetricTags() {
   }
 }
 
-fetch('dashboard_data.json?v=2026-07-24T00%3A23%3A10.726Z')
+function shiftMonthKey(month, offset) {
+  const [year, monthNumber] = month.split('-').map(Number);
+  const value = new Date(year, monthNumber - 1 + offset, 1);
+  return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function dailyMonthRows(data, month) {
+  return (data.daily?.data || []).filter(record => String(record['日期'] || '').startsWith(month));
+}
+
+function aggregateDailyMonthMetric(rows, metric) {
+  const ratioParts = RATIO_METRICS[metric];
+  if (ratioParts) {
+    const numerator = aggregateDailyMonthMetric(rows, ratioParts[0]);
+    const denominator = aggregateDailyMonthMetric(rows, ratioParts[1]);
+    return denominator ? numerator / denominator : 0;
+  }
+  if (metric === '大钟占比（298+358）') {
+    const numerator = rows.reduce((sum, row) => sum + safeNum(row['298项目数']) + safeNum(row['358项目数']), 0);
+    const denominator = rows.reduce((sum, row) => sum + safeNum(row['项目数']), 0);
+    return denominator ? numerator / denominator : 0;
+  }
+  if (metric === '差评率') {
+    const numerator = rows.reduce((sum, row) => sum + safeNum(row['总差评数']), 0);
+    const denominator = rows.reduce((sum, row) => sum + safeNum(row['总评论数']), 0);
+    return denominator ? numerator / denominator : 0;
+  }
+  if (metric === '新客占比') {
+    const numerator = rows.reduce((sum, row) => sum + safeNum(row['核销新客数']), 0);
+    const denominator = numerator + rows.reduce((sum, row) => sum + safeNum(row['核销老客数']), 0);
+    return denominator ? numerator / denominator : 0;
+  }
+  if (AVG_METRICS.has(metric) || ['抖音评价回复率'].includes(metric)) {
+    const valid = rows.map(row => safeNum(row[metricField(metric)])).filter(value => value > 0);
+    return valid.length ? valid.reduce((sum, value) => sum + value, 0) / valid.length : 0;
+  }
+  const field = metricField(metric);
+  return rows.reduce((sum, row) => sum + safeNum(row[field]), 0);
+}
+
+function prepareMonthlyViewData(data) {
+  const monthly = data.monthly;
+  const dailyDates = data.daily?.dates || [];
+  const latestDailyDate = [...dailyDates].sort().at(-1) || '';
+  const latestMonth = latestDailyDate.substring(0, 7);
+  if (!latestMonth) return monthly;
+
+  const monthDate = `${latestMonth}-01`;
+  const rows = dailyMonthRows(data, latestMonth);
+  const storeNames = data.stores || [...new Set(rows.map(row => row['门店']))];
+  const partialRows = storeNames.map(store => {
+    const storeRows = rows.filter(row => row['门店'] === store);
+    const record = { 日期: monthDate, 门店: store };
+    monthly.metrics.forEach(metric => {
+      record[metric] = aggregateDailyMonthMetric(storeRows, metric);
+    });
+    return record;
+  });
+
+  return {
+    ...monthly,
+    dates: [...new Set([...monthly.dates.filter(date => date !== monthDate), monthDate])].sort(),
+    data: [...monthly.data.filter(row => row['日期'] !== monthDate), ...partialRows],
+  };
+}
+
+fetch('dashboard_data.json?v=2026-07-24T00%3A40%3A26.000Z')
   .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
   .then(data => {
     ROOT_DATA = data;
-    const selected = data[DATA_GRAIN] || data.monthly || data;
+    const selected = DATA_GRAIN === 'monthly'
+      ? prepareMonthlyViewData(data)
+      : (data[DATA_GRAIN] || data.monthly || data);
     ALL_DATA = { ...data, ...selected };
     STORES = data.stores || selected.stores || [];
     DATES = selected.dates || [];
@@ -1353,7 +1422,14 @@ function initFilters() {
         ? [...new Set(sortedDesc.map(d => d.substring(0, 7)))]
         : sortedDesc;
       const current = document.getElementById('overview-month')?.value || months[0] || '';
-      html = `<select id="overview-month" aria-label="月份">${months.map(m => `<option value="${m}" ${m === current ? 'selected' : ''}>${m.substring(0, 7).replace('-', '年')}月</option>`).join('')}</select>`;
+      const latestDailyDate = [...(ROOT_DATA.daily?.dates || [])].sort().at(-1) || '';
+      const latestDailyMonth = latestDailyDate.substring(0, 7);
+      html = `<select id="overview-month" aria-label="月份">${months.map(m => {
+        const label = m === latestDailyMonth
+          ? `${m.substring(0, 7).replace('-', '年')}月（截至${latestDailyDate.substring(8, 10)}日）`
+          : `${m.substring(0, 7).replace('-', '年')}月`;
+        return `<option value="${m}" ${m === current ? 'selected' : ''}>${label}</option>`;
+      }).join('')}</select>`;
     } else if (period === 'quarter') {
       const currentYear = document.getElementById('overview-quarter-year')?.value || latest.substring(0, 4);
       const latestQuarter = latest ? `Q${Math.floor((Number(latest.substring(5, 7)) - 1) / 3) + 1}` : 'Q1';
@@ -1516,6 +1592,54 @@ function calcTotal(dates, metric) {
   return sum;
 }
 
+function calcRowsTotal(rows, metric) {
+  const parts = RATIO_METRICS[metric];
+  if (parts) {
+    const numerator = calcRowsTotal(rows, parts[0]);
+    const denominator = calcRowsTotal(rows, parts[1]);
+    return denominator ? numerator / denominator : 0;
+  }
+  const f = metricField(metric);
+  return rows.reduce((sum, row) => sum + safeNum(row[f]), 0);
+}
+
+function getDailyRowsForDates(dates) {
+  const dateSet = new Set(dates);
+  return (ROOT_DATA.daily?.data || []).filter(row => dateSet.has(row['日期']));
+}
+
+function getOverviewComparison(dates) {
+  const period = document.getElementById('overview-period')?.value;
+  if (DATA_GRAIN === 'monthly' && period === 'month' && dates.length === 1) {
+    const selectedMonth = dates[0].substring(0, 7);
+    const latestDailyDate = [...(ROOT_DATA.daily?.dates || [])].sort().at(-1) || '';
+    const latestDailyMonth = latestDailyDate.substring(0, 7);
+    if (selectedMonth === latestDailyMonth && latestDailyDate) {
+      const dayLimit = Number(latestDailyDate.substring(8, 10));
+      const clipMonth = month => (ROOT_DATA.daily?.dates || []).filter(date =>
+        date.startsWith(month) && Number(date.substring(8, 10)) <= dayLimit
+      );
+      return {
+        prev: { rows: getDailyRowsForDates(clipMonth(shiftMonthKey(selectedMonth, -1))), label: '环比同期' },
+        yoy: { rows: getDailyRowsForDates(clipMonth(shiftMonthKey(selectedMonth, -12))), label: '同比同期' },
+      };
+    }
+    return {
+      prev: { dates: [`${shiftMonthKey(selectedMonth, -1)}-01`], label: '环比' },
+      yoy: { dates: [`${shiftMonthKey(selectedMonth, -12)}-01`], label: '同比' },
+    };
+  }
+  if (DATA_GRAIN === 'daily') {
+    return { prev: { dates: getPrevDates(dates), label: '' } };
+  }
+  return {};
+}
+
+function calcOverviewRangeTotal(range, metric) {
+  if (range?.rows) return calcRowsTotal(range.rows, metric);
+  return range?.dates?.length ? calcTotal(range.dates, metric) : 0;
+}
+
 function calcStoreAgg(dates, store, metric) {
   const f = metricField(metric);
   let sum = 0;
@@ -1595,19 +1719,27 @@ function renderOverview() {
 
 function renderOverviewKPIs(dates) {
   const container = document.getElementById('overview-kpi');
-  const prev = getPrevDates(dates);
-  const hasPrev = prev.length > 0;
+  const comparison = getOverviewComparison(dates);
 
-  function calcMoM(cur, metric) {
-    if (!hasPrev) return '';
-    const pv = calcTotal(prev, metric);
+  function calcDelta(cur, metric, range) {
+    const pv = calcOverviewRangeTotal(range, metric);
     if (!pv) return '';
     const chg = (cur - pv) / pv;
     const arrow = chg >= 0 ? '↑' : '↓';
     // 红涨绿跌：up/down 类只按涨跌方向赋予；差评等负向指标上升呈红色，恰好兼作警示
     const colorCls = chg >= 0 ? 'up' : 'down';
-    return `<div class="kpi-change ${colorCls}"><span class="arrow">${arrow}</span>${(chg*100).toFixed(1)}%</div>`;
+    const label = range.label ? `<span class="kpi-change-label">${range.label}</span>` : '';
+    return `<div class="kpi-change ${colorCls}"><span class="arrow">${arrow}</span>${(chg*100).toFixed(1)}%${label}</div>`;
   }
+
+  function overviewChanges(cur, metric) {
+    return Object.values(comparison)
+      .map(range => calcDelta(cur, metric, range))
+      .filter(Boolean)
+      .join('');
+  }
+
+  const overviewMoney = n => DATA_GRAIN === 'daily' ? fmtYInt(n) : fmtY(n);
 
   const revenueMetric = primaryRevenueMetric();
   const totalRev = calcTotal(dates,revenueMetric);
@@ -1644,15 +1776,15 @@ function renderOverviewKPIs(dates) {
   const mtScore = avgNonZero('美团评分');
 
   const kpis = [
-    { label:METRIC_LABELS[revenueMetric], val:fmtY(totalRev), raw:totalRev, color:'gold', m:revenueMetric },
-    { label:'现金流营业额', val:fmtY(totalCashflow), raw:totalCashflow, color:'', m:'现金流营业额' },
+    { label:METRIC_LABELS[revenueMetric], val:overviewMoney(totalRev), raw:totalRev, color:'gold', m:revenueMetric },
+    { label:'现金流营业额', val:overviewMoney(totalCashflow), raw:totalCashflow, color:'', m:'现金流营业额' },
     { label:'现金流率', val:fmtPct(cashflowRate), raw:cashflowRate, color: cashflowRate>=1?'green':'', m:null },
-    { label:'项目均价', val:fmtY(Math.round(avgTicket)), raw:avgTicket, color:'', m:null },
+    { label:'项目均价', val:fmtYInt(avgTicket), raw:avgTicket, color:'', m:null },
     { label:'总项目数', val:fmtN(totalProjects), raw:totalProjects, color:'', m:'项目数' },
-    { label:'抖音营业额', val:fmtY(dyAmt), raw:dyAmt, color:'', m:'抖音营业额' },
-    { label:'美团营业额', val:fmtY(mtAmt), raw:mtAmt, color:'', m:'美团营业额' },
-    { label:'卡金-充值', val:fmtY(cardRechargeGap), raw:cardRechargeGap, color: cardRechargeGap<0?'red':'green', sub:cardRechargeGap<0?'充值少于卡金':'充值覆盖卡金', m:null },
-    { label:'免单减免', val:fmtY(totalFree), raw:totalFree, color: totalFree>0?'red':'', m:'免单减免' },
+    { label:'抖音营业额', val:overviewMoney(dyAmt), raw:dyAmt, color:'', m:'抖音营业额' },
+    { label:'美团营业额', val:overviewMoney(mtAmt), raw:mtAmt, color:'', m:'美团营业额' },
+    { label:'卡金-充值', val:overviewMoney(cardRechargeGap), raw:cardRechargeGap, color: cardRechargeGap<0?'red':'green', sub:cardRechargeGap<0?'充值少于卡金':'充值覆盖卡金', m:null },
+    { label:'免单减免', val:overviewMoney(totalFree), raw:totalFree, color: totalFree>0?'red':'', m:'免单减免' },
     { label:'综合新增评论', val:fmtN(totalComments), raw:totalComments, color:'green', m:'综合新增评论' },
     { label:'综合新增差评', val:fmtN(totalBad), raw:totalBad, color:'red', m:'综合新增差评' },
     { label:'差评率', val:fmtPct(badRate), raw:badRate, color: badRate>0.05?'red':'', m:null },
@@ -1665,7 +1797,7 @@ function renderOverviewKPIs(dates) {
     <div class="kpi-card">
       <div class="kpi-label">${it.label}</div>
       <div class="kpi-value ${it.color}">${it.val}</div>
-      ${it.m && hasPrev ? calcMoM(it.raw, it.m) : ''}
+      ${it.m ? overviewChanges(it.raw, it.m) : ''}
       ${it.sub ? `<div class="kpi-sub">${it.sub}</div>` : ''}
     </div>`).join('');
 }
@@ -2508,6 +2640,10 @@ function renderDetailKPIs(store, dates) {
   const getSum = m => calcStoreAgg(dates, store, m);
   const getPrevSum = m => calcStoreAgg([prevMonth], store, m);
   const getPySum = m => calcStoreAgg([prevYearMonth], store, m);
+  const rechargeFraudAmount = getSum('充值');
+  const meituanVerificationSub = rechargeFraudAmount > 0
+    ? `刷单金额 ${fmtYInt(rechargeFraudAmount)} 元`
+    : '元';
 
   function renderDelta(current, prev, isP, label) {
     if (!prev || prev === 0) return null;
@@ -2531,8 +2667,6 @@ function renderDetailKPIs(store, dates) {
         { label:METRIC_LABELS[revenueMetric], val:fmtYInt(totalVal), sub:`服务${fmtYInt(svcVal)}  ·  商品${fmtYInt(prodVal)}`, color:'gold', m:revenueMetric, isSum:true, mom:true },
         { label:'客单价', val:fmtYInt(avgTicket), sub:'总营业额 / 项目数', color:'', m:null },
         { label:'现金流营业额', val:fmtYInt(getSum('现金流营业额')), sub:'元', color:'', m:'现金流营业额', isSum:true },
-        { label:'抖音营业额', val:fmtYInt(getSum('抖音')), sub:'元', color:'', m:'抖音', isSum:true, mom:true },
-        { label:'美团营业额', val:fmtYInt(getSum('美团')), sub:'元', color:'', m:'美团', isSum:true, mom:true },
         { label:'卡金', val:fmtYInt(getSum('卡金')), sub:'元', color:'', m:'卡金', isSum:true },
         { label:'充值', val:fmtYInt(getSum('充值')), sub:'元', color:'', m:'充值', isSum:true },
         { label:'免单减免', val:fmtYInt(getSum('免单减免')), sub:'元', color:'', m:'免单减免', isSum:true },
@@ -2557,8 +2691,7 @@ function renderDetailKPIs(store, dates) {
     {
       title: '核销', open: true, items: [
         { label:'抖音平台核销', val:fmtYInt(getSum('抖音-平台')), sub:'元', color:'', m:'抖音-平台', isSum:true },
-        { label:'美团平台核销', val:fmtYInt(getSum('美团-平台')), sub:'元', color:'', m:'美团-平台', isSum:true },
-        { label:'抖音核销率', val:fmtPct(getVal('抖音核销率')), sub:'平台核销金额 / 成交金额', color:'', m:'抖音核销率' },
+        { label:'美团平台核销', val:fmtYInt(getSum('美团-平台')), sub:meituanVerificationSub, color:'', m:'美团-平台', isSum:true },
         { label:'新客占比', val:fmtPct(getVal('新客占比')), sub:'', color:'', m:'新客占比' },
       ]
     }
@@ -2591,26 +2724,23 @@ function renderDetailKPIs(store, dates) {
 
 function renderDetailPieCharts(store) {
   const dates = getDetailDates(store);
-  const svcTotal = calcStoreAgg(dates, store, primaryRevenueMetric());
-  const dy = calcStoreAgg(dates, store, '抖音');
-  const mt = calcStoreAgg(dates, store, '美团');
-  const kj = calcStoreAgg(dates, store, '卡金');
-  const free = calcStoreAgg(dates, store, '免单减免');
-  const prod = calcStoreAgg(dates, store, '商品营业额');
-  const cashPay = svcTotal - dy - mt - kj - free - prod;
+  const revenueTotal = calcStoreAgg(dates, store, primaryRevenueMetric());
+  const dy = calcStoreAgg(dates, store, '抖音-平台');
+  const mt = calcStoreAgg(dates, store, '美团-平台');
+  const other = Math.max(0, revenueTotal - dy - mt);
 
   const pie = getChart('chart-detail-revenue-pie');
   if (!pie) return;
   pie.setOption({
     backgroundColor:'transparent',
-    tooltip:{...T.tip,formatter:p=>`${p.name}: ${p.value.toLocaleString('zh-CN')} (${p.percent.toFixed(1)}%) · 占${DATA_GRAIN === 'daily' ? '总营业额' : '服务营业额'} ${(p.value/svcTotal*100).toFixed(1)}%`},
+    tooltip:{...T.tip,formatter:p=>`${p.name}: ${p.value.toLocaleString('zh-CN')} (${p.percent.toFixed(1)}%) · 占${DATA_GRAIN === 'daily' ? '总营业额' : '服务营业额'} ${(p.value/(revenueTotal || 1)*100).toFixed(1)}%`},
     legend:{orient:'vertical',right:5,top:'center',textStyle:{color:T.text,fontSize:10},itemWidth:8,itemHeight:8},
     series:[{
       type:'pie',radius:['35%','65%'],center:['40%','50%'],
       data:[
         {value:dy,name:'抖音',itemStyle:{color:T.dy}},
         {value:mt,name:'美团',itemStyle:{color:T.mt}},
-        {value:Math.max(0,svcTotal-dy-mt),name:'其它',itemStyle:{color:T.gold}},
+        {value:other,name:'其它',itemStyle:{color:T.gold}},
       ],
       label:{show:true,formatter:'{b}\n{d}%',fontSize:10,color:T.label},labelLine:{lineStyle:{color:T.axis}}
     }]
