@@ -1686,8 +1686,15 @@ const CHANNEL_REVENUE_FIELDS = Object.freeze({
 
 function getDailyRowsForViewDates(dates) {
   const values = (dates || []).map(String);
-  const dailyDates = new Set(values.filter(value => /^\d{4}-\d{2}-\d{2}$/.test(value)));
-  const months = new Set(values.filter(value => /^\d{4}-\d{2}$/.test(value)));
+  const dailyDates = new Set();
+  const months = new Set();
+  values.forEach(value => {
+    if (/^\d{4}-\d{2}$/.test(value) || (DATA_GRAIN === 'monthly' && /^\d{4}-\d{2}-01$/.test(value))) {
+      months.add(value.substring(0, 7));
+    } else if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      dailyDates.add(value);
+    }
+  });
   return (ROOT_DATA.daily?.data || []).filter(row => {
     const date = String(row['日期'] || '');
     return dailyDates.has(date) || months.has(date.substring(0, 7));
@@ -1813,14 +1820,33 @@ function getMonthlyData(dates, metric) {
 }
 
 function getStoreMonthlyData(store, metric, dates) {
-  if (RATIO_METRICS[metric] || CHANNEL_REVENUE_FIELDS[metric] || metric === '美团刷单金额') {
-    return Object.fromEntries(dates.map(d => [d, calcStoreValue([d], store, metric)]));
-  }
-  const f = metricField(metric);
+  const useDailyRows = DATA_GRAIN === 'monthly'
+    && document.getElementById('detail-period')?.value === 'month';
   const result = {};
   dates.forEach(d => {
-    const r = IDX_BY_DS[d + '_' + store] || DAILY_IDX_BY_DS[d + '_' + store];
-    result[d] = r ? safeNum(r[f]) : 0;
+    const key = d + '_' + store;
+    const row = useDailyRows
+      ? (DAILY_IDX_BY_DS[key] || IDX_BY_DS[key])
+      : (IDX_BY_DS[key] || DAILY_IDX_BY_DS[key]);
+    if (!row) {
+      result[d] = 0;
+      return;
+    }
+    if (CHANNEL_REVENUE_FIELDS[metric]) {
+      result[d] = channelRevenueValue(row, metric);
+      return;
+    }
+    if (metric === '美团刷单金额') {
+      result[d] = safeNum(row['美团刷单金额']);
+      return;
+    }
+    const parts = RATIO_METRICS[metric];
+    if (parts) {
+      const denominator = safeNum(row[metricField(parts[1])]);
+      result[d] = denominator ? safeNum(row[metricField(parts[0])]) / denominator : 0;
+      return;
+    }
+    result[d] = safeNum(row[metricField(metric)]);
   });
   return result;
 }
@@ -2715,11 +2741,21 @@ function renderDetail() {
   renderCardGold(store, trendDates);
 }
 
+function getDailyStoreDates(store) {
+  return [...new Set((ROOT_DATA?.daily?.data || [])
+    .filter(record => record['门店'] === store)
+    .map(record => record['日期']))].sort();
+}
+
 function getDetailTrendDates(store, selectedDates) {
   const period = document.getElementById('detail-period').value;
   const storeDates = getStoreDates(store);
-  // 月度视图的日期键是每月第一天，但数值本身就是整月汇总。
-  // 不再把月度选择展开成日数据，避免月度汇总与日趋势混用。
+  if (DATA_GRAIN === 'monthly' && period === 'month') {
+    const selectedMonths = new Set(selectedDates.map(date => date.substring(0, 7)));
+    const dailyTrendDates = getDailyStoreDates(store)
+      .filter(date => selectedMonths.has(date.substring(0, 7)));
+    return dailyTrendDates.length > 1 ? dailyTrendDates : selectedDates;
+  }
   if (DATA_GRAIN === 'monthly') return selectedDates;
   if (period !== 'day') return selectedDates;
   const end = selectedDates[selectedDates.length - 1] || storeDates[storeDates.length - 1];
