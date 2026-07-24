@@ -3064,6 +3064,20 @@ function renderCardGold(store, dates) {
   const consume = getStoreMonthlyData(store,'卡金',dates);
   const recharge = getStoreMonthlyData(store,'充值',dates);
   const labels = Object.keys(consume).sort();
+  const showAllPointLabels = dates.length <= 14;
+  const pointData = (values, formatter) => values.map((value, index) => ({
+    value,
+    label: {
+      show: value != null && !isNaN(value) && (showAllPointLabels || index === values.length - 1),
+      position: 'top',
+      distance: 5,
+      color: T.text,
+      fontSize: 9,
+      formatter: params => formatter(params.value)
+    }
+  }));
+  const pointLabelStyle = { show: false, fontSize: 9 };
+  const pointLabelLayout = { hideOverlap: true, moveOverlap: 'shiftY' };
   const hasData = (obj, d) => (obj[d] || 0) > 0;
   const glabels = labels.filter(d => hasData(consume,d) || hasData(recharge,d));
 
