@@ -1103,6 +1103,7 @@ function prepareMonthlyViewData(data) {
     monthly.metrics.forEach(metric => {
       record[metric] = aggregateDailyMonthMetric(storeRows, metric);
     });
+    record['美团刷单金额'] = storeRows.reduce((sum, row) => sum + safeNum(row['美团刷单金额']), 0);
     return record;
   });
 
@@ -1113,7 +1114,7 @@ function prepareMonthlyViewData(data) {
   };
 }
 
-fetch('dashboard_data.json?v=2026-07-24T00%3A40%3A26.000Z')
+fetch('dashboard_data.json?v=2026-07-24T01%3A24%3A37.078Z')
   .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
   .then(data => {
     ROOT_DATA = data;
@@ -1179,6 +1180,13 @@ function displayDate(date) {
 
 function axisDate(date) {
   return DATA_GRAIN === 'daily' ? date.substring(5) : date.substring(5, 7) + '月';
+}
+
+function trendAxisDate(date, trendDates) {
+  const dailyDates = ROOT_DATA?.daily?.dates || [];
+  const isDailyTrend = DATA_GRAIN === 'daily'
+    || (trendDates.length > 1 && trendDates.every(value => dailyDates.includes(value)));
+  return isDailyTrend ? date.substring(5) : axisDate(date);
 }
 
 function shiftIsoDate(date, days) {
@@ -1286,15 +1294,20 @@ function getChart(id) {
 // 数据索引
 let IDX_BY_DATE = {};  // date→[{record}]
 let IDX_BY_DS = {};    // date_store→record
+let DAILY_IDX_BY_DS = {}; // daily date_store→record, used by monthly detail trends
 let LATEST_DATE = '';
 function buildIndex() {
   IDX_BY_DATE = {};
   IDX_BY_DS = {};
+  DAILY_IDX_BY_DS = {};
   ALL_DATA.data.forEach(r => {
     const d = r['日期'], s = r['门店'];
     if (!IDX_BY_DATE[d]) IDX_BY_DATE[d] = [];
     IDX_BY_DATE[d].push(r);
     IDX_BY_DS[d + '_' + s] = r;
+  });
+  (ROOT_DATA?.daily?.data || []).forEach(r => {
+    DAILY_IDX_BY_DS[r['日期'] + '_' + r['门店']] = r;
   });
   LATEST_DATE = [...DATES].sort().pop() || '';
   // Update freshness badge
@@ -1644,7 +1657,7 @@ function calcStoreAgg(dates, store, metric) {
   const f = metricField(metric);
   let sum = 0;
   dates.forEach(d => {
-    const r = IDX_BY_DS[d + '_' + store];
+    const r = IDX_BY_DS[d + '_' + store] || DAILY_IDX_BY_DS[d + '_' + store];
     if (r) sum += safeNum(r[f]);
   });
   return sum;
@@ -1702,7 +1715,7 @@ function getStoreMonthlyData(store, metric, dates) {
   const f = metricField(metric);
   const result = {};
   dates.forEach(d => {
-    const r = IDX_BY_DS[d + '_' + store];
+    const r = IDX_BY_DS[d + '_' + store] || DAILY_IDX_BY_DS[d + '_' + store];
     result[d] = r ? safeNum(r[f]) : 0;
   });
   return result;
@@ -2565,10 +2578,21 @@ function renderDetail() {
   renderCardGold(store, trendDates);
 }
 
+function getDailyStoreDates(store) {
+  return [...new Set((ROOT_DATA?.daily?.data || [])
+    .filter(record => record['门店'] === store)
+    .map(record => record['日期']))].sort();
+}
+
 function getDetailTrendDates(store, selectedDates) {
   const period = document.getElementById('detail-period').value;
-  if (DATA_GRAIN !== 'daily' || period !== 'day') return selectedDates;
-  const storeDates = getStoreDates(store);
+  const storeDates = DATA_GRAIN === 'monthly' ? getDailyStoreDates(store) : getStoreDates(store);
+  if (DATA_GRAIN === 'monthly') {
+    const selectedMonths = new Set(selectedDates.map(date => date.substring(0, 7)));
+    const dailyTrendDates = storeDates.filter(date => selectedMonths.has(date.substring(0, 7)));
+    return dailyTrendDates.length > 1 ? dailyTrendDates : selectedDates;
+  }
+  if (period !== 'day') return selectedDates;
   const end = selectedDates[selectedDates.length - 1] || storeDates[storeDates.length - 1];
   const endIndex = storeDates.indexOf(end);
   return endIndex >= 0 ? storeDates.slice(Math.max(0, endIndex - 6), endIndex + 1) : selectedDates;
@@ -2640,7 +2664,7 @@ function renderDetailKPIs(store, dates) {
   const getSum = m => calcStoreAgg(dates, store, m);
   const getPrevSum = m => calcStoreAgg([prevMonth], store, m);
   const getPySum = m => calcStoreAgg([prevYearMonth], store, m);
-  const rechargeFraudAmount = getSum('充值');
+  const rechargeFraudAmount = getSum('美团刷单金额');
   const meituanVerificationSub = rechargeFraudAmount > 0
     ? `刷单金额 ${fmtYInt(rechargeFraudAmount)} 元`
     : '元';
@@ -2769,6 +2793,7 @@ function renderDetailTrendCharts(store, dates) {
   const m358 = getStoreMonthlyData(store,'358项目数',dates);
   const mRev = getStoreMonthlyData(store,primaryRevenueMetric(),dates);
   const labels = Object.keys(mRev).sort();
+  const xDate = date => trendAxisDate(date, dates);
 
   const hasData = (obj, d) => (obj[d] || 0) > 0;
 
@@ -2779,7 +2804,7 @@ function renderDetailTrendCharts(store, dates) {
   revChart.setOption({
     backgroundColor:'transparent',
     tooltip:{...T.tip,trigger:'axis',formatter:p=>`${p[0].name}<br>${p[0].value.toLocaleString('zh-CN')}`},
-    xAxis:{type:'category',data:revLabels.map(axisDate),axisLine:{lineStyle:{color:T.axis}},axisLabel:{color:T.text,fontSize:10},splitLine:{show:false}},
+    xAxis:{type:'category',data:revLabels.map(xDate),axisLine:{lineStyle:{color:T.axis}},axisLabel:{color:T.text,fontSize:10},splitLine:{show:false}},
     yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:T.split}},axisLabel:{color:T.text,fontSize:10}},
     series:[{data:revLabels.map(d=>mRev[d]),type:'line',smooth:true,symbol:'circle',symbolSize:4,areaStyle:{color:{type:'linear',x:0,y:0,x2:0,y2:1,colorStops:[{offset:0,color:T.mt+'1F'},{offset:1,color:T.mt+'00'}]}},lineStyle:{color:T.mt,width:2},itemStyle:{color:T.mt}}],
     grid:{left:50,right:15,top:10,bottom:25}
@@ -2792,7 +2817,7 @@ function renderDetailTrendCharts(store, dates) {
     backgroundColor:'transparent',
     tooltip:{...T.tip,trigger:'axis'},
     legend:{data:['168项目','298项目','358项目'],textStyle:{color:T.text,fontSize:10},itemWidth:12,itemHeight:8,top:5},
-    xAxis:{type:'category',data:projLabels.map(axisDate),axisLine:{lineStyle:{color:T.axis}},axisLabel:{color:T.text,fontSize:10},splitLine:{show:false}},
+    xAxis:{type:'category',data:projLabels.map(xDate),axisLine:{lineStyle:{color:T.axis}},axisLabel:{color:T.text,fontSize:10},splitLine:{show:false}},
     yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:T.split}},axisLabel:{color:T.text,fontSize:10}},
     series:[
       {name:'168项目',data:projLabels.map(d=>m168[d]),type:'line',smooth:true,symbol:'circle',symbolSize:3,lineStyle:{color:T.mt,width:2},itemStyle:{color:T.mt}},
@@ -2812,7 +2837,7 @@ function renderDetailTrendCharts(store, dates) {
     backgroundColor:'transparent',
     tooltip:{...T.tip,trigger:'axis'},
     legend:{data:['抖音评论','美团评论','差评'],textStyle:{color:T.text,fontSize:10},itemWidth:12,itemHeight:8,top:5},
-    xAxis:{type:'category',data:comLabels.map(axisDate),axisLine:{lineStyle:{color:T.axis}},axisLabel:{color:T.text,fontSize:10},splitLine:{show:false}},
+    xAxis:{type:'category',data:comLabels.map(xDate),axisLine:{lineStyle:{color:T.axis}},axisLabel:{color:T.text,fontSize:10},splitLine:{show:false}},
     yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:T.split}},axisLabel:{color:T.text,fontSize:10}},
     series:[
       {name:'抖音评论',data:comLabels.map(d=>comDy[d]),type:'line',smooth:true,symbol:'circle',symbolSize:3,lineStyle:{color:T.dy,width:2},itemStyle:{color:T.dy}},
@@ -2831,7 +2856,7 @@ function renderDetailTrendCharts(store, dates) {
     backgroundColor:'transparent',
     tooltip:{...T.tip,trigger:'axis'},
     legend:{data:['美团访问','抖音访问'],textStyle:{color:T.text,fontSize:10},itemWidth:12,itemHeight:8,top:5},
-    xAxis:{type:'category',data:trafLabels.map(axisDate),axisLine:{lineStyle:{color:T.axis}},axisLabel:{color:T.text,fontSize:10},splitLine:{show:false}},
+    xAxis:{type:'category',data:trafLabels.map(xDate),axisLine:{lineStyle:{color:T.axis}},axisLabel:{color:T.text,fontSize:10},splitLine:{show:false}},
     yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:T.split}},axisLabel:{color:T.text,fontSize:10}},
     series:[
       {name:'美团访问',data:trafLabels.map(d=>mtVis[d]),type:'line',smooth:true,symbol:'circle',symbolSize:3,areaStyle:{color:{type:'linear',x:0,y:0,x2:0,y2:1,colorStops:[{offset:0,color:T.mt+'1F'},{offset:1,color:T.mt+'00'}]}},lineStyle:{color:T.mt,width:2},itemStyle:{color:T.mt}},
@@ -2855,7 +2880,7 @@ function renderDetailTrendCharts(store, dates) {
       return `${p[0]?.name || ''}<br>${rows.join('<br>')}`;
     }},
     legend:{data:['美团转化率','抖音转化率','抖音核销率'],textStyle:{color:T.text,fontSize:10},itemWidth:12,itemHeight:8,top:5},
-    xAxis:{type:'category',data:convLabels.map(axisDate),axisLine:{lineStyle:{color:T.axis}},axisLabel:{color:T.text,fontSize:10},splitLine:{show:false}},
+    xAxis:{type:'category',data:convLabels.map(xDate),axisLine:{lineStyle:{color:T.axis}},axisLabel:{color:T.text,fontSize:10},splitLine:{show:false}},
     yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:T.split}},axisLabel:{color:T.text,fontSize:10,formatter:v=>(v*100).toFixed(0)+'%'}},
     series:[
       {name:'美团转化率',data:convLabels.map(d=>conv1[d] > 0 ? conv1[d] : null),type:'line',smooth:true,connectNulls:false,showSymbol:true,symbol:'circle',symbolSize:5,lineStyle:{color:T.mt,width:2},itemStyle:{color:T.mt}},
@@ -2872,7 +2897,7 @@ function renderDetailTrendCharts(store, dates) {
   newChart.setOption({
     backgroundColor:'transparent',
     tooltip:{...T.tip,trigger:'axis',formatter:p=>`${p[0].name}<br>${(p[0].value*100).toFixed(1)}%`},
-    xAxis:{type:'category',data:newLabels.map(axisDate),axisLine:{lineStyle:{color:T.axis}},axisLabel:{color:T.text,fontSize:10},splitLine:{show:false}},
+    xAxis:{type:'category',data:newLabels.map(xDate),axisLine:{lineStyle:{color:T.axis}},axisLabel:{color:T.text,fontSize:10},splitLine:{show:false}},
     yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:T.split}},axisLabel:{color:T.text,fontSize:10,formatter:v=>(v*100).toFixed(0)+'%'},max:1},
     series:[{data:newLabels.map(d=>newRate[d]),type:'line',smooth:true,symbol:'circle',symbolSize:3,areaStyle:{color:{type:'linear',x:0,y:0,x2:0,y2:1,colorStops:[{offset:0,color:T.mt+'1F'},{offset:1,color:T.mt+'00'}]}},lineStyle:{color:T.mt,width:2},itemStyle:{color:T.mt}}],
     grid:{left:50,right:15,top:10,bottom:25}
@@ -2908,7 +2933,7 @@ function renderCardGold(store, dates) {
     backgroundColor:'transparent',
     tooltip:{...T.tip,trigger:'axis',formatter:p=>`${p[0].name}<br>${p[0].seriesName}: ${p[0].value.toLocaleString('zh-CN')}<br>${p[1].seriesName}: ${p[1].value.toLocaleString('zh-CN')}`},
     legend:{data:['卡金消耗','充值'],textStyle:{color:T.text,fontSize:10},itemWidth:12,itemHeight:8,top:5},
-    xAxis:{type:'category',data:glabels.map(axisDate),axisLine:{lineStyle:{color:T.axis}},axisLabel:{color:T.text,fontSize:10},splitLine:{show:false}},
+    xAxis:{type:'category',data:glabels.map(d => trendAxisDate(d, dates)),axisLine:{lineStyle:{color:T.axis}},axisLabel:{color:T.text,fontSize:10},splitLine:{show:false}},
     yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:T.split}},axisLabel:{color:T.text,fontSize:10}},
     series:[
       {
@@ -3032,7 +3057,9 @@ setInterval(() => {
       if (h !== _lastDataHash) {
         _lastDataHash = h;
         ROOT_DATA = data;
-        const selected = data[DATA_GRAIN] || data.monthly || data;
+        const selected = DATA_GRAIN === 'monthly'
+          ? prepareMonthlyViewData(data)
+          : (data[DATA_GRAIN] || data.monthly || data);
         ALL_DATA = { ...data, ...selected };
         STORES = data.stores || selected.stores || [];
         DATES = selected.dates || [];
