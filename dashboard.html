@@ -880,13 +880,19 @@ body[data-theme="light"] .median-box { border-color: rgba(169,127,69,.30); backg
 <div id="tab-detail" class="tab-content">
 
   <div class="filter-bar">
+    <div class="presets" id="detail-preset-btns">
+      <button class="preset-btn active" data-preset="latestMonth">最近一月</button>
+      <button class="preset-btn" data-preset="latestQuarter">最近一季</button>
+      <button class="preset-btn" data-preset="ytd">今年</button>
+      <button class="preset-btn" data-preset="all">全部</button>
+    </div>
     <div class="filter-group">
       <span class="filter-label">门店</span>
       <select id="detail-store"></select>
     </div>
     <div class="filter-group">
-      <span class="filter-label">周期</span>
-      <select id="detail-period">
+      <span class="filter-label">时间维度</span>
+      <select id="detail-period" aria-label="单店详情时间维度">
         <option value="day">单日</option>
         <option value="week">近7日</option>
         <option value="month">月度</option>
@@ -1444,6 +1450,7 @@ function buildIndex() {
 
 // 预设日期覆盖（非null时覆盖 getFilteredDates 的返回值）
 let presetDates = null;
+let detailPresetDates = null;
 function setPreset(name) {
   const btns = document.querySelectorAll('#preset-btns .preset-btn');
   btns.forEach(b => b.classList.toggle('active', b.dataset.preset === name));
@@ -1463,10 +1470,36 @@ function setPreset(name) {
   }
   renderOverview();
 }
+
+function getDetailPresetDates(name, store) {
+  const sorted = getStoreDates(store);
+  const latest = sorted[sorted.length - 1] || '';
+  switch (name) {
+    case 'latestMonth': return latest ? [latest] : [];
+    case 'latestQuarter': return sorted.slice(DATA_GRAIN === 'daily' ? -7 : -3);
+    case 'ytd':
+      return sorted.filter(d => d.startsWith(
+        DATA_GRAIN === 'daily' ? latest.substring(0, 7) : latest.substring(0, 4)
+      ));
+    case 'all': return sorted;
+    default: return null;
+  }
+}
+
+function setDetailPreset(name) {
+  const btns = document.querySelectorAll('#detail-preset-btns .preset-btn');
+  btns.forEach(b => b.classList.toggle('active', b.dataset.preset === name));
+  const store = document.getElementById('detail-store')?.value;
+  detailPresetDates = store ? getDetailPresetDates(name, store) : null;
+  renderDetail();
+}
+
 // Preset button click handlers
 document.addEventListener('click', e => {
   const btn = e.target.closest('#preset-btns .preset-btn');
   if (btn) setPreset(btn.dataset.preset);
+  const detailBtn = e.target.closest('#detail-preset-btns .preset-btn');
+  if (detailBtn) setDetailPreset(detailBtn.dataset.preset);
 });
 
 // 获取上一周期日期（同长度）
@@ -1614,50 +1647,66 @@ function initFilters() {
     return ia - ib;
   });
 
+  function clearDetailPreset() {
+    detailPresetDates = null;
+    document.querySelectorAll('#detail-preset-btns .preset-btn').forEach(button => button.classList.remove('active'));
+  }
+
   function updateDetailPeriodUI(store) {
     const storeDates = getStoreDates(store);
     const years = [...new Set(storeDates.map(d => d.substring(0,4)))].sort();
     const sortedStoreDates = [...storeDates].sort((a,b) => b.localeCompare(a));
+    const latest = sortedStoreDates[0] || '';
     const period = dp.value;
 
     let html = '';
     if (period === 'day' || period === 'week') {
       const controlId = period === 'day' ? 'detail-day' : 'detail-week-end';
       const lastVal = document.getElementById(controlId)?.value || sortedStoreDates[0] || '';
-      html = `<select id="${controlId}">${sortedStoreDates.map(d => `<option value="${d}" ${d === lastVal ? 'selected' : ''}>${d}</option>`).join('')}</select>`;
+      html = `<select id="${controlId}" aria-label="${period === 'day' ? '日期' : '周截止日'}">${sortedStoreDates.map(d => `<option value="${d}" ${d === lastVal ? 'selected' : ''}>${d}</option>`).join('')}</select>`;
     } else if (period === 'month') {
       const lastVal = document.getElementById('detail-month')?.value;
       const monthValues = DATA_GRAIN === 'daily'
         ? [...new Set(sortedStoreDates.map(d => d.substring(0, 7)))]
         : sortedStoreDates;
-      html = `<select id="detail-month">${monthValues.map(d => {
-        const label = d.substring(0,7).replace('-','年')+'月';
+      const latestDailyDate = [...(ROOT_DATA.daily?.dates || [])].sort().at(-1) || '';
+      const latestDailyMonth = latestDailyDate.substring(0, 7);
+      html = `<select id="detail-month" aria-label="月份">${monthValues.map(d => {
+        const label = d.substring(0, 7) === latestDailyMonth
+          ? `${d.substring(0, 7).replace('-', '年')}月（截至${latestDailyDate.substring(8, 10)}日）`
+          : `${d.substring(0, 7).replace('-', '年')}月`;
         return `<option value="${d}" ${d === lastVal ? 'selected' : ''}>${label}</option>`;
       }).join('')}</select>`;
     } else if (period === 'quarter') {
-      const lastY = document.getElementById('detail-q-year')?.value || years[years.length-1] || '';
-      const lastQ = document.getElementById('detail-q-quarter')?.value || '';
-      html = `<select id="detail-q-year">${years.map(y => `<option value="${y}" ${y===lastY?'selected':''}>${y}年</option>`).join('')}</select>
-        <select id="detail-q-quarter">${['Q1','Q2','Q3','Q4'].map(q => `<option value="${q}" ${q===lastQ?'selected':''}>${q}</option>`).join('')}</select>`;
+      const lastY = document.getElementById('detail-q-year')?.value || latest.substring(0, 4);
+      const latestQuarter = latest ? `Q${Math.floor((Number(latest.substring(5, 7)) - 1) / 3) + 1}` : 'Q1';
+      const lastQ = document.getElementById('detail-q-quarter')?.value || latestQuarter;
+      html = `<select id="detail-q-year" aria-label="季度年份">${[...years].reverse().map(y => `<option value="${y}" ${y===lastY?'selected':''}>${y}年</option>`).join('')}</select>
+        <select id="detail-q-quarter" aria-label="季度">${['Q1','Q2','Q3','Q4'].map(q => `<option value="${q}" ${q===lastQ?'selected':''}>${q}</option>`).join('')}</select>`;
     } else if (period === 'year') {
       const lastY = document.getElementById('detail-year')?.value || years[years.length-1] || '';
-      html = `<select id="detail-year">${years.map(y => `<option value="${y}" ${y===lastY?'selected':''}>${y}年</option>`).join('')}</select>`;
+      html = `<select id="detail-year" aria-label="年份">${[...years].reverse().map(y => `<option value="${y}" ${y===lastY?'selected':''}>${y}年</option>`).join('')}</select>`;
     } else if (period === 'range') {
       const lastFrom = document.getElementById('detail-from')?.value || sortedStoreDates[sortedStoreDates.length-1] || '';
       const lastTo = document.getElementById('detail-to')?.value || sortedStoreDates[0] || '';
       const fromOpts = sortedStoreDates.map(d => `<option value="${d}" ${d===lastFrom?'selected':''}>${displayDate(d)}</option>`).join('');
       const toOpts = sortedStoreDates.map(d => `<option value="${d}" ${d===lastTo?'selected':''}>${displayDate(d)}</option>`).join('');
-      html = `<select id="detail-from">${fromOpts}</select><span class="filter-label" style="margin:0 4px">至</span><select id="detail-to">${toOpts}</select>`;
+      html = `<select id="detail-from" aria-label="起始时间">${fromOpts}</select><span class="filter-label" style="margin:0 4px">至</span><select id="detail-to" aria-label="截止时间">${toOpts}</select>`;
     }
     dpUi.innerHTML = html;
-    // Bind change events to dynamic selects
-    dpUi.querySelectorAll('select').forEach(s => s.onchange = () => renderDetail());
+    dpUi.querySelectorAll('select').forEach(s => {
+      s.onchange = () => {
+        clearDetailPreset();
+        renderDetail();
+      };
+    });
   }
 
   dp.onchange = () => {
     const store = storeSelect.value;
     if (switchGrainForPeriod(dp.value, { tab:'detail', store })) return;
     if (store) updateDetailPeriodUI(store);
+    clearDetailPreset();
     renderDetail();
   };
 
@@ -1667,11 +1716,20 @@ function initFilters() {
   }
   storeSelect.onchange = () => {
     updateDetailPeriodUI(storeSelect.value);
+    const activePreset = document.querySelector('#detail-preset-btns .preset-btn.active');
+    if (activePreset) {
+      detailPresetDates = getDetailPresetDates(activePreset.dataset.preset, storeSelect.value);
+    }
     renderDetail();
   };
 
   if (sortedStores.length > 0) {
     updateDetailPeriodUI(storeSelect.value || sortedStores[0]);
+    if (pendingViewState?.tab === 'detail') {
+      clearDetailPreset();
+    } else {
+      detailPresetDates = getDetailPresetDates('latestMonth', storeSelect.value || sortedStores[0]);
+    }
   }
   renderDetail();
 }
@@ -2833,7 +2891,9 @@ function renderDetail() {
   const store = document.getElementById('detail-store').value;
   const dates = getDetailDates(store);
   const detailActive = document.getElementById('tab-detail')?.classList.contains('active');
-  if (detailActive && DATA_GRAIN === 'monthly' && document.getElementById('detail-period').value === 'month') {
+  if (detailActive && DATA_GRAIN === 'monthly'
+    && document.getElementById('detail-period').value === 'month'
+    && dates.length === 1) {
     const month = String(dates[0] || '').substring(0, 7);
     if (month && !hasDailyMonth(month)) {
       ensureDailyYear(month.substring(0, 4))
@@ -2858,7 +2918,7 @@ function getDailyStoreDates(store) {
 function getDetailTrendDates(store, selectedDates) {
   const period = document.getElementById('detail-period').value;
   const storeDates = getStoreDates(store);
-  if (DATA_GRAIN === 'monthly' && period === 'month') {
+  if (DATA_GRAIN === 'monthly' && period === 'month' && selectedDates.length === 1) {
     const selectedMonths = new Set(selectedDates.map(date => date.substring(0, 7)));
     const dailyTrendDates = getDailyStoreDates(store)
       .filter(date => selectedMonths.has(date.substring(0, 7)));
@@ -2872,6 +2932,7 @@ function getDetailTrendDates(store, selectedDates) {
 }
 
 function getDetailDates(store) {
+  if (detailPresetDates) return detailPresetDates;
   const period = document.getElementById('detail-period').value;
   const storeDates = getStoreDates(store);
   if (!storeDates.length) return [];
