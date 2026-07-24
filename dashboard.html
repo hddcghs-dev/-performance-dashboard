@@ -2582,9 +2582,9 @@ function renderCompare() {
       mainVal = fmtScore(mean);
       subText = `均值 ${mainVal} | ${storeLabel}`;
     } else {
-      mainVal = fmtY(total);
+      mainVal = fmtYInt(total);
       const meanPerMonth = mean / dates.length;
-      subText = `总值 ${fmtY(total)} · 单店月均 ${fmtMean(meanPerMonth, m)} | ${storeLabel}`;
+      subText = `总值 ${fmtYInt(total)} · 单店月均 ${fmtYInt(meanPerMonth)} | ${storeLabel}`;
     }
     return `<div class="kpi-card">
       <div class="kpi-label">${METRIC_LABELS[m]||m}</div>
