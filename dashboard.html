@@ -1836,6 +1836,12 @@ function renderOverview() {
 
 function getOverviewTrendDates(dates) {
   const period = document.getElementById('overview-period')?.value;
+  if (DATA_GRAIN === 'monthly' && period === 'month') {
+    const selectedDate = [...dates].sort().pop() || LATEST_DATE;
+    const selectedYear = selectedDate.substring(0, 4);
+    const yearDates = DATES.filter(date => date.startsWith(selectedYear + '-')).sort();
+    return yearDates.length > 1 ? yearDates : dates;
+  }
   if (DATA_GRAIN !== 'daily' || period !== 'day' || dates.length !== 1) return dates;
   const sortedDates = [...DATES].sort();
   const endIndex = sortedDates.indexOf(dates[0]);
@@ -2709,20 +2715,12 @@ function renderDetail() {
   renderCardGold(store, trendDates);
 }
 
-function getDailyStoreDates(store) {
-  return [...new Set((ROOT_DATA?.daily?.data || [])
-    .filter(record => record['门店'] === store)
-    .map(record => record['日期']))].sort();
-}
-
 function getDetailTrendDates(store, selectedDates) {
   const period = document.getElementById('detail-period').value;
-  const storeDates = DATA_GRAIN === 'monthly' ? getDailyStoreDates(store) : getStoreDates(store);
-  if (DATA_GRAIN === 'monthly') {
-    const selectedMonths = new Set(selectedDates.map(date => date.substring(0, 7)));
-    const dailyTrendDates = storeDates.filter(date => selectedMonths.has(date.substring(0, 7)));
-    return dailyTrendDates.length > 1 ? dailyTrendDates : selectedDates;
-  }
+  const storeDates = getStoreDates(store);
+  // 月度视图的日期键是每月第一天，但数值本身就是整月汇总。
+  // 不再把月度选择展开成日数据，避免月度汇总与日趋势混用。
+  if (DATA_GRAIN === 'monthly') return selectedDates;
   if (period !== 'day') return selectedDates;
   const end = selectedDates[selectedDates.length - 1] || storeDates[storeDates.length - 1];
   const endIndex = storeDates.indexOf(end);
