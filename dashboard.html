@@ -2226,6 +2226,23 @@ function renderOverviewKPIs(dates) {
     return `<div class="kpi-change ${colorCls}"><span class="arrow">${arrow}</span>${(chg*100).toFixed(1)}%${label}</div>`;
   }
 
+  // 对比期基线可以自定义的版本：美团营业额要扣掉刷单，基线也必须同口径扣，
+  // 否则拿净额和含刷单的旧值比，涨跌率是错的。
+  function overviewChangesWith(cur, resolveBaseline) {
+    return Object.values(comparison)
+      .map((range) => {
+        const pv = resolveBaseline(range);
+        if (!pv) return '';
+        const chg = (cur - pv) / pv;
+        const arrow = chg >= 0 ? '↑' : '↓';
+        const colorCls = chg >= 0 ? 'up' : 'down';
+        const label = range.label ? `<span class="kpi-change-label">${range.label}</span>` : '';
+        return `<div class="kpi-change ${colorCls}"><span class="arrow">${arrow}</span>${(chg * 100).toFixed(1)}%${label}</div>`;
+      })
+      .filter(Boolean)
+      .join('');
+  }
+
   function overviewChanges(cur, metric) {
     return Object.values(comparison)
       .map(range => calcDelta(cur, metric, range))
@@ -2241,6 +2258,7 @@ function renderOverviewKPIs(dates) {
   const dyAmt = calcTotal(dates,'抖音营业额');
   const mtAmt = calcTotal(dates,'美团营业额');
   const mtFraud = calcTotal(dates, '美团刷单金额');
+  const mtNet = Math.max(0, mtAmt - mtFraud);
   const totalFree = calcTotal(dates,'免单减免');
   const totalCard = calcTotal(dates,'卡金');
   const totalRecharge = calcTotal(dates,'充值');
@@ -2277,7 +2295,13 @@ function renderOverviewKPIs(dates) {
     { label:'项目均价', val:fmtYInt(avgTicket), raw:avgTicket, color:'', m:null },
     { label:'总项目数', val:fmtN(totalProjects), raw:totalProjects, color:'', m:'项目数' },
     { label:'抖音营业额', val:overviewMoney(dyAmt), raw:dyAmt, color:'', m:'抖音营业额' },
-    { label:'美团营业额', val:overviewMoney(mtAmt), raw:mtAmt, color:'', m:'美团营业额', sub:mtFraud > 0 ? `刷单金额 ${fmtYInt(mtFraud)} 元` : undefined },
+    // 美团-平台是平台核销口径，含刷单。营业结构图一直是扣掉刷单后算占比的，
+    // 卡片却显示含刷单的毛额，两处对不上；刷单常年占 14%~62%，7-24 那天扣完
+    // 抖音(43,964)其实大于美团(35,170)，毛额会让渠道大小关系反过来。统一取净额。
+    { label:'美团营业额', val:overviewMoney(mtNet), raw:mtNet, color:'',
+      changes: overviewChangesWith(mtNet, (range) => Math.max(0,
+        calcOverviewRangeTotal(range, '美团营业额') - calcOverviewRangeTotal(range, '美团刷单金额'))),
+      sub: mtFraud > 0 ? `已扣刷单 ${fmtYInt(mtFraud)} 元 · 平台核销 ${fmtYInt(mtAmt)}` : undefined },
     { label:'卡金-充值', val:overviewMoney(cardRechargeGap), raw:cardRechargeGap, color: cardRechargeGap<0?'red':'green', sub:cardRechargeGap<0?'充值少于卡金':'充值覆盖卡金', m:null },
     { label:'免单减免', val:overviewMoney(totalFree), raw:totalFree, color: totalFree>0?'red':'', m:'免单减免' },
     { label:'综合新增评论', val:fmtN(totalComments), raw:totalComments, color:'green', m:'综合新增评论' },
@@ -2303,7 +2327,7 @@ function renderOverviewKPIs(dates) {
     <div class="kpi-card">
       <div class="kpi-label">${it.label}</div>
       <div class="kpi-value ${it.color}">${it.val}</div>
-      ${it.m ? overviewChanges(it.raw, it.m) : ''}
+      ${it.changes !== undefined ? it.changes : (it.m ? overviewChanges(it.raw, it.m) : '')}
       ${it.sub ? `<div class="kpi-sub">${it.sub}</div>` : ''}
     </div>`;
 
