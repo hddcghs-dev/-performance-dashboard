@@ -359,6 +359,28 @@ body[data-theme="light"] select option { color: #15231b; background: #ffffff; }
 
 /* ===== KPI 指标卡 ===== */
 .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 22px; }
+/* 转化漏斗：曝光→访问→下单→核销，每级之间标转化率 */
+.funnel-card { margin-bottom: 22px; padding-bottom: 14px; }
+.funnel-row { display: flex; align-items: stretch; gap: 0; padding: 4px 16px 14px; flex-wrap: nowrap; overflow-x: auto; }
+.funnel-row + .funnel-row { border-top: 1px solid var(--border); padding-top: 14px; }
+.funnel-plat { flex: 0 0 62px; display: flex; align-items: center; font-size: 12px; color: var(--text2); font-weight: 600; }
+.funnel-step { flex: 1 1 0; min-width: 78px; display: flex; flex-direction: column; justify-content: center; }
+.funnel-step-label { font-size: 11px; color: var(--text2); margin-bottom: 3px; white-space: nowrap; }
+.funnel-step-val { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+.funnel-arrow { flex: 0 0 62px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+.funnel-arrow-rate { font-size: 12px; font-weight: 700; }
+.funnel-arrow-line { font-size: 12px; color: var(--text2); line-height: 1; }
+.funnel-empty { padding: 10px 16px 4px; font-size: 12px; color: var(--text2); }
+/* 趋势图预设组合：61 个指标的选择器没人会去翻，给几个成组的入口 */
+.trend-presets { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 16px 10px; }
+.trend-preset-btn { font-size: 12px; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--text2); cursor: pointer; transition: all .15s; }
+.trend-preset-btn:hover { color: var(--text); border-color: var(--accent); }
+.trend-preset-btn.active { background: var(--accent); border-color: var(--accent); color: #06251b; font-weight: 600; }
+@media (max-width: 720px) {
+  .funnel-step-val { font-size: 16px; }
+  .funnel-plat { flex-basis: 46px; }
+  .funnel-arrow { flex-basis: 46px; }
+}
 .kpi-card { min-height: 140px; padding: 18px 18px 16px; }
 .kpi-card:hover {
   transform: translateY(-6px) scale(1.025);
@@ -421,6 +443,8 @@ body[data-theme="light"] .kpi-card:hover { box-shadow: 0 24px 60px rgba(34,62,46
 .kpi-sub { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.6; }
 
 /* KPI 分区 */
+/* 概览 KPI 分组后不再是一张平铺网格，改为纵向排列的分区 */
+.kpi-grid.kpi-grouped { display: block; }
 .kpi-section { margin-bottom: 14px; }
 .kpi-section-header {
   display: flex; align-items: center; justify-content: space-between;
@@ -788,22 +812,27 @@ body[data-theme="light"] .median-box { border-color: rgba(169,127,69,.30); backg
 
   <div class="main">
     <div class="kpi-grid" id="overview-kpi"></div>
+    <div class="chart-card funnel-card">
+      <div class="chart-card-title">转化漏斗</div>
+      <div id="overview-funnel"></div>
+    </div>
     <div class="insight-grid" id="overview-insights"></div>
     <div class="chart-grid">
       <div class="chart-card" style="grid-column:1/-1;">
         <div class="chart-card-title" id="trend-chart-title">趋势图</div>
+        <div class="trend-presets" id="trend-presets"></div>
         <div style="margin-bottom:8px;" id="trend-metric-tags"></div>
         <div class="chart" id="chart-trend" style="height:280px;"></div>
       </div>
     </div>
     <div class="chart-grid">
       <div class="chart-card">
-        <div class="chart-card-title">营业结构</div>
+        <div class="chart-card-title">营业结构占比 · 按日</div>
         <div class="chart" id="chart-revenue-pie" style="height:260px;"></div>
         <div id="revenue-check" style="font-size:10px;color:var(--text2);text-align:center;padding:0 10px 8px;"></div>
       </div>
       <div class="chart-card">
-        <div class="chart-card-title">项目占比</div>
+        <div class="chart-card-title">项目结构占比 · 按日</div>
         <div class="chart" id="chart-project-pie"></div>
       </div>
     </div>
@@ -1077,25 +1106,59 @@ function keepAvailableSelectedMetrics() {
   compareSelectedMetrics = compareSelectedMetrics.filter(metric => available.has(metric));
 }
 
-function trendToggleMetric(m, el) {
-  const idx = trendSelectedMetrics.indexOf(m);
-  if (idx >= 0) { trendSelectedMetrics.splice(idx,1); }
-  else { trendSelectedMetrics.push(m); }
+// 成组的预设。指标选择器里有 61 项，实际上没人会逐个翻，
+// 常看的就是这四组关系：钱、流量、转化、口碑。
+const TREND_PRESETS = [
+  { name: '营收', metrics: ['总营业额', '抖音-平台', '美团-平台'] },
+  { name: '流量', metrics: ['美团曝光人数', '美团访问人数', '抖音门店页访问人数'] },
+  { name: '转化', metrics: ['美团曝光-访问转化率', '美团意向转化率', '抖音转化率'] },
+  { name: '口碑', metrics: ['美团评分', '抖音评分', '差评率'] },
+  { name: '项目结构', metrics: ['168项目数', '298项目数', '358项目数'] },
+];
+
+function renderTrendPresets() {
+  const container = document.getElementById('trend-presets');
+  if (!container) return;
+  const current = [...trendSelectedMetrics].sort().join('|');
+  container.innerHTML = TREND_PRESETS
+    .map((preset, i) => {
+      const metrics = preset.metrics.filter(isMetricAvailable);
+      if (!metrics.length) return '';
+      const active = [...metrics].sort().join('|') === current;
+      return `<button class="trend-preset-btn ${active ? 'active' : ''}" onclick="applyTrendPreset(${i})">${escapeHtml(preset.name)}</button>`;
+    })
+    .join('');
+}
+
+function applyTrendPreset(index) {
+  const preset = TREND_PRESETS[index];
+  if (!preset) return;
+  trendSelectedMetrics = preset.metrics.filter(isMetricAvailable);
+  syncTrendSelection();
+}
+
+function syncTrendSelection() {
+  renderTrendPresets();
   renderTrendMetricDropdown();
   renderTrendChart(getOverviewTrendDates(getFilteredDates()), trendSelectedMetrics);
-  // Update chart title
   const title = document.getElementById('trend-chart-title');
   if (title) {
     title.textContent = trendSelectedMetrics.length > 0
-      ? trendSelectedMetrics.map(mm=>METRIC_LABELS[mm]||mm).join(' / ')
+      ? trendSelectedMetrics.map((mm) => METRIC_LABELS[mm] || mm).join(' / ')
       : '趋势图';
   }
 }
 
+function trendToggleMetric(m, el) {
+  const idx = trendSelectedMetrics.indexOf(m);
+  if (idx >= 0) { trendSelectedMetrics.splice(idx,1); }
+  else { trendSelectedMetrics.push(m); }
+  syncTrendSelection();
+}
+
 function trendRemoveMetric(m) {
   trendSelectedMetrics = trendSelectedMetrics.filter(x=>x!==m);
-  renderTrendMetricDropdown();
-  renderTrendChart(getOverviewTrendDates(getFilteredDates()), trendSelectedMetrics);
+  syncTrendSelection();
 }
 
 function renderTrendMetricTags() {
@@ -1607,6 +1670,7 @@ function getStoreDates(store) {
 function initFilters() {
   // 初始化趋势指标多选下拉
   renderTrendMetricDropdown();
+  renderTrendPresets();
   const sortedDates = [...DATES].sort();
   presetDates = sortedDates.length ? [sortedDates[sortedDates.length - 1]] : null;
   if (pendingViewState?.tab === 'overview') {
@@ -2074,6 +2138,73 @@ function getOverviewTrendDates(dates) {
     : dates;
 }
 
+// 转化漏斗。KPI 卡只讲结果（钱、项目、评价），漏斗补的是过程：
+// 营业额掉了，是曝光少了还是转化差了，只有拆到每一级才看得出来。
+// 每级之间显示转化率，并与对比期做百分点差 —— 单看 6.9% 判断不了好坏。
+const FUNNELS = [
+  {
+    platform: '美团',
+    steps: [
+      { label: '曝光', metric: '美团曝光人数' },
+      { label: '访问', metric: '美团访问人数' },
+      { label: '下单', metric: '美团下单人数' },
+      { label: '核销', metric: '美团核销总数' },
+    ],
+  },
+  {
+    platform: '抖音',
+    steps: [
+      { label: '门店页访问', metric: '抖音门店页访问人数' },
+      { label: '成交', metric: '抖音门店页成交人数' },
+    ],
+  },
+];
+
+function renderOverviewFunnel(dates) {
+  const container = document.getElementById('overview-funnel');
+  if (!container) return;
+  const comparison = getOverviewComparison(dates);
+  const baseline = Object.values(comparison)[0] || null;
+
+  const rows = FUNNELS.map((funnel) => {
+    const values = funnel.steps.map((step) => calcTotal(dates, step.metric));
+    // 整条漏斗都没有数据时不画，避免展示一排 0
+    if (!values.some((value) => value > 0)) return '';
+
+    const cells = [`<div class="funnel-plat">${escapeHtml(funnel.platform)}</div>`];
+    funnel.steps.forEach((step, i) => {
+      if (i > 0) {
+        const rate = values[i - 1] > 0 ? values[i] / values[i - 1] : 0;
+        let deltaHtml = '<span class="funnel-arrow-line">→</span>';
+        if (baseline) {
+          const prevFrom = calcOverviewRangeTotal(baseline, funnel.steps[i - 1].metric);
+          const prevTo = calcOverviewRangeTotal(baseline, funnel.steps[i].metric);
+          if (prevFrom > 0) {
+            const diff = rate - prevTo / prevFrom;
+            const cls = diff >= 0 ? 'up' : 'down';
+            const sign = diff >= 0 ? '+' : '';
+            deltaHtml = `<span class="funnel-arrow-line kpi-change ${cls}" style="display:inline">${sign}${(diff * 100).toFixed(1)}pt</span>`;
+          }
+        }
+        cells.push(
+          `<div class="funnel-arrow"><div class="funnel-arrow-rate">${fmtPct(rate)}</div>${deltaHtml}</div>`
+        );
+      }
+      cells.push(
+        `<div class="funnel-step">
+          <div class="funnel-step-label">${escapeHtml(step.label)}</div>
+          <div class="funnel-step-val">${fmtN(values[i])}</div>
+        </div>`
+      );
+    });
+    return `<div class="funnel-row">${cells.join('')}</div>`;
+  }).filter(Boolean);
+
+  container.innerHTML = rows.length
+    ? rows.join('')
+    : '<div class="funnel-empty">所选周期没有流量数据</div>';
+}
+
 function renderOverviewKPIs(dates) {
   const container = document.getElementById('overview-kpi');
   const comparison = getOverviewComparison(dates);
@@ -2150,13 +2281,44 @@ function renderOverviewKPIs(dates) {
     { label:'抖音评分', val:fmtScore(dyScore.value), raw:dyScore.value, sub:latestDate.substring(0,7).replace('-','年')+'月 · 有效'+dyScore.count+'店', color: Number(dyScore.value)>4.5?'green':'', m:null },
     { label:'美团评分', val:fmtScore(mtScore.value), raw:mtScore.value, sub:latestDate.substring(0,7).replace('-','年')+'月 · 有效'+mtScore.count+'店', color: Number(mtScore.value)>4.5?'green':'', m:null },
   ];
-  const hiddenOverviewKpis = new Set(['现金流率','抖音评分','美团评分']);
-  container.innerHTML = kpis.filter(it => !hiddenOverviewKpis.has(it.label)).map(it => `
+  renderOverviewFunnel(dates);
+  // 评分从隐藏改为放进「口碑与客群」：平台评分是流量分配的输入，
+  // IM 日报已经在监控评分下降，看板不该只在风险榜里以阈值形式出现。
+  const hiddenOverviewKpis = new Set(['现金流率']);
+  // 12 张卡原来平铺成两行、权重完全一样，读者得自己分组。
+  // 按「结果 → 构成 → 口碑」分层，读的顺序就是归因的顺序。
+  const KPI_SECTIONS = [
+    { name: '经营结果', labels: ['总营业额', '服务营业额', '现金流营业额', '项目均价', '总项目数'] },
+    { name: '渠道与扣减', labels: ['抖音营业额', '美团营业额', '卡金-充值', '免单减免'] },
+    { name: '口碑与客群', labels: ['综合新增评论', '综合新增差评', '差评率', '新客占比', '抖音评分', '美团评分'] },
+  ];
+
+  const cardHtml = (it) => `
     <div class="kpi-card">
       <div class="kpi-label">${it.label}</div>
       <div class="kpi-value ${it.color}">${it.val}</div>
       ${it.m ? overviewChanges(it.raw, it.m) : ''}
       ${it.sub ? `<div class="kpi-sub">${it.sub}</div>` : ''}
+    </div>`;
+
+  const visible = kpis.filter((it) => !hiddenOverviewKpis.has(it.label));
+  const claimed = new Set();
+  const sections = KPI_SECTIONS.map((section) => {
+    const items = section.labels
+      .map((label) => visible.find((it) => it.label === label))
+      .filter(Boolean);
+    items.forEach((it) => claimed.add(it.label));
+    return { name: section.name, items };
+  }).filter((section) => section.items.length);
+  // 任何没被分到组的卡片兜底放最后，避免改指标时静默丢卡
+  const rest = visible.filter((it) => !claimed.has(it.label));
+  if (rest.length) sections.push({ name: '其它', items: rest });
+
+  container.classList.add('kpi-grouped');
+  container.innerHTML = sections.map((section) => `
+    <div class="kpi-section">
+      <div class="kpi-section-header">${escapeHtml(section.name)}</div>
+      <div class="kpi-section-body">${section.items.map(cardHtml).join('')}</div>
     </div>`).join('');
 }
 
@@ -2285,61 +2447,101 @@ function renderTrendChart(dates, metrics) {
   }, true);
 }
 
-function renderPieCharts(dates) {
-  const dy = calcTotal(dates, '抖音营业额');
-  const meituanGross = calcTotal(dates, '美团营业额');
-  const fraudRechargeAmount = calcTotal(dates, '美团刷单金额');
-  const mt = Math.max(0, meituanGross - fraudRechargeAmount);
-  const revenueMetric = primaryRevenueMetric();
-  const svcTotal = calcTotal(dates,revenueMetric);
-  const other = Math.max(0, svcTotal - dy - mt);
-  const pieTotal = dy + mt + other;
+// 结构图。原来这两张是单日饼图 —— 看到"抖音 40.3%"没有任何基准，
+// 判断不了是高是低。改成按日期的百分比堆叠面积图，结构随时间怎么走一眼可见；
+// 各成分的绝对值仍在 tooltip 里。
+function revenueSplitFor(dateList) {
+  const dy = calcTotal(dateList, '抖音营业额');
+  const meituanGross = calcTotal(dateList, '美团营业额');
+  const mt = Math.max(0, meituanGross - calcTotal(dateList, '美团刷单金额'));
+  const reference = calcTotal(dateList, primaryRevenueMetric());
+  const parts = [dy, mt, Math.max(0, reference - dy - mt)];
+  // 占比按成分之和归一化，而不是拿主营业额做分母：有些日子平台核销金额之和会
+  // 超过门店总营业额（核销与前厅的口径差），用总营业额当分母会让堆叠面积冲破
+  // 100% 轴。口径差本身由下方 revenue-check 那一行负责报出来。
+  return { parts, total: parts.reduce((a, b) => a + b, 0), reference };
+}
 
-  const pie = getChart('chart-revenue-pie');
-  if (!pie) return;
-  pie.setOption({
-    backgroundColor:'transparent',
-    tooltip:{...T.tip,formatter:p=>`${p.name}: ${p.value.toLocaleString('zh-CN')} (${p.percent.toFixed(1)}%) · 占营业结构 ${(p.value/(pieTotal || 1)*100).toFixed(1)}%`},
-    legend:{orient:'vertical',right:10,top:'center',textStyle:{color:T.text,fontSize:11},itemWidth:10,itemHeight:10},
-    series:[{
-      type:'pie', radius:['40%','70%'], center:['35%','50%'],
-      data:[
-        {value:dy,name:'抖音',itemStyle:{color:T.dy}},
-        {value:mt,name:'美团',itemStyle:{color:T.mt}},
-        {value:other,name:'其它',itemStyle:{color:T.gold}},
-      ],
-      label:{show:true,formatter:'{b}\n{d}%',fontSize:11,color:T.label},
-      labelLine:{lineStyle:{color:T.axis}}
-    }]
-  });
-  // 核验: 各成分之和 = 当前主营业额口径
+function projectSplitFor(dateList) {
+  const parts = ['168项目数', '298项目数', '358项目数'].map((m) => calcTotal(dateList, m));
+  const total = parts.reduce((a, b) => a + b, 0);
+  return { parts, total, reference: total };
+}
+
+function renderStackedShareChart(elId, dateList, seriesDefs, splitFn, valueFormatter) {
+  const chart = getChart(elId);
+  if (!chart) return;
+  const rows = dateList.map((date) => splitFn([date]));
+  const series = seriesDefs.map((def, i) => ({
+    name: def.name,
+    type: 'line',
+    stack: 'share',
+    stackStrategy: 'all',
+    symbol: 'none',
+    lineStyle: { width: 1, color: def.color },
+    areaStyle: { color: def.color, opacity: 0.72 },
+    emphasis: { focus: 'series' },
+    data: rows.map((row) => (row.total > 0 ? +(row.parts[i] / row.total * 100).toFixed(2) : 0)),
+  }));
+  chart.setOption({
+    backgroundColor: 'transparent',
+    tooltip: {
+      ...T.tip,
+      trigger: 'axis',
+      formatter: (params) => {
+        if (!params.length) return '';
+        const idx = params[0].dataIndex;
+        const row = rows[idx];
+        const lines = params.map((p) => {
+          const abs = row.parts[seriesDefs.findIndex((d) => d.name === p.seriesName)] || 0;
+          return `${p.marker}${p.seriesName} ${p.value}% · ${valueFormatter(abs)}`;
+        });
+        return `${displayDate(dateList[idx])}<br/>${lines.join('<br/>')}`;
+      },
+    },
+    legend: { top: 0, textStyle: { color: T.text, fontSize: 11 }, itemWidth: 10, itemHeight: 10 },
+    grid: { left: 44, right: 16, top: 32, bottom: 26 },
+    xAxis: {
+      type: 'category',
+      boundaryGap: false,
+      data: dateList.map(displayDate),
+      axisLine: { lineStyle: { color: T.axis } },
+      axisLabel: { color: T.text, fontSize: 10 },
+    },
+    yAxis: {
+      type: 'value', max: 100, min: 0,
+      axisLabel: { color: T.text, fontSize: 10, formatter: '{value}%' },
+      splitLine: { lineStyle: { color: T.axis, opacity: 0.35 } },
+    },
+    series,
+  }, true);
+}
+
+function renderPieCharts(dates) {
+  const trendDates = getOverviewTrendDates(dates);
+  const dateList = trendDates.length > 1 ? trendDates : dates;
+
+  renderStackedShareChart(
+    'chart-revenue-pie', dateList,
+    [{ name: '抖音', color: T.dy }, { name: '美团', color: T.mt }, { name: '其它', color: T.gold }],
+    revenueSplitFor,
+    (v) => v.toLocaleString('zh-CN'),
+  );
+
+  // 各成分之和 = 当前主营业额口径（保留原有的数据核验）
   const checkEl = document.getElementById('revenue-check');
   if (checkEl) {
-    const checkSum = pieTotal;
-    const diff = Math.abs(svcTotal - checkSum);
-    checkEl.textContent = `抖音 + 美团 + 其它 = ${checkSum.toLocaleString('zh-CN')}  ·  ${DATA_GRAIN === 'daily' ? '总营业额' : '服务营业额'} ${svcTotal.toLocaleString('zh-CN')}  ${diff < 1 ? '正常' : '差额 '+diff.toFixed(2)}`;
+    const { total: sum, reference } = revenueSplitFor(dates);
+    const diff = Math.abs(reference - sum);
+    checkEl.textContent = `所选周期 抖音 + 美团 + 其它 = ${sum.toLocaleString('zh-CN')}  ·  ${DATA_GRAIN === 'daily' ? '总营业额' : '服务营业额'} ${reference.toLocaleString('zh-CN')}  ${diff < 1 ? '正常' : '差额 ' + diff.toFixed(2)}`;
   }
 
-  const p168 = calcTotal(dates,'168项目数');
-  const p298 = calcTotal(dates,'298项目数');
-  const p358 = calcTotal(dates,'358项目数');
-  const projPie = getChart('chart-project-pie');
-  if (!projPie) return;
-  projPie.setOption({
-    backgroundColor:'transparent',
-    tooltip:{...T.tip,formatter:p=>`${p.name}: ${p.value.toLocaleString('zh-CN')} (${p.percent.toFixed(1)}%)`},
-    legend:{orient:'vertical',right:10,top:'center',textStyle:{color:T.text,fontSize:11},itemWidth:10,itemHeight:10},
-    series:[{
-      type:'pie', radius:['40%','70%'], center:['35%','50%'],
-      data:[
-        {value:p168,name:'168元',itemStyle:{color:T.mt}},
-        {value:p298,name:'298元',itemStyle:{color:T.dy}},
-        {value:p358,name:'358元',itemStyle:{color:T.gold}},
-      ],
-      label:{show:true,formatter:'{b}\n{d}%',fontSize:11,color:T.label},
-      labelLine:{lineStyle:{color:T.axis}}
-    }]
-  });
+  renderStackedShareChart(
+    'chart-project-pie', dateList,
+    [{ name: '168元', color: T.mt }, { name: '298元', color: T.dy }, { name: '358元', color: T.gold }],
+    projectSplitFor,
+    (v) => `${v.toLocaleString('zh-CN')} 个`,
+  );
 }
 
 function renderOverviewAlerts(dates) {
