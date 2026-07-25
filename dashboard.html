@@ -1247,7 +1247,9 @@ function prepareMonthlyViewData(data) {
     monthly.metrics.forEach(metric => {
       record[metric] = aggregateDailyMonthMetric(storeRows, metric);
     });
-    record['美团刷单金额'] = storeRows.reduce((sum, row) => sum + safeNum(row['美团刷单金额']), 0);
+    for (const fraudMetric of FRAUD_METRICS) {
+      record[fraudMetric] = storeRows.reduce((sum, row) => sum + safeNum(row[fraudMetric]), 0);
+    }
     return record;
   });
 
@@ -1893,7 +1895,7 @@ function getFilteredDates() {
 function calcTotal(dates, metric) {
   const rule = metricRule(metric);
   if (rule.kind === 'channel') return calcChannelRevenue(dates, metric);
-  if (metric === '美团刷单金额') return calcFraudRecharge(dates);
+  if (FRAUD_METRICS.has(metric)) return calcFraudRecharge(dates, metric);
   if (DATA_GRAIN === 'monthly' && rule.kind === 'daily-sum') {
     const field = metricField(metric);
     const dailyRows = getDailyRowsForViewDates(dates);
@@ -1917,7 +1919,7 @@ function calcTotal(dates, metric) {
 function calcRowsTotal(rows, metric) {
   const rule = metricRule(metric);
   if (rule.kind === 'channel') return calcChannelRevenueRows(rows, metric);
-  if (metric === '美团刷单金额') return rows.reduce((sum, row) => sum + safeNum(row['美团刷单金额']), 0);
+  if (FRAUD_METRICS.has(metric)) return rows.reduce((sum, row) => sum + safeNum(row[metric]), 0);
   const parts = rule.parts;
   if (parts) {
     const numerator = calcRowsTotal(rows, parts[0]);
@@ -1967,10 +1969,14 @@ function calcChannelRevenue(dates, metric) {
   return calcChannelRevenueRows(rows, metric);
 }
 
-function calcFraudRecharge(dates) {
+// 刷单类伪指标：不是飞书字段，由对账汇总在建看板数据时注入。
+// 美团=平台充值减前厅充值；抖音=2000元代金券（平台售价1800）。
+const FRAUD_METRICS = new Set(['美团刷单金额', '抖音刷单金额']);
+
+function calcFraudRecharge(dates, metric = '美团刷单金额') {
   const dailyRows = getDailyRowsForViewDates(dates);
   const rows = dailyRows.length ? dailyRows : dates.flatMap((date) => IDX_BY_DATE[date] || []);
-  return rows.reduce((sum, row) => sum + safeNum(row['美团刷单金额']), 0);
+  return rows.reduce((sum, row) => sum + safeNum(row[metric]), 0);
 }
 
 function getOverviewComparison(dates) {
@@ -2021,12 +2027,12 @@ function calcStoreAgg(dates, store, metric) {
       : dates.map((date) => IDX_BY_DS[`${date}_${store}`]).filter(Boolean);
     return calcChannelRevenueRows(rows, metric);
   }
-  if (metric === '美团刷单金额') {
+  if (FRAUD_METRICS.has(metric)) {
     const dailyRows = getDailyRowsForViewDates(dates).filter(row => row['门店'] === store);
     const rows = dailyRows.length
       ? dailyRows
       : dates.map((date) => IDX_BY_DS[`${date}_${store}`]).filter(Boolean);
-    return rows.reduce((sum, row) => sum + safeNum(row['美团刷单金额']), 0);
+    return rows.reduce((sum, row) => sum + safeNum(row[metric]), 0);
   }
   if (DATA_GRAIN === 'monthly' && rule.kind === 'daily-sum') {
     const field = metricField(metric);
@@ -2104,8 +2110,8 @@ function getStoreMonthlyData(store, metric, dates) {
       result[d] = channelRevenueValue(row, metric);
       return;
     }
-    if (metric === '美团刷单金额') {
-      result[d] = safeNum(row['美团刷单金额']);
+    if (FRAUD_METRICS.has(metric)) {
+      result[d] = safeNum(row[metric]);
       return;
     }
     const parts = rule.parts;
@@ -2256,6 +2262,8 @@ function renderOverviewKPIs(dates) {
   const totalRev = calcTotal(dates,revenueMetric);
   const totalCashflow = calcTotal(dates,'现金流营业额');
   const dyAmt = calcTotal(dates,'抖音营业额');
+  const dyFraud = calcTotal(dates, '抖音刷单金额');
+  const dyNet = Math.max(0, dyAmt - dyFraud);
   const mtAmt = calcTotal(dates,'美团营业额');
   const mtFraud = calcTotal(dates, '美团刷单金额');
   const mtNet = Math.max(0, mtAmt - mtFraud);
@@ -2294,7 +2302,11 @@ function renderOverviewKPIs(dates) {
     { label:'现金流率', val:fmtPct(cashflowRate), raw:cashflowRate, color: cashflowRate>=1?'green':'', m:null },
     { label:'项目均价', val:fmtYInt(avgTicket), raw:avgTicket, color:'', m:null },
     { label:'总项目数', val:fmtN(totalProjects), raw:totalProjects, color:'', m:'项目数' },
-    { label:'抖音营业额', val:overviewMoney(dyAmt), raw:dyAmt, color:'', m:'抖音营业额' },
+    // 抖音同样按净额：2000元代金券（平台售价 1800）是刷单，计入平台核销但无对应服务
+    { label:'抖音营业额', val:overviewMoney(dyNet), raw:dyNet, color:'',
+      changes: overviewChangesWith(dyNet, (range) => Math.max(0,
+        calcOverviewRangeTotal(range, '抖音营业额') - calcOverviewRangeTotal(range, '抖音刷单金额'))),
+      sub: dyFraud > 0 ? `已扣代金券 ${fmtYInt(dyFraud)} 元 · 平台核销 ${fmtYInt(dyAmt)}` : undefined },
     // 美团-平台是平台核销口径，含刷单。营业结构图一直是扣掉刷单后算占比的，
     // 卡片却显示含刷单的毛额，两处对不上；刷单常年占 14%~62%，7-24 那天扣完
     // 抖音(43,964)其实大于美团(35,170)，毛额会让渠道大小关系反过来。统一取净额。
@@ -2481,7 +2493,8 @@ function renderTrendChart(dates, metrics) {
 // 判断不了是高是低。改成按日期的百分比堆叠面积图，结构随时间怎么走一眼可见；
 // 各成分的绝对值仍在 tooltip 里。
 function revenueSplitFor(dateList) {
-  const dy = calcTotal(dateList, '抖音营业额');
+  // 两个渠道都按净额：美团扣平台充值刷单，抖音扣 2000元代金券
+  const dy = Math.max(0, calcTotal(dateList, '抖音营业额') - calcTotal(dateList, '抖音刷单金额'));
   const meituanGross = calcTotal(dateList, '美团营业额');
   const mt = Math.max(0, meituanGross - calcTotal(dateList, '美团刷单金额'));
   const reference = calcTotal(dateList, primaryRevenueMetric());
