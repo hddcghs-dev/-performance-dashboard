@@ -1203,11 +1203,49 @@ async function fetchDashboardFile(name, version) {
 }
 
 async function fetchDashboardData(manifest) {
-  if (DATA_GRAIN === 'monthly' && manifest?.files?.core) {
-    const core = manifest.files.core;
+  const core = manifest?.files?.core;
+  if (!core) {
+    // No shard manifest: fall back to the single full file.
+    return fetchDashboardFile('dashboard_data.json', manifest?.version || '');
+  }
+  if (DATA_GRAIN === 'monthly') {
     return fetchDashboardFile(core.name, core.version);
   }
-  return fetchDashboardFile('dashboard_data.json', manifest?.version || '');
+
+  // Daily used to download dashboard_data.json (17.6MB raw / 11k rows) before
+  // first paint. Load the core plus only the newest year's shard instead — that
+  // covers every default view — then prefetch the remaining years in the
+  // background so date pickers and the "全部" preset still have full history.
+  const data = await fetchDashboardFile(core.name, core.version);
+  const years = Object.keys(manifest.files.dailyByYear || {}).sort();
+  const newestYear = years[years.length - 1];
+  if (newestYear) {
+    const file = manifest.files.dailyByYear[newestYear];
+    const shard = await fetchDashboardFile(file.name, file.version);
+    data.daily = {
+      ...data.daily,
+      metrics: shard.metrics || data.daily?.metrics || [],
+      data: shard.data || [],
+    };
+    DAILY_YEAR_LOADS.set(newestYear, Promise.resolve(true));
+  }
+  return data;
+}
+
+// Pull in every daily year that is not loaded yet, then repaint once.
+// Runs after the first render, so it never delays time-to-first-paint.
+function prefetchRemainingDailyYears() {
+  const years = Object.keys(DATA_MANIFEST?.files?.dailyByYear || {});
+  const pending = years.filter((year) => !DAILY_YEAR_LOADS.has(year));
+  if (!pending.length) return Promise.resolve(false);
+  return Promise.all(pending.map((year) => ensureDailyYear(year).catch(() => false)))
+    .then((results) => {
+      if (!results.some(Boolean)) return false;
+      renderOverview();
+      renderCompare();
+      renderDetail();
+      return true;
+    });
 }
 
 function hasDailyMonth(month) {
@@ -1227,6 +1265,12 @@ async function ensureDailyYear(year) {
       metrics: shard.metrics || ROOT_DATA.daily?.metrics || [],
       data: existing.concat(additions),
     };
+    // In daily grain ALL_DATA.data is the array buildIndex() walks. applyDashboardData
+    // spread-copied it from the first shard, so it has to be repointed here or the
+    // newly loaded rows never reach the index.
+    if (DATA_GRAIN === 'daily') {
+      ALL_DATA = { ...ALL_DATA, metrics: ROOT_DATA.daily.metrics, data: ROOT_DATA.daily.data };
+    }
     buildIndex();
     return true;
   });
@@ -1260,6 +1304,9 @@ Promise.resolve()
     DATA_VERSION = manifest?.version || '';
     const data = await fetchDashboardData(manifest);
     applyDashboardData(data, true);
+    if (DATA_GRAIN === 'daily') {
+      prefetchRemainingDailyYears().catch((err) => console.error('历史年份预取失败:', err));
+    }
   })
   .catch(err => {
     console.error('数据加载失败:', err);
