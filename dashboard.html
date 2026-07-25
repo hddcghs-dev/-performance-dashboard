@@ -373,9 +373,15 @@ body[data-theme="light"] select option { color: #15231b; background: #ffffff; }
 .funnel-empty { padding: 10px 16px 4px; font-size: 12px; color: var(--text2); }
 /* 趋势图预设组合：61 个指标的选择器没人会去翻，给几个成组的入口 */
 .trend-presets { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 16px 10px; }
-.trend-preset-btn { font-size: 12px; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--text2); cursor: pointer; transition: all .15s; }
-.trend-preset-btn:hover { color: var(--text); border-color: var(--accent); }
-.trend-preset-btn.active { background: var(--accent); border-color: var(--accent); color: #06251b; font-weight: 600; }
+.trend-preset-btn { font-size: 12px; font-weight: 600; padding: 5px 14px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; transition: all .15s; }
+.trend-preset-btn:hover { color: var(--ink); background: var(--surface-2); border-color: var(--line-strong); }
+/* 与顶部时间预设按钮同一套选中样式，避免自造颜色导致对比度不足 */
+.trend-preset-btn.active {
+  background: linear-gradient(135deg, var(--jade), var(--cyan));
+  border-color: transparent;
+  color: var(--on-accent);
+  box-shadow: 0 6px 18px var(--glow);
+}
 @media (max-width: 720px) {
   .funnel-step-val { font-size: 16px; }
   .funnel-plat { flex-basis: 46px; }
