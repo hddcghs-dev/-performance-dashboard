@@ -2306,7 +2306,7 @@ function renderOverviewKPIs(dates) {
     { label:'抖音营业额', val:overviewMoney(dyNet), raw:dyNet, color:'',
       changes: overviewChangesWith(dyNet, (range) => Math.max(0,
         calcOverviewRangeTotal(range, '抖音营业额') - calcOverviewRangeTotal(range, '抖音刷单金额'))),
-      sub: dyFraud > 0 ? `已扣代金券 ${fmtYInt(dyFraud)} 元 · 平台核销 ${fmtYInt(dyAmt)}` : undefined },
+      sub: dyFraud > 0 ? `已扣刷单 ${fmtYInt(dyFraud)} 元 · 平台核销 ${fmtYInt(dyAmt)}` : undefined },
     // 美团-平台是平台核销口径，含刷单。营业结构图一直是扣掉刷单后算占比的，
     // 卡片却显示含刷单的毛额，两处对不上；刷单常年占 14%~62%，7-24 那天扣完
     // 抖音(43,964)其实大于美团(35,170)，毛额会让渠道大小关系反过来。统一取净额。

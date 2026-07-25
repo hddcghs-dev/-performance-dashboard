@@ -7,7 +7,7 @@
     '抖音营业额': { platform: '抖音-平台', fallback: '抖音-可聚集' },
     '美团营业额': { platform: '美团-平台', fallback: '美团-可聚集' },
   });
-  const dailySumMetrics = new Set(['抖音扫码', '美团扫码']);
+  const dailySumMetrics = new Set(['抖音扫码', '美团扫码', '抖音刷单金额', '美团刷单金额']);
   const ratioMetrics = Object.freeze({
     '美团转化率': ['美团核销总数', '美团曝光人数'],
     '抖音转化率': ['抖音门店页成交人数', '抖音门店页访问人数'],
@@ -20,7 +20,6 @@
 
   function metricRule(metric) {
     if (channelRevenueFields[metric]) return { kind: 'channel', fields: channelRevenueFields[metric] };
-    if (metric === '美团刷单金额') return { kind: 'daily-sum', field: metric };
     if (dailySumMetrics.has(metric)) return { kind: 'daily-sum', field: metric };
     if (ratioMetrics[metric]) return { kind: 'ratio', parts: ratioMetrics[metric] };
     if (averageMetrics.has(metric)) return { kind: 'average', field: metric };
