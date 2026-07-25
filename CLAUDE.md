@@ -1,50 +1,63 @@
-﻿# 民德搓澡堂经营数据看板
+# 民德搓澡堂 · 经营看板（发布仓库）
 
-## 数据系统
+这是一个**纯发布产物仓库**，不是开发目录。除 `dashboard.html`、
+`dashboard-metric-rules.js`、`index.html` 和 `daily-dashboard/` 外，
+其余文件都由脚本每天覆盖写入。
 
-### 飞书多维表格（主力）
-- **民德业绩看板-新**: 25店×61字段月度数据
-  - Base Token: `SIwGb8hWvaIMDdsIysycBJ1EnOt`
-  - 数据表 (tbl1DVnqDDU6Ro8z): 每月25条记录（含泉州兴贤路店、福州世欧王庄五里亭店）
-  - 门店台账 (tblUiwpfn3YhGAWd): 25店基础信息，决定门店排列顺序
+真正的源码和文档在工作目录：
 
-### 门店顺序
-门店台账排列（1-25）：民德路→红谷滩→抚河桥→抚州高新→朝阳→京东天虹→赣州章贡→上饶万年→九江中航城→九江万达→上饶婺源→杭州西湖→新余渝水→台州椒江→赣州南康→青岛北区→萍乡安源→温州时代→台州路桥→鹰潭月湖→宜春袁州→杭州市中心→合肥经开→泉州兴贤路→福州世欧王庄五里亭
+```
+/Users/chenxiaolan/Documents/Codex/2026-05-29/9-https-www-life-data-cn
+```
 
-### GitHub Pages 看板
-- 在线: https://hddcghs-dev.github.io/-performance-dashboard/
-- 仓库: `hddcghs-dev/-performance-dashboard`
-- 本地: `../github-pages-deploy/`
-- **数据源**: 飞书Base API拉取（2026-05起改为直接从Base生成，不再依赖Excel）
+**动手前先读那里的 `AUTOMATION.md`**，口径、门店映射、数据质量规则全在那份文档里，
+本仓库不重复维护。
 
-## 月度更新流程
+## 两条铁律
 
-### 飞书 Base 更新
-1. 收到3个Excel：美团月报（日数据）、抖音月报、营业汇总
-2. 美团日数据按门店汇总到月（sum：曝光/访问/下单/核销额/核销人次/新客/评论/差评；last：评分）
-3. 门店名称映射：Excel简称→Base选项名（注意赣州店→赣州章贡加盟店等差异）
-4. `lark-cli base +record-upsert` 逐条写入（每店一条，25条）
-5. 排序值按门店台账顺序写1-25
-6. 福州世欧王庄五里亭店（2026-06新增）：排序25，目前仅抖音数据
-7. 泉州兴贤路店：无抖音数据，美团极少
-8. 营业汇总Excel列映射（52列，0-based）：
-   - 服务销售(cols 1-13): 总业绩[1]/现金业绩[2]/现金占比[3]/抖音线下[4]/微信[5]/现金[6]/实收卡金[7]/赠送卡金[8]/免单[9]/美团线下[10]/活动减免[11]/支付宝[12]/银行卡[13]
-   - 商品销售(cols 14-26): 总业绩[14]/现金业绩[15]/现金占比[16]/抖音线下[17]/微信[18]/现金[19]/实收卡金[20]/美团线下[21]/支付宝[22]/赠送卡金[23]/免单[24]/活动减免[25]/银行卡[26]
-   - 会员开卡(cols 27-33): 总业绩[27]/现金业绩[28]/现金占比[29]/微信[30]/支付宝[31]/现金[32]/银行卡[33]
-   - 会员充值(cols 34-42): 总业绩[34]/现金业绩[35]/现金占比[36]/微信[37]/支付宝[38]/银行卡[39]/抖音线下[40]/现金[41]/免单[42]
-   - 抖音 = [4]+[17]（服务+商品抖音线下）
-   - 美团 = [10]+[21]（服务+商品美团线下）
-   - 免单+减免 = [9]+[11]+[24]+[25]+[42]（服务+商品免单及活动减免+充值免单）
-9. 门店名称映射（营业汇总→Base选项名）：
-   - 婺源店→上饶婺源加盟店、新余渝水店→新余渝水店、青岛市北区店→青岛北区店
-   - 宜春袁州店→宜春袁州店、京东天虹店→京东天虹店、九江万达店→九江万达店
-   - 南康店→赣州南康店、朝阳店→朝阳店、抚州高新店→抚州高新加盟店
-   - 红谷滩店→红谷滩店、杭州市中心店→杭州市中心店、温州时代店→温州时代店
-   - 泉州兴贤路店→泉州兴贤路店、万年店→上饶万年加盟店、鹰潭月湖店→鹰潭月湖店
-   - 台州路桥店→台州路桥店、萍乡安源店→萍乡安源店、民德路店→民德路店
-   - 合肥经开店→合肥经开店、台州椒江店→台州椒江店、九江中航城店→九江中航城店
-   - 赣州店→赣州章贡加盟店、抚河桥店→抚河桥店、杭州西溪天街店→杭州西湖店
+1. **工作区必须保持干净。** `sync-dashboard-to-github.mjs` 每天会
+   `git rebase origin/main`，这里留下未提交改动会让自动同步失败。
+   要改 `dashboard.html`，改完当场 commit。
+2. **不要删 `dashboard_data.json`。** 它不只是页面数据，
+   `build-performance-dashboard-data.js` 每天读它取历史、追加当天、再写回。
+   删了第二天构建直接报错。
 
-### GitHub Pages 部署
-1. `python generate_dashboard.py` — 从Base拉取数据→生成dashboard_data.json→复制到github-pages-deploy
-2. 在 ../github-pages-deploy/ 提交推送即可部署
+## 谁在写什么
+
+```
+飞书「门店日明细」表 (Y7oubeBYNaAVqNs7yurc5SxSnee / tblXCehbW5BMG0sg)
+  → build-performance-dashboard-data.js
+      读 dashboard_data.json 取历史
+      按 --date 从飞书只拉当天 26 条
+      写回 dashboard_data.json + dashboard_core.json
+         + dashboard_daily_YYYY.json + dashboard_version.json
+  → sync-dashboard-to-github.mjs
+      只 git add 上面这几个 json 和 dashboard.html、dashboard-metric-rules.js
+      commit "Update daily performance data" 后 push
+```
+
+`index.html`、`daily-dashboard/`、`echarts.min.js`、`ui-*.css` 不在自动发布名单里，
+只能人工改人工提交。
+
+## 前端取数
+
+页面先读 `dashboard_version.json` 拿版本号，再按版本号请求数据文件（用于缓存破坏）。
+
+```js
+// dashboard.html · fetchDashboardData
+grain=monthly → dashboard_core.json          （1.1MB）
+grain=daily   → dashboard_data.json          （17.6MB，全量）
+```
+
+`ensureDailyYear()` 支持按年拉 `dashboard_daily_YYYY.json` 分片，
+但只有 monthly 路径走到那里；daily 路径因为已经拿到全量数据，永远不会触发懒加载。
+**要改数据加载策略，这两个函数得一起改。**
+
+## 门店
+
+当前 26 店，顺序由飞书「门店日明细」表的 `排序` 字段决定，不要在前端硬编码门店列表。
+
+历史遗留：本仓库早期是"月度业绩看板"，数据源是 Excel + Python `generate_json.py`，
+门店数是 23/25。**那套流程已经全部废弃**，现在是 Node 脚本直连飞书 Base。
+如果在别处看到 `业绩看板_优化版`、`github-pages-deploy`、`generate_json.py`
+这些名字，都是过时信息。
