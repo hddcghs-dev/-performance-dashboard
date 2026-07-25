@@ -44,8 +44,7 @@ node scripts/sync-dashboard-to-github.mjs --date 2026-07-24
 | `dashboard_data.json` | 全量数据，同时是增量构建的状态文件 | 自动 |
 | `dashboard_core.json` | 月度核心数据分片 | 自动 |
 | `dashboard_daily_YYYY.json` | 按年拆分的日粒度分片 | 自动 |
-| `index.html` | 站点首页，负责跳转 | 人工 |
-| `daily-dashboard/index.html` | 单文件快照看板 | 人工 |
+| `index.html` | 站点首页，跳转到 `dashboard.html?grain=daily` | 人工 |
 | `echarts.min.js` / `assets/` | 图表库 | 人工 |
 
 `dashboard_data.json` 既是页面数据源，也是 `build-performance-dashboard-data.js`
@@ -54,12 +53,14 @@ node scripts/sync-dashboard-to-github.mjs --date 2026-07-24
 
 ## 已知的坑
 
-- **首页和日更数据不是同一个看板。** `index.html` 跳转到 `daily-dashboard/`，
-  那是一份人工提交的单文件快照，不参与每日同步；每天自动更新的是
-  `dashboard.html?grain=daily`。两者会随时间越差越远。
-- **`grain=daily` 目前读全量 `dashboard_data.json`**，分片只在
+- **`grain=daily` 目前读全量 `dashboard_data.json`**（17.6MB），分片只在
   `grain=monthly` 时生效（见 `dashboard.html` 的 `fetchDashboardData`）。
-  按年懒加载的 `ensureDailyYear()` 已经写好，daily 路径下用不上。
+  按年懒加载的 `ensureDailyYear()` 已经写好，但只在 `renderDetail()` 的
+  monthly 分支被调用，daily 路径下用不上。要改成 daily 也走分片，
+  这两个函数得一起改，并且要把三个页签的读取路径都过一遍。
+
+2026-07-25 已清理：站点首页原本跳到 `daily-dashboard/` 单文件快照，
+不参与每日同步、数据停在 2026-07-18，现已删除，首页改指 `dashboard.html?grain=daily`。
 
 ## 数据口径
 

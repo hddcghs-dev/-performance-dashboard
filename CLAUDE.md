@@ -36,8 +36,11 @@
       commit "Update daily performance data" 后 push
 ```
 
-`index.html`、`daily-dashboard/`、`echarts.min.js`、`ui-*.css` 不在自动发布名单里，
-只能人工改人工提交。
+`index.html`、`echarts.min.js`、`ui-*.css` 不在自动发布名单里，只能人工改人工提交。
+
+站点首页 `index.html` 跳到 `dashboard.html?grain=daily`。
+（2026-07-25 前它跳到 `daily-dashboard/` 的单文件快照，那份不参与每日同步、
+数据冻结在 2026-07-18，已删除。）
 
 ## 前端取数
 
