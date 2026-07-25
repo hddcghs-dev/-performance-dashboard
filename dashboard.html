@@ -2500,11 +2500,13 @@ function renderStackedShareChart(elId, dateList, seriesDefs, splitFn, valueForma
       },
     },
     legend: { top: 0, textStyle: { color: T.text, fontSize: 11 }, itemWidth: 10, itemHeight: 10 },
-    grid: { left: 44, right: 16, top: 32, bottom: 26 },
+    // 右边留够，否则最后一个日期标签会被裁掉
+    grid: { left: 44, right: 28, top: 32, bottom: 26 },
     xAxis: {
       type: 'category',
       boundaryGap: false,
-      data: dateList.map(displayDate),
+      // 与趋势图同一套短日期格式（07-18），完整日期会挤爆横轴
+      data: dateList.map(axisDate),
       axisLine: { lineStyle: { color: T.axis } },
       axisLabel: { color: T.text, fontSize: 10 },
     },
