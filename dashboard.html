@@ -2278,8 +2278,10 @@ function renderOverviewKPIs(dates) {
 
   const overviewMoney = n => DATA_GRAIN === 'daily' ? fmtYInt(n) : fmtY(n);
 
-  const revenueMetric = primaryRevenueMetric();
-  const totalRev = calcTotal(dates,revenueMetric);
+  const revenueMetric = '总营业额';
+  const totalService = calcTotal(dates, '服务营业额');
+  const totalProduct = calcTotal(dates, '商品营业额');
+  const totalRev = totalService + totalProduct;
   const totalCashflow = calcTotal(dates,'现金流营业额');
   const dyAmt = calcTotal(dates,'抖音营业额');
   const dyFraud = calcTotal(dates, '抖音刷单金额');
@@ -2291,6 +2293,8 @@ function renderOverviewKPIs(dates) {
   const totalCard = calcTotal(dates,'卡金');
   const totalRecharge = calcTotal(dates,'充值');
   const totalProjects = calcTotal(dates,'项目数');
+  const totalBigClockProjects = calcTotal(dates,'298项目数') + calcTotal(dates,'358项目数');
+  const bigClockRate = totalProjects > 0 ? totalBigClockProjects / totalProjects : 0;
   const totalComments = calcTotal(dates,'综合新增评论');
   const totalBad = calcTotal(dates,'综合新增差评');
   const badRate = totalComments > 0 ? totalBad/totalComments : 0;
@@ -2317,10 +2321,13 @@ function renderOverviewKPIs(dates) {
   const mtScore = avgNonZero('美团评分');
 
   const kpis = [
-    { label:METRIC_LABELS[revenueMetric], val:overviewMoney(totalRev), raw:totalRev, color:'gold', m:revenueMetric },
+    { label:METRIC_LABELS[revenueMetric], val:overviewMoney(totalRev), raw:totalRev, color:'gold',
+      changes: overviewChangesWith(totalRev, (range) =>
+        calcOverviewRangeTotal(range, '服务营业额') + calcOverviewRangeTotal(range, '商品营业额')),
+      sub:`服务 ${overviewMoney(totalService)} · 商品 ${overviewMoney(totalProduct)}` },
     { label:'现金流营业额', val:overviewMoney(totalCashflow), raw:totalCashflow, color:'', m:'现金流营业额' },
     { label:'现金流率', val:fmtPct(cashflowRate), raw:cashflowRate, color: cashflowRate>=1?'green':'', m:null },
-    { label:'项目均价', val:fmtYInt(avgTicket), raw:avgTicket, color:'', m:null },
+    { label:'项目均价', val:fmtYInt(avgTicket), raw:avgTicket, color:'', m:null, sub:`大钟率 ${fmtPct(bigClockRate)}` },
     { label:'总项目数', val:fmtN(totalProjects), raw:totalProjects, color:'', m:'项目数' },
     // 抖音同样按净额：2000元代金券（平台售价 1800）是刷单，计入平台核销但无对应服务
     { label:'抖音营业额', val:overviewMoney(dyNet), raw:dyNet, color:'',
