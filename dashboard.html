@@ -3286,10 +3286,15 @@ function renderDetailKPIs(store, dates) {
   const getSum = m => calcStoreAgg(dates, store, m);
   const getPrevSum = m => calcStoreAgg([prevMonth], store, m);
   const getPySum = m => calcStoreAgg([prevYearMonth], store, m);
-  const rechargeFraudAmount = getSum('美团刷单金额');
-  const meituanNetVerification = Math.max(0, getSum('美团-平台') - rechargeFraudAmount);
-  const meituanVerificationSub = rechargeFraudAmount > 0
-    ? `刷单金额 ${fmtYInt(rechargeFraudAmount)} 元（已剔除）`
+  const douyinFraudAmount = getSum('抖音刷单金额');
+  const douyinNetVerification = Math.max(0, getSum('抖音-平台') - douyinFraudAmount);
+  const douyinVerificationSub = douyinFraudAmount > 0
+    ? `刷单金额 ${fmtYInt(douyinFraudAmount)} 元（已剔除）`
+    : '元';
+  const meituanFraudAmount = getSum('美团刷单金额');
+  const meituanNetVerification = Math.max(0, getSum('美团-平台') - meituanFraudAmount);
+  const meituanVerificationSub = meituanFraudAmount > 0
+    ? `刷单金额 ${fmtYInt(meituanFraudAmount)} 元（已剔除）`
     : '元';
 
   function renderDelta(current, prev, isP, label) {
@@ -3357,7 +3362,7 @@ function renderDetailKPIs(store, dates) {
     },
     {
       key: 'redemption', title: '核销', open: true, items: [
-        { label:'抖音平台核销', val:fmtYInt(getSum('抖音-平台')), sub:'元', color:'', m:'抖音-平台', isSum:true },
+        { label:'抖音平台核销', val:fmtYInt(douyinNetVerification), sub:douyinVerificationSub, color:'', m:'抖音-平台', isSum:true },
         { label:'美团平台核销', val:fmtYInt(meituanNetVerification), sub:meituanVerificationSub, color:'', m:'美团-平台', isSum:true },
         { label:'新客占比', val:fmtPct(getVal('新客占比')), sub:'', color:'', m:'新客占比' },
       ]
