@@ -2094,13 +2094,11 @@ function getMonthlyData(dates, metric) {
 
 function getStoreMonthlyData(store, metric, dates) {
   const rule = metricRule(metric);
-  const useDailyRows = DATA_GRAIN === 'monthly'
-    && document.getElementById('detail-period')?.value === 'month';
   const result = {};
   dates.forEach(d => {
     const key = d + '_' + store;
-    const row = useDailyRows
-      ? (DAILY_IDX_BY_DS[key] || IDX_BY_DS[key])
+    const row = DATA_GRAIN === 'monthly'
+      ? IDX_BY_DS[key]
       : (IDX_BY_DS[key] || DAILY_IDX_BY_DS[key]);
     if (!row) {
       result[d] = 0;
@@ -3184,17 +3182,6 @@ function detailExportCSV() {
 function renderDetail() {
   const store = document.getElementById('detail-store').value;
   const dates = getDetailDates(store);
-  const detailActive = document.getElementById('tab-detail')?.classList.contains('active');
-  if (detailActive && DATA_GRAIN === 'monthly'
-    && document.getElementById('detail-period').value === 'month'
-    && dates.length === 1) {
-    const month = String(dates[0] || '').substring(0, 7);
-    if (month && !hasDailyMonth(month)) {
-      ensureDailyYear(month.substring(0, 4))
-        .then((loaded) => { if (loaded) renderDetail(); })
-        .catch((error) => console.error('日度趋势加载失败:', error));
-    }
-  }
   const trendDates = getDetailTrendDates(store, dates);
 
   renderDetailKPIs(store, dates);
@@ -3213,10 +3200,9 @@ function getDetailTrendDates(store, selectedDates) {
   const period = document.getElementById('detail-period').value;
   const storeDates = getStoreDates(store);
   if (DATA_GRAIN === 'monthly' && period === 'month' && selectedDates.length === 1) {
-    const selectedMonths = new Set(selectedDates.map(date => date.substring(0, 7)));
-    const dailyTrendDates = getDailyStoreDates(store)
-      .filter(date => selectedMonths.has(date.substring(0, 7)));
-    return dailyTrendDates.length > 1 ? dailyTrendDates : selectedDates;
+    const selectedYear = selectedDates[0].substring(0, 4);
+    const yearMonths = storeDates.filter(date => date.startsWith(`${selectedYear}-`));
+    return yearMonths.length > 1 ? yearMonths : selectedDates;
   }
   if (DATA_GRAIN === 'monthly') return selectedDates;
   if (period !== 'day') return selectedDates;
