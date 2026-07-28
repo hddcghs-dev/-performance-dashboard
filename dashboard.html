@@ -1461,6 +1461,10 @@ function safeNum(v) {
   const n = parseFloat(v);
   return isNaN(n) ? 0 : n;
 }
+function totalRevenueValue(row) {
+  const total = safeNum(row?.['总营业额']);
+  return total || safeNum(row?.['服务营业额']) + safeNum(row?.['商品营业额']);
+}
 function metricField(m) { return FIELD_MAP[m] || m; }
 function primaryRevenueMetric() { return DATA_GRAIN === 'daily' ? '总营业额' : '服务营业额'; }
 function escapeHtml(value) {
@@ -2028,6 +2032,12 @@ function calcOverviewRangeTotal(range, metric) {
 
 function calcStoreAgg(dates, store, metric) {
   const rule = metricRule(metric);
+  if (metric === '总营业额') {
+    return dates.reduce((sum, date) => {
+      const row = IDX_BY_DS[`${date}_${store}`] || DAILY_IDX_BY_DS[`${date}_${store}`];
+      return sum + (row ? totalRevenueValue(row) : 0);
+    }, 0);
+  }
   if (rule.kind === 'channel') {
     const dailyRows = getDailyRowsForViewDates(dates).filter(row => row['门店'] === store);
     const rows = dailyRows.length
@@ -2110,6 +2120,10 @@ function getStoreMonthlyData(store, metric, dates) {
       : (IDX_BY_DS[key] || DAILY_IDX_BY_DS[key]);
     if (!row) {
       result[d] = 0;
+      return;
+    }
+    if (metric === '总营业额') {
+      result[d] = totalRevenueValue(row);
       return;
     }
     if (rule.kind === 'channel') {
@@ -3306,7 +3320,7 @@ function renderDetailKPIs(store, dates) {
     return `<div class="kpi-change ${cls}"><span class="arrow">${arrow}</span>${sign}${(delta*100).toFixed(1)}% <span style="font-size:9px;color:var(--text2)">${label}</span></div>`;
   }
 
-  const revenueMetric = primaryRevenueMetric();
+  const revenueMetric = '总营业额';
   const totalVal = getSum(revenueMetric);
   const svcVal = getSum('服务营业额');
   const prodVal = getSum('商品营业额');
@@ -3314,8 +3328,7 @@ function renderDetailKPIs(store, dates) {
   const project168 = getSum('168项目数');
   const project298 = getSum('298项目数');
   const project358 = getSum('358项目数');
-  const ticketRevenue = getSum('总营业额') || totalVal;
-  const avgTicket = projectCount > 0 ? ticketRevenue / projectCount : 0;
+  const avgTicket = projectCount > 0 ? totalVal / projectCount : 0;
   const bigClockRate = getVal('大钟占比');
   const sections = [
     {
@@ -3396,7 +3409,7 @@ function renderDetailKPIs(store, dates) {
 
 function renderDetailPieCharts(store) {
   const dates = getDetailDates(store);
-  const revenueTotal = calcStoreAgg(dates, store, primaryRevenueMetric());
+  const revenueTotal = calcStoreAgg(dates, store, '总营业额');
   const dy = calcStoreAgg(dates, store, '抖音营业额');
   const meituanPlatform = calcStoreAgg(dates, store, '美团营业额');
   const fraudRechargeAmount = calcStoreAgg(dates, store, '美团刷单金额');
@@ -3442,7 +3455,7 @@ function renderDetailTrendCharts(store, dates) {
   const m168 = getStoreMonthlyData(store,'168项目数',dates);
   const m298 = getStoreMonthlyData(store,'298项目数',dates);
   const m358 = getStoreMonthlyData(store,'358项目数',dates);
-  const mRev = getStoreMonthlyData(store,primaryRevenueMetric(),dates);
+  const mRev = getStoreMonthlyData(store,'总营业额',dates);
   const labels = Object.keys(mRev).sort();
   const xDate = date => trendAxisDate(date, dates);
   const showAllPointLabels = dates.length <= 14;
