@@ -3300,11 +3300,12 @@ function renderDetailKPIs(store, dates) {
   const projectCount = getSum('项目数');
   const ticketRevenue = getSum('总营业额') || totalVal;
   const avgTicket = projectCount > 0 ? ticketRevenue / projectCount : 0;
+  const bigClockRate = getVal('大钟占比');
   const sections = [
     {
       key: 'revenue', title: '营收', open: true, items: [
         { label:METRIC_LABELS[revenueMetric], val:fmtYInt(totalVal), sub:`服务${fmtYInt(svcVal)}  ·  商品${fmtYInt(prodVal)}`, color:'gold', m:revenueMetric, isSum:true, mom:true },
-        { label:'客单价', val:fmtYInt(avgTicket), sub:'总营业额 / 项目数', color:'', m:null },
+        { label:'客单价', val:fmtYInt(avgTicket), sub:`大钟率 ${fmtPct(bigClockRate)} · 总营业额 / 项目数`, color:'', m:null },
         { label:'现金流营业额', val:fmtYInt(getSum('现金流营业额')), sub:'元', color:'', m:'现金流营业额', isSum:true },
         { label:'卡金', val:fmtYInt(getSum('卡金')), sub:'元', color:'', m:'卡金', isSum:true },
         { label:'充值', val:fmtYInt(getSum('充值')), sub:'元', color:'', m:'充值', isSum:true },
