@@ -469,7 +469,7 @@ body[data-theme="light"] .kpi-card:hover { box-shadow: 0 24px 60px rgba(34,62,46
   border-radius: 0 0 var(--radius-card) var(--radius-card);
   background: var(--surface);
 }
-/* 单店详情：营收横向展开，其余指标按优先级分栏，减少纵向堆叠。 */
+/* 单店详情：同类指标成组排列，营收横向展开，其余分为项目、评分、评价、流量转化、核销和扫码。 */
 #detail-kpi.detail-kpi-layout {
   grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: 14px;
@@ -478,13 +478,17 @@ body[data-theme="light"] .kpi-card:hover { box-shadow: 0 24px 60px rgba(34,62,46
 }
 #detail-kpi .kpi-section { min-width: 0; margin-bottom: 0; }
 #detail-kpi .kpi-section-revenue { grid-column: 1 / -1; }
+#detail-kpi .kpi-section-project,
 #detail-kpi .kpi-section-rating { grid-column: span 4; }
-#detail-kpi .kpi-section-online { grid-column: span 8; }
-#detail-kpi .kpi-section-redemption { grid-column: span 8; }
+#detail-kpi .kpi-section-reviews { grid-column: span 4; }
+#detail-kpi .kpi-section-traffic { grid-column: span 8; }
+#detail-kpi .kpi-section-redemption { grid-column: 1 / -1; }
 #detail-kpi .kpi-section-scans { grid-column: span 4; }
-#detail-kpi .kpi-section-revenue .kpi-section-body { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-#detail-kpi .kpi-section-online .kpi-section-body { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-#detail-kpi .kpi-section-redemption .kpi-section-body { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+#detail-kpi .kpi-section-revenue .kpi-section-body { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+#detail-kpi .kpi-section-reviews .kpi-section-body,
+#detail-kpi .kpi-section-redemption .kpi-section-body { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+#detail-kpi .kpi-section-traffic .kpi-section-body { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+#detail-kpi .kpi-section-project .kpi-section-body,
 #detail-kpi .kpi-section-rating .kpi-section-body,
 #detail-kpi .kpi-section-scans .kpi-section-body { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 #detail-kpi > .data-missing { grid-column: 1 / -1; }
@@ -727,8 +731,10 @@ body[data-theme="light"] .median-box { border-color: rgba(169,127,69,.30); backg
   .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   #detail-kpi.detail-kpi-layout { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   #detail-kpi .kpi-section-revenue,
-  #detail-kpi .kpi-section-online { grid-column: 1 / -1; }
+  #detail-kpi .kpi-section-traffic { grid-column: 1 / -1; }
+  #detail-kpi .kpi-section-project,
   #detail-kpi .kpi-section-rating,
+  #detail-kpi .kpi-section-reviews,
   #detail-kpi .kpi-section-redemption,
   #detail-kpi .kpi-section-scans { grid-column: span 1; }
   #detail-kpi .kpi-section-body { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
@@ -751,8 +757,10 @@ body[data-theme="light"] .median-box { border-color: rgba(169,127,69,.30); backg
   .kpi-grid, .kpi-section-body, .insight-grid { grid-template-columns: 1fr; }
   #detail-kpi.detail-kpi-layout { grid-template-columns: 1fr; }
   #detail-kpi .kpi-section-revenue,
+  #detail-kpi .kpi-section-project,
   #detail-kpi .kpi-section-rating,
-  #detail-kpi .kpi-section-online,
+  #detail-kpi .kpi-section-reviews,
+  #detail-kpi .kpi-section-traffic,
   #detail-kpi .kpi-section-redemption,
   #detail-kpi .kpi-section-scans { grid-column: 1 / -1; }
   #detail-kpi .kpi-section-body { grid-template-columns: 1fr !important; }
@@ -3298,6 +3306,9 @@ function renderDetailKPIs(store, dates) {
   const svcVal = getSum('服务营业额');
   const prodVal = getSum('商品营业额');
   const projectCount = getSum('项目数');
+  const project168 = getSum('168项目数');
+  const project298 = getSum('298项目数');
+  const project358 = getSum('358项目数');
   const ticketRevenue = getSum('总营业额') || totalVal;
   const avgTicket = projectCount > 0 ? ticketRevenue / projectCount : 0;
   const bigClockRate = getVal('大钟占比');
@@ -3305,11 +3316,16 @@ function renderDetailKPIs(store, dates) {
     {
       key: 'revenue', title: '营收', open: true, items: [
         { label:METRIC_LABELS[revenueMetric], val:fmtYInt(totalVal), sub:`服务${fmtYInt(svcVal)}  ·  商品${fmtYInt(prodVal)}`, color:'gold', m:revenueMetric, isSum:true, mom:true },
-        { label:'客单价', val:fmtYInt(avgTicket), sub:`大钟率 ${fmtPct(bigClockRate)} · 总营业额 / 项目数`, color:'', m:null },
         { label:'现金流营业额', val:fmtYInt(getSum('现金流营业额')), sub:'元', color:'', m:'现金流营业额', isSum:true },
         { label:'卡金', val:fmtYInt(getSum('卡金')), sub:'元', color:'', m:'卡金', isSum:true },
         { label:'充值', val:fmtYInt(getSum('充值')), sub:'元', color:'', m:'充值', isSum:true },
         { label:'免单减免', val:fmtYInt(getSum('免单减免')), sub:'元', color:'', m:'免单减免', isSum:true },
+      ]
+    },
+    {
+      key: 'project', title: '项目', open: true, items: [
+        { label:'客单价', val:fmtYInt(avgTicket), sub:`大钟率 ${fmtPct(bigClockRate)} · 总营业额 / 项目数`, color:'', m:null },
+        { label:'项目数', val:fmtN(projectCount), sub:`168 ${fmtN(project168)} · 298 ${fmtN(project298)} · 358 ${fmtN(project358)}`, color:'', m:'项目数', isSum:true },
       ]
     },
     {
@@ -3319,10 +3335,14 @@ function renderDetailKPIs(store, dates) {
       ]
     },
     {
-      key: 'online', title: '线上', open: true, items: [
+      key: 'reviews', title: '评价', open: true, items: [
         { label:'新增评论', val:fmtN(getSum('综合新增评论')), sub:'条', color:'green', m:'综合新增评论', isSum:true },
         { label:'差评数', val:fmtN(getSum('综合新增差评')), sub:'条', color: getSum('综合新增差评')>0?'red':'', m:'综合新增差评', isSum:true },
         { label:'差评率', val:fmtPct(getVal('差评率')), sub:'', color: getVal('差评率')>0.05?'red':'', m:'差评率' },
+      ]
+    },
+    {
+      key: 'traffic', title: '流量转化', open: true, items: [
         { label:'美团访问', val:fmtN(getSum('美团访问人数')), sub:'人', color:'', m:'美团访问人数', isSum:true },
         { label:'抖音访问', val:fmtN(getSum('抖音门店页访问人数')), sub:'人', color:'', m:'抖音门店页访问人数', isSum:true },
         { label:'美团转化率', val:fmtPct(getVal('美团转化率')), sub:'成交人数 / 曝光人数', color:'', m:'美团转化率' },
@@ -3330,16 +3350,16 @@ function renderDetailKPIs(store, dates) {
       ]
     },
     {
+      key: 'scans', title: '扫码', open: true, items: [
+        { label:'抖音扫码', val:fmtN(getSum('抖音扫码')), sub:'次', color:'', m:'抖音扫码', isSum:true },
+        { label:'美团扫码', val:fmtN(getSum('美团扫码')), sub:'次', color:'', m:'美团扫码', isSum:true },
+      ]
+    },
+    {
       key: 'redemption', title: '核销', open: true, items: [
         { label:'抖音平台核销', val:fmtYInt(getSum('抖音-平台')), sub:'元', color:'', m:'抖音-平台', isSum:true },
         { label:'美团平台核销', val:fmtYInt(meituanNetVerification), sub:meituanVerificationSub, color:'', m:'美团-平台', isSum:true },
         { label:'新客占比', val:fmtPct(getVal('新客占比')), sub:'', color:'', m:'新客占比' },
-      ]
-    },
-    {
-      key: 'scans', title: '扫码', open: true, items: [
-        { label:'抖音扫码', val:fmtN(getSum('抖音扫码')), sub:'次', color:'', m:'抖音扫码', isSum:true },
-        { label:'美团扫码', val:fmtN(getSum('美团扫码')), sub:'次', color:'', m:'美团扫码', isSum:true },
       ]
     }
   ];
