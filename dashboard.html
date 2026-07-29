@@ -3611,13 +3611,13 @@ function renderDetailKPIs(store, dates) {
       ]
     },
     {
-      key: 'rating', title: '评分', open: false, items: [
+      key: 'rating', title: '评分', open: true, items: [
         { label:'评分', val:noData ? '—' : `抖音 ${getVal('抖音评分') > 0 ? fmtScore(getVal('抖音评分')) : '—'}<br>美团 ${getVal('美团评分') > 0 ? fmtScore(getVal('美团评分')) : '—'}<br>大众点评 ${getVal('大众点评') > 0 ? fmtScore(getVal('大众点评')) : '—'}`, color:'', valueFn:platformScoreRangeValue, merged:true },
         { label:'美团经营分', val:noData || getVal('美团经营分') <= 0 ? '—' : fmtScore(getVal('美团经营分')), color:'', m:'美团经营分' },
       ]
     },
     {
-      key: 'reviews', title: '评价', open: false, items: [
+      key: 'reviews', title: '评价', open: true, items: [
         { label:'新增评论', val:fmtN(getSum('综合新增评论')), sub:'条', color:'green', m:'综合新增评论', isSum:true },
         { label:'差评数', val:fmtN(getSum('综合新增差评')), sub:'条', color: getSum('综合新增差评')>0?'red':'', m:'综合新增差评', isSum:true },
         { label:'差评率', val:fmtPct(getVal('差评率')), sub:'', color: getVal('差评率')>0.05?'red':'', m:'差评率' },
@@ -3632,13 +3632,13 @@ function renderDetailKPIs(store, dates) {
       ]
     },
     {
-      key: 'scans', title: '扫码', open: false, items: [
+      key: 'scans', title: '扫码', open: true, items: [
         { label:'抖音扫码', val:fmtN(getSum('抖音扫码')), sub:'次', color:'', m:'抖音扫码', isSum:true },
         { label:'美团扫码', val:fmtN(getSum('美团扫码')), sub:'次', color:'', m:'美团扫码', isSum:true },
       ]
     },
     {
-      key: 'redemption', title: '核销', open: false, items: [
+      key: 'redemption', title: '核销', open: true, items: [
         { label:'抖音平台核销', val:fmtYInt(douyinNetVerification), sub:douyinVerificationSub, color:'', m:'抖音-平台', valueFn:range => netVerificationRangeValue(range, '抖音-平台', '抖音刷单金额') },
         { label:'美团平台核销', val:fmtYInt(meituanNetVerification), sub:meituanVerificationSub, color:'', m:'美团-平台', valueFn:range => netVerificationRangeValue(range, '美团-平台', '美团刷单金额') },
         { label:'新客占比', val:fmtPct(getVal('新客占比')), sub:'', color:'', m:'新客占比' },
