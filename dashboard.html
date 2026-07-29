@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>民的时代经营看板</title>
 <script src="assets/echarts.min.js"></script>
-<script src="dashboard-metric-rules.js?v=20260729-decision-workbench"></script>
+<script src="dashboard-metric-rules.js?v=20260729-conversion-groups"></script>
 <script src="dashboard-time-rules.js"></script>
 <style>
 /* ============================================================
@@ -314,6 +314,10 @@ body[data-theme="light"] select option { color: #15231b; background: #ffffff; }
   box-shadow: var(--shadow);
 }
 .dropdown.open .dropdown-content { display: block; }
+.trend-category-filter { flex: 1 1 100%; align-items: flex-start; }
+.trend-category-dropdowns { display: flex; flex-wrap: wrap; gap: 8px; flex: 1; }
+.trend-category-dropdowns .dropdown-btn { min-width: 112px; height: 36px; font-size: 12px; }
+.trend-category-dropdowns .dropdown-content { min-width: 240px; }
 .dropdown-item { padding: 8px 14px; cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 8px; color: var(--ink); }
 .dropdown-item:hover { background: var(--mint); }
 .dropdown-item input[type=checkbox] { accent-color: var(--jade); }
@@ -808,6 +812,9 @@ body[data-theme="light"] .median-box { border-color: rgba(169,127,69,.30); backg
   .filter-group { width: 100%; justify-content: space-between; }
   .filter-group select, .filter-group .dropdown { flex: 1; min-width: 0; }
   .filter-group .dropdown-btn { width: 100%; }
+  .trend-category-filter { align-items: flex-start; }
+  .trend-category-dropdowns .dropdown { flex: 1 1 calc(50% - 8px); }
+  .trend-category-dropdowns .dropdown-btn { min-width: 0; }
   .main { padding: 16px 14px 36px; }
   .kpi-grid, .kpi-section-body, .insight-grid { grid-template-columns: 1fr; }
   #detail-kpi.detail-kpi-layout { grid-template-columns: 1fr; }
@@ -867,15 +874,9 @@ body[data-theme="light"] .median-box { border-color: rgba(169,127,69,.30); backg
       <select id="overview-period" aria-label="整体概览时间维度"></select>
     </div>
     <div class="filter-group" id="overview-period-ui"></div>
-    <div class="filter-group">
+    <div class="filter-group trend-category-filter">
       <span class="filter-label">指标</span>
-      <div class="dropdown" id="trend-metric-dropdown">
-        <div class="dropdown-btn" id="trend-metric-btn" onclick="toggleDropdown('trend-metric-dropdown')">
-          <span id="trend-metric-count">选择指标（可多选）</span>
-          <span style="font-size:10px;">▼</span>
-        </div>
-        <div class="dropdown-content" id="trend-metric-list"></div>
-      </div>
+      <div class="trend-category-dropdowns" id="trend-category-dropdowns"></div>
     </div>
   </div>
 
@@ -900,14 +901,10 @@ body[data-theme="light"] .median-box { border-color: rgba(169,127,69,.30); backg
       </div>
     </div>
     <div class="chart-grid">
-      <div class="chart-card">
+      <div class="chart-card" style="grid-column:1/-1;">
         <div class="chart-card-title">营业结构占比 · 按日</div>
         <div class="chart" id="chart-revenue-pie" style="height:260px;"></div>
         <div id="revenue-check" style="font-size:10px;color:var(--text2);text-align:center;padding:0 10px 8px;"></div>
-      </div>
-      <div class="chart-card">
-        <div class="chart-card-title">项目结构占比 · 按日</div>
-        <div class="chart" id="chart-project-pie"></div>
       </div>
     </div>
     <div class="kpi-grid overview-secondary" id="overview-secondary-kpi"></div>
@@ -1137,7 +1134,7 @@ const DROPDOWN_EXCLUDED_METRICS = new Set(['抖音评价回复率','抖音成交
 // Current Base fields grouped for both overview and store comparison menus.
 const METRIC_GROUPS = {
   '营收':['总营业额','服务营业额','现金流营业额','抖音营业额','美团营业额','抖音-可聚集','美团-可聚集','卡金','充值','开卡','续充','商品营业额','商品销售数量','免单减免'],
-  '📦 项目':['项目数','168项目数','298项目数','358项目数','大钟占比'],
+  '项目':['项目数','168项目数','298项目数','358项目数','大钟占比'],
   '评价':['抖音新增评论','抖音总评论','抖音新增差评','抖音总中差评','美团新增评论','美团总评价','美团新增差评','美团总差评','综合新增评论','综合新增差评','总评论数','总差评数','差评率'],
   '评分':['抖音评分','美团评分','大众点评','美团经营分'],
   '流量':['美团曝光人数','美团访问人数','美团下单人数','美团成交人数','抖音访问人数','抖音成交人数','抖音扫码','美团扫码'],
@@ -1170,19 +1167,25 @@ document.addEventListener('click', (e) => {
 });
 
 function renderTrendMetricDropdown() {
-  const container = document.getElementById('trend-metric-list');
+  const container = document.getElementById('trend-category-dropdowns');
   if (!container) return;
-  container.innerHTML = getAvailableMetricGroups().map(([grp, metrics]) => `
-    <div class="metric-group">
-      <div class="metric-group-header">${escapeHtml(grp)}</div>
-      <div class="metric-group-items">
+  const openGroup = container.querySelector('.dropdown.open')?.dataset.group || '';
+  container.innerHTML = getAvailableMetricGroups().map(([grp, metrics], index) => {
+    const selectedCount = metrics.filter(metric => trendSelectedMetrics.includes(metric)).length;
+    return `<div class="dropdown ${openGroup === grp ? 'open' : ''}" id="trend-category-${index}" data-group="${escapeHtml(grp)}">
+      <div class="dropdown-btn" onclick="toggleDropdown('trend-category-${index}')">
+        <span>${escapeHtml(grp)}${selectedCount ? ` · ${selectedCount}` : ''}</span>
+        <span style="font-size:10px;">▼</span>
+      </div>
+      <div class="dropdown-content"><div class="metric-group-items">
         ${metrics.map(m => `
           <div class="metric-item ${trendSelectedMetrics.includes(m)?'selected':''}" data-metric="${escapeHtml(m)}">
             <input type="checkbox" ${trendSelectedMetrics.includes(m)?'checked':''} onclick="event.stopPropagation();trendToggleMetric('${jsString(m)}',this.parentElement)">
             ${escapeHtml(METRIC_LABELS[m]||m)}
           </div>`).join('')}
-      </div>
-    </div>`).join('');
+      </div></div>
+    </div>`;
+  }).join('');
   renderTrendMetricTags();
 }
 
@@ -1210,7 +1213,6 @@ const TREND_PRESETS = [
   { name: '流量', metrics: ['美团曝光人数', '美团访问人数', '抖音门店页访问人数'] },
   { name: '转化', metrics: ['曝光-访问转化率', '意向转化率', '抖音转化率'] },
   { name: '口碑', metrics: ['美团评分', '抖音评分', '差评率'] },
-  { name: '项目结构', metrics: ['168项目数', '298项目数', '358项目数'] },
 ];
 
 function renderTrendPresets() {
@@ -1271,12 +1273,6 @@ function renderTrendMetricTags() {
         <span class="remove" onclick="trendRemoveMetric('${jsString(m)}')">×</span>
       </span>`;
     }).join('');
-  }
-  const btn = document.getElementById('trend-metric-count');
-  if (btn) {
-    btn.textContent = trendSelectedMetrics.length === 0 ? '选择指标（可多选）'
-      : trendSelectedMetrics.length <= 2 ? trendSelectedMetrics.map(mm=>METRIC_LABELS[mm]||mm).join(', ')
-      : `已选${trendSelectedMetrics.length}个指标`;
   }
 }
 
@@ -2710,12 +2706,6 @@ function revenueSplitFor(dateList) {
   return { parts, total: parts.reduce((a, b) => a + b, 0), reference };
 }
 
-function projectSplitFor(dateList) {
-  const parts = ['168项目数', '298项目数', '358项目数'].map((m) => calcTotal(dateList, m));
-  const total = parts.reduce((a, b) => a + b, 0);
-  return { parts, total, reference: total };
-}
-
 function renderStackedShareChart(elId, dateList, seriesDefs, splitFn, valueFormatter) {
   const chart = getChart(elId);
   if (!chart) return;
@@ -2785,13 +2775,6 @@ function renderPieCharts(dates) {
     const diff = Math.abs(reference - sum);
     checkEl.textContent = `所选周期 抖音 + 美团 + 其它 = ${sum.toLocaleString('zh-CN')}  ·  ${DATA_GRAIN === 'daily' ? '总营业额' : '服务营业额'} ${reference.toLocaleString('zh-CN')}  ${diff < 1 ? '正常' : '差额 ' + diff.toFixed(2)}`;
   }
-
-  renderStackedShareChart(
-    'chart-project-pie', dateList,
-    [{ name: '168元', color: T.mt }, { name: '298元', color: T.dy }, { name: '358元', color: T.gold }],
-    projectSplitFor,
-    (v) => `${v.toLocaleString('zh-CN')} 个`,
-  );
 }
 
 function renderOverviewAlerts(dates) {
