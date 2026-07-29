@@ -1,7 +1,7 @@
 # 民德搓澡堂 · 经营看板（发布仓库）
 
 这是一个**纯发布产物仓库**，不是开发目录。除 `dashboard.html`、
-`dashboard-metric-rules.js`、`index.html` 和 `daily-dashboard/` 外，
+`dashboard-metric-rules.js`、`dashboard-time-rules.js`、`index.html` 和 `daily-dashboard/` 外，
 其余文件都由脚本每天覆盖写入。
 
 真正的源码和文档在工作目录：
@@ -32,7 +32,8 @@
       写回 dashboard_data.json + dashboard_core.json
          + dashboard_daily_YYYY.json + dashboard_version.json
   → sync-dashboard-to-github.mjs
-      只 git add 上面这几个 json 和 dashboard.html、dashboard-metric-rules.js
+      只 git add 上面这几个 json、dashboard.html
+         + dashboard-metric-rules.js + dashboard-time-rules.js
       commit "Update daily performance data" 后 push
 ```
 
