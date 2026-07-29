@@ -6,7 +6,7 @@
 <title>民的时代经营看板</title>
 <script src="assets/echarts.min.js"></script>
 <script src="dashboard-metric-rules.js?v=20260729-conversion-groups"></script>
-<script src="dashboard-time-rules.js"></script>
+<script src="dashboard-time-rules.js?v=20260729-detail-comparison"></script>
 <style>
 /* ============================================================
    曜石翡翠 · Obsidian Jade — 高端经营指挥舱视觉系统
@@ -314,10 +314,12 @@ body[data-theme="light"] select option { color: #15231b; background: #ffffff; }
   box-shadow: var(--shadow);
 }
 .dropdown.open .dropdown-content { display: block; }
-.trend-category-filter { flex: 1 1 100%; align-items: flex-start; }
-.trend-category-dropdowns { display: flex; flex-wrap: wrap; gap: 8px; flex: 1; }
-.trend-category-dropdowns .dropdown-btn { min-width: 112px; height: 36px; font-size: 12px; }
-.trend-category-dropdowns .dropdown-content { min-width: 240px; }
+.filter-controls-line { display: flex; align-items: center; gap: 14px; flex: 1 1 auto; min-width: 0; }
+.metric-category-filter { flex: 1 1 auto; align-items: center; min-width: 0; }
+.metric-category-dropdowns { display: flex; flex-wrap: nowrap; gap: 6px; flex: 1; }
+.metric-category-dropdowns .dropdown { flex: 1 1 80px; min-width: 74px; }
+.metric-category-dropdowns .dropdown-btn { width: 100%; min-width: 74px; height: 36px; padding: 0 10px; font-size: 12px; }
+.metric-category-dropdowns .dropdown-content { min-width: 240px; }
 .dropdown-item { padding: 8px 14px; cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 8px; color: var(--ink); }
 .dropdown-item:hover { background: var(--mint); }
 .dropdown-item input[type=checkbox] { accent-color: var(--jade); }
@@ -802,6 +804,8 @@ body[data-theme="light"] .median-box { border-color: rgba(169,127,69,.30); backg
   .overview-command-grid { grid-template-columns: 1fr; }
   .executive-stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .header, .filter-bar { padding-left: 20px; padding-right: 20px; }
+  .filter-controls-line { flex: 1 1 100%; flex-wrap: wrap; }
+  .metric-category-filter { flex: 1 1 100%; }
 }
 @media (max-width: 620px) {
   .header { flex-wrap: wrap; align-items: flex-start; gap: 10px; padding: 12px 14px; }
@@ -812,9 +816,11 @@ body[data-theme="light"] .median-box { border-color: rgba(169,127,69,.30); backg
   .filter-group { width: 100%; justify-content: space-between; }
   .filter-group select, .filter-group .dropdown { flex: 1; min-width: 0; }
   .filter-group .dropdown-btn { width: 100%; }
-  .trend-category-filter { align-items: flex-start; }
-  .trend-category-dropdowns .dropdown { flex: 1 1 calc(50% - 8px); }
-  .trend-category-dropdowns .dropdown-btn { min-width: 0; }
+  .filter-controls-line { width: 100%; gap: 10px; }
+  .metric-category-filter { align-items: flex-start; }
+  .metric-category-dropdowns { flex-wrap: wrap; }
+  .metric-category-dropdowns .dropdown { flex: 1 1 calc(50% - 6px); }
+  .metric-category-dropdowns .dropdown-btn { min-width: 0; }
   .main { padding: 16px 14px 36px; }
   .kpi-grid, .kpi-section-body, .insight-grid { grid-template-columns: 1fr; }
   #detail-kpi.detail-kpi-layout { grid-template-columns: 1fr; }
@@ -869,14 +875,16 @@ body[data-theme="light"] .median-box { border-color: rgba(169,127,69,.30); backg
       <button class="preset-btn" data-preset="ytd">今年</button>
       <button class="preset-btn" data-preset="all">全部</button>
     </div>
-    <div class="filter-group">
-      <span class="filter-label">时间维度</span>
-      <select id="overview-period" aria-label="整体概览时间维度"></select>
-    </div>
-    <div class="filter-group" id="overview-period-ui"></div>
-    <div class="filter-group trend-category-filter">
-      <span class="filter-label">指标</span>
-      <div class="trend-category-dropdowns" id="trend-category-dropdowns"></div>
+    <div class="filter-controls-line" id="overview-filter-controls">
+      <div class="filter-group">
+        <span class="filter-label">时间维度</span>
+        <select id="overview-period" aria-label="整体概览时间维度"></select>
+      </div>
+      <div class="filter-group" id="overview-period-ui"></div>
+      <div class="filter-group metric-category-filter">
+        <span class="filter-label">指标</span>
+        <div class="metric-category-dropdowns" id="trend-category-dropdowns"></div>
+      </div>
     </div>
   </div>
 
@@ -922,35 +930,31 @@ body[data-theme="light"] .median-box { border-color: rgba(169,127,69,.30); backg
       <button class="preset-btn" data-preset="ytd" onclick="setComparePreset('ytd')">今年</button>
       <button class="preset-btn" data-preset="all" onclick="setComparePreset('all')">全部</button>
     </div>
-    <div class="filter-group">
-      <span class="filter-label">门店</span>
-      <div class="dropdown" id="compare-store-dropdown">
-        <div class="dropdown-btn" id="compare-store-btn" onclick="toggleDropdown('compare-store-dropdown')">
-          <span id="compare-store-count">选择门店</span>
-          <span style="font-size:10px;">▼</span>
+    <div class="filter-controls-line" id="compare-filter-controls">
+      <div class="filter-group">
+        <span class="filter-label">门店</span>
+        <div class="dropdown" id="compare-store-dropdown">
+          <div class="dropdown-btn" id="compare-store-btn" onclick="toggleDropdown('compare-store-dropdown')">
+            <span id="compare-store-count">选择门店</span>
+            <span style="font-size:10px;">▼</span>
+          </div>
+          <div class="dropdown-content" id="compare-store-list"></div>
         </div>
-        <div class="dropdown-content" id="compare-store-list"></div>
       </div>
-    </div>
-    <div class="filter-group">
-      <span class="filter-label" id="compare-start-label">起始月</span>
-      <select id="compare-start"></select>
-    </div>
-    <div class="filter-group">
-      <span class="filter-label" id="compare-end-label">截止月</span>
-      <select id="compare-end"></select>
-    </div>
-    <div class="filter-group">
-      <span class="filter-label">指标</span>
-      <div class="dropdown" id="compare-metric-dropdown">
-        <div class="dropdown-btn" id="compare-metric-btn" onclick="toggleDropdown('compare-metric-dropdown')">
-          <span id="compare-metric-count">选择指标</span>
-          <span style="font-size:10px;">▼</span>
-        </div>
-        <div class="dropdown-content" id="compare-metric-list" style="min-width:260px;"></div>
+      <div class="filter-group">
+        <span class="filter-label" id="compare-start-label">起始月</span>
+        <select id="compare-start"></select>
       </div>
+      <div class="filter-group">
+        <span class="filter-label" id="compare-end-label">截止月</span>
+        <select id="compare-end"></select>
+      </div>
+      <div class="filter-group metric-category-filter">
+        <span class="filter-label">指标</span>
+        <div class="metric-category-dropdowns" id="compare-category-dropdowns"></div>
+      </div>
+      <button onclick="compareRestoreDefault()">恢复默认</button>
     </div>
-    <button onclick="compareRestoreDefault()">恢复默认</button>
   </div>
 
   <div class="main">
@@ -1073,7 +1077,7 @@ const {
   percentageMetrics: PCT_METRICS,
   ratioMetrics: RATIO_METRICS,
 } = window.DashboardMetricRules;
-const { resolveTimeSelection } = window.DashboardTimeRules;
+const { resolveComparisonSelection, resolveTimeSelection } = window.DashboardTimeRules;
 const VIEW_STATE_KEY = 'mindeDashboardPendingView';
 let pendingViewState = null;
 try {
@@ -2945,18 +2949,25 @@ function initCompare() {
 }
 
 function renderCompareMetricDropdown() {
-  const container = document.getElementById('compare-metric-list');
-  container.innerHTML = getAvailableMetricGroups().map(([grp, metrics]) => `
-    <div class="metric-group">
-      <div class="metric-group-header">${escapeHtml(grp)}</div>
-      <div class="metric-group-items">
+  const container = document.getElementById('compare-category-dropdowns');
+  if (!container) return;
+  const openGroup = container.querySelector('.dropdown.open')?.dataset.group || '';
+  container.innerHTML = getAvailableMetricGroups().map(([grp, metrics], index) => {
+    const selectedCount = metrics.filter(metric => compareSelectedMetrics.includes(metric)).length;
+    return `<div class="dropdown ${openGroup === grp ? 'open' : ''}" id="compare-category-${index}" data-group="${escapeHtml(grp)}">
+      <div class="dropdown-btn" onclick="toggleDropdown('compare-category-${index}')">
+        <span>${escapeHtml(grp)}${selectedCount ? ` · ${selectedCount}` : ''}</span>
+        <span style="font-size:10px;">▼</span>
+      </div>
+      <div class="dropdown-content"><div class="metric-group-items">
         ${metrics.map(m => `
           <div class="metric-item ${compareSelectedMetrics.includes(m)?'selected':''}" data-metric="${escapeHtml(m)}">
             <input type="checkbox" ${compareSelectedMetrics.includes(m)?'checked':''} onclick="event.stopPropagation();compareToggleMetric('${jsString(m)}',this.parentElement)">
             ${escapeHtml(METRIC_LABELS[m]||m)}
           </div>`).join('')}
-      </div>
-    </div>`).join('');
+      </div></div>
+    </div>`;
+  }).join('');
 
   renderCompareMetricTags();
 }
@@ -3055,12 +3066,6 @@ function renderCompareMetricTags() {
         <span class="remove" onclick="compareRemoveMetric('${jsString(m)}')">×</span>
       </span>`;
     }).join('');
-  }
-  const btn = document.getElementById('compare-metric-count');
-  if (btn) {
-    btn.textContent = compareSelectedMetrics.length === 0 ? '选择指标'
-      : compareSelectedMetrics.length <= 2 ? compareSelectedMetrics.map(mm=>METRIC_LABELS[mm]||mm).join(', ')
-      : `已选${compareSelectedMetrics.length}个指标`;
   }
 }
 
@@ -3490,34 +3495,61 @@ function getDetailDates(store) {
   return getDetailTimeSelection(store).rangeDates;
 }
 
+function getDetailComparisonRanges(store, dates) {
+  const selection = getDetailTimeSelection(store);
+  const comparison = resolveComparisonSelection({
+    grain: DATA_GRAIN,
+    period: selection.period,
+    preset: selection.preset,
+    rangeDates: dates,
+  });
+  const ranges = {
+    prev: { dates: comparison.previousDates, label: '环比' },
+    yoy: { dates: comparison.previousYearDates, label: '同比' },
+  };
+
+  if (DATA_GRAIN !== 'monthly' || !dates.length) return ranges;
+  const prepared = ROOT_DATA.monthlyComparison;
+  const latestMonth = prepared?.month || '';
+  if (!latestMonth || !dates.some(date => date.startsWith(latestMonth))) return ranges;
+
+  const withPreparedPartialMonth = (targetDates, preparedRange) => {
+    if (!preparedRange?.month || !preparedRange?.rows?.length) return { dates: targetDates };
+    const targetMonth = preparedRange.month;
+    const targetDate = `${targetMonth}-01`;
+    if (!targetDates.includes(targetDate)) return { dates: targetDates };
+    const rows = targetDates.flatMap(date =>
+      date === targetDate ? preparedRange.rows : (IDX_BY_DATE[date] || [])
+    );
+    return { rows };
+  };
+
+  ranges.prev = {
+    ...withPreparedPartialMonth(comparison.previousDates, prepared.previous),
+    label: '环比同期',
+  };
+  ranges.yoy = {
+    ...withPreparedPartialMonth(comparison.previousYearDates, prepared.previousYear),
+    label: '同比同期',
+  };
+  return ranges;
+}
+
 function renderDetailKPIs(store, dates) {
   if (!dates.length) {
     document.getElementById('detail-kpi').innerHTML = `<div class="data-missing">该门店在所选周期内无数据记录</div>`;
     return;
   }
-  const isAll = dates.length !== 1;
-
-  // MoM & YoY only for single-month mode
   const singleDate = dates.length === 1 ? dates[0] : null;
-  const dateParts = singleDate ? singleDate.split('-') : null;
-  const prevMonth = dateParts ? (DATA_GRAIN === 'daily'
-    ? shiftIsoDate(singleDate, -1)
-    : ((parseInt(dateParts[1]) === 1 ? `${parseInt(dateParts[0])-1}-12` : `${dateParts[0]}-${String(parseInt(dateParts[1])-1).padStart(2,'0')}`) + '-01')) : '';
-  const prevYearMonth = dateParts ? `${parseInt(dateParts[0])-1}-${dateParts[1]}-${DATA_GRAIN === 'daily' ? dateParts[2] : '01'}` : '';
-  const prevRecord = dateParts ? (getRecord(prevMonth, store) || {}) : {};
-  const pyRecord = dateParts ? (getRecord(prevYearMonth, store) || {}) : {};
-  const foundRecord = !isAll ? getRecord(dates[0], store) : null;
-  const noData = !isAll && !foundRecord;
-  const curRecord = foundRecord || {};
+  const foundRecord = singleDate ? getRecord(singleDate, store) : null;
+  const noData = Boolean(singleDate && !foundRecord);
+  const comparisonRanges = getDetailComparisonRanges(store, dates);
+  const currentRange = { dates };
 
   const getVal = m => {
     return calcStoreValue(dates, store, m);
   };
-  const getPrevVal = m => calcStoreValue([prevMonth], store, m);
-  const getPyVal = m => calcStoreValue([prevYearMonth], store, m);
   const getSum = m => calcStoreAgg(dates, store, m);
-  const getPrevSum = m => calcStoreAgg([prevMonth], store, m);
-  const getPySum = m => calcStoreAgg([prevYearMonth], store, m);
   const douyinFraudAmount = getSum('抖音刷单金额');
   const douyinNetVerification = Math.max(0, getSum('抖音-平台') - douyinFraudAmount);
   const douyinVerificationSub = douyinFraudAmount > 0
@@ -3529,12 +3561,12 @@ function renderDetailKPIs(store, dates) {
     ? `刷单金额 ${fmtYInt(meituanFraudAmount)} 元（已剔除）`
     : '元';
 
-  function renderDelta(current, prev, isP, label) {
+  function renderDelta(current, prev, label) {
     if (!prev || prev === 0) return null;
     const delta = (current - prev) / prev;
     const sign = delta > 0 ? '+' : '';
-    const cls = delta > 0 ? 'up' : 'down';
-    const arrow = delta > 0 ? '↑' : '↓';
+    const cls = delta > 0 ? 'up' : delta < 0 ? 'down' : '';
+    const arrow = delta > 0 ? '↑' : delta < 0 ? '↓' : '→';
     return `<div class="kpi-change ${cls}"><span class="arrow">${arrow}</span>${sign}${(delta*100).toFixed(1)}% <span style="font-size:9px;color:var(--text2)">${label}</span></div>`;
   }
 
@@ -3548,10 +3580,24 @@ function renderDetailKPIs(store, dates) {
   const project358 = getSum('358项目数');
   const avgTicket = projectCount > 0 ? totalVal / projectCount : 0;
   const bigClockRate = getVal('大钟占比');
+  const metricRangeValue = (range, metric) => calcStoreRangeValue(range, store, metric);
+  const averageTicketRangeValue = range => {
+    const revenue = metricRangeValue(range, '总营业额');
+    const projects = metricRangeValue(range, '项目数');
+    return projects > 0 ? revenue / projects : 0;
+  };
+  const platformScoreRangeValue = range => {
+    const values = ['抖音评分', '美团评分', '大众点评']
+      .map(metric => metricRangeValue(range, metric))
+      .filter(value => value > 0);
+    return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
+  };
+  const netVerificationRangeValue = (range, platformMetric, fraudMetric) =>
+    Math.max(0, metricRangeValue(range, platformMetric) - metricRangeValue(range, fraudMetric));
   const sections = [
     {
       key: 'revenue', title: '营收', open: true, items: [
-        { label:METRIC_LABELS[revenueMetric], val:fmtYInt(totalVal), sub:`服务${fmtYInt(svcVal)}  ·  商品${fmtYInt(prodVal)}`, color:'gold', m:revenueMetric, isSum:true, mom:true },
+        { label:METRIC_LABELS[revenueMetric], val:fmtYInt(totalVal), sub:`服务${fmtYInt(svcVal)}  ·  商品${fmtYInt(prodVal)}`, color:'gold', m:revenueMetric },
         { label:'现金流营业额', val:fmtYInt(getSum('现金流营业额')), sub:'元', color:'', m:'现金流营业额', isSum:true },
         { label:'卡金', val:fmtYInt(getSum('卡金')), sub:'元', color:'', m:'卡金', isSum:true },
         { label:'充值', val:fmtYInt(getSum('充值')), sub:'元', color:'', m:'充值', isSum:true },
@@ -3560,13 +3606,13 @@ function renderDetailKPIs(store, dates) {
     },
     {
       key: 'project', title: '项目', open: true, items: [
-        { label:'客单价', val:fmtYInt(avgTicket), sub:`大钟率 ${fmtPct(bigClockRate)} · 总营业额 / 项目数`, color:'', m:null },
+        { label:'客单价', val:fmtYInt(avgTicket), sub:`大钟率 ${fmtPct(bigClockRate)} · 总营业额 / 项目数`, color:'', valueFn:averageTicketRangeValue },
         { label:'项目数', val:fmtN(projectCount), sub:`168 ${fmtN(project168)} · 298 ${fmtN(project298)} · 358 ${fmtN(project358)}`, color:'', m:'项目数', isSum:true },
       ]
     },
     {
       key: 'rating', title: '评分', open: false, items: [
-        { label:'评分', val:noData ? '—' : `抖音 ${getVal('抖音评分') > 0 ? fmtScore(getVal('抖音评分')) : '—'}<br>美团 ${getVal('美团评分') > 0 ? fmtScore(getVal('美团评分')) : '—'}<br>大众点评 ${getVal('大众点评') > 0 ? fmtScore(getVal('大众点评')) : '—'}`, color:'', m:'抖音评分', merged:true },
+        { label:'评分', val:noData ? '—' : `抖音 ${getVal('抖音评分') > 0 ? fmtScore(getVal('抖音评分')) : '—'}<br>美团 ${getVal('美团评分') > 0 ? fmtScore(getVal('美团评分')) : '—'}<br>大众点评 ${getVal('大众点评') > 0 ? fmtScore(getVal('大众点评')) : '—'}`, color:'', valueFn:platformScoreRangeValue, merged:true },
         { label:'美团经营分', val:noData || getVal('美团经营分') <= 0 ? '—' : fmtScore(getVal('美团经营分')), color:'', m:'美团经营分' },
       ]
     },
@@ -3593,8 +3639,8 @@ function renderDetailKPIs(store, dates) {
     },
     {
       key: 'redemption', title: '核销', open: false, items: [
-        { label:'抖音平台核销', val:fmtYInt(douyinNetVerification), sub:douyinVerificationSub, color:'', m:'抖音-平台', isSum:true },
-        { label:'美团平台核销', val:fmtYInt(meituanNetVerification), sub:meituanVerificationSub, color:'', m:'美团-平台', isSum:true },
+        { label:'抖音平台核销', val:fmtYInt(douyinNetVerification), sub:douyinVerificationSub, color:'', m:'抖音-平台', valueFn:range => netVerificationRangeValue(range, '抖音-平台', '抖音刷单金额') },
+        { label:'美团平台核销', val:fmtYInt(meituanNetVerification), sub:meituanVerificationSub, color:'', m:'美团-平台', valueFn:range => netVerificationRangeValue(range, '美团-平台', '美团刷单金额') },
         { label:'新客占比', val:fmtPct(getVal('新客占比')), sub:'', color:'', m:'新客占比' },
       ]
     }
@@ -3609,10 +3655,10 @@ function renderDetailKPIs(store, dates) {
       </summary>
       <div class="kpi-section-body">
         ${sec.items.map(it => {
-          const isPMetric = isPct(it.m);
-          const changeEl = it.mom && !isAll
-            ? (renderDelta(it.isSum ? getSum(it.m) : getVal(it.m), it.isSum ? getPrevSum(it.m) : getPrevVal(it.m), isPMetric, DATA_GRAIN === 'daily' ? '较昨日' : '环比') || '')
-            + (renderDelta(it.isSum ? getSum(it.m) : getVal(it.m), it.isSum ? getPySum(it.m) : getPyVal(it.m), isPMetric, '同比') || '')
+          const valueFor = it.valueFn || (range => metricRangeValue(range, it.m));
+          const changeEl = (it.m || it.valueFn)
+            ? (renderDelta(valueFor(currentRange), valueFor(comparisonRanges.prev), comparisonRanges.prev.label) || '')
+            + (renderDelta(valueFor(currentRange), valueFor(comparisonRanges.yoy), comparisonRanges.yoy.label) || '')
             : '';
           return `<div class="kpi-card${noData?' no-data':''}">
             <div class="kpi-label">${it.label}</div>
