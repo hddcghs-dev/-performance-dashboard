@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>民德搓澡堂 · 经营数据看板</title>
+<title>民德时代日报看板</title>
 <script src="assets/echarts.min.js"></script>
-<script src="dashboard-metric-rules.js?v=20260729-average-trend"></script>
+<script src="dashboard-metric-rules.js?v=20260729-decision-workbench"></script>
 <script src="dashboard-time-rules.js"></script>
 <style>
 /* ============================================================
@@ -388,7 +388,7 @@ body[data-theme="light"] select option { color: #15231b; background: #ffffff; }
   .funnel-plat { flex-basis: 46px; }
   .funnel-arrow { flex-basis: 46px; }
 }
-.kpi-card { min-height: 140px; padding: 18px 18px 16px; }
+.kpi-card { min-height: 118px; padding: 16px 16px 14px; }
 .kpi-card:hover {
   transform: translateY(-6px) scale(1.025);
   border-color: var(--ring);
@@ -711,6 +711,65 @@ body[data-theme="light"] .median-box { border-color: rgba(169,127,69,.30); backg
 .alert-store .detail { color: var(--muted); font-size: 11px; }
 .alert-none { color: var(--down); font-size: 12px; padding: 8px 0; text-align: center; }
 
+/* ===== 经营决策层 ===== */
+.data-health {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px 18px;
+  padding: 10px 14px; margin-bottom: 14px;
+  border: 1px solid var(--line); border-radius: 14px; background: var(--surface);
+  color: var(--muted); font-size: 11px;
+}
+.data-health.warning { border-color: rgba(216,180,126,.40); background: rgba(216,180,126,.07); }
+.health-status { color: var(--down); font-weight: 700; }
+.data-health.warning .health-status { color: var(--gold); }
+.health-item strong { color: var(--ink); font-weight: 700; }
+.overview-command-grid { display: grid; grid-template-columns: minmax(0,1.4fr) minmax(320px,.8fr); gap: 14px; margin-bottom: 18px; }
+.executive-card, .action-card, .detail-diagnosis {
+  position: relative; background: var(--paper); border: 1px solid var(--line);
+  border-radius: var(--radius-card); box-shadow: var(--shadow); overflow: hidden;
+}
+.command-head { padding: 13px 16px; border-bottom: 1px solid var(--line); font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: .08em; }
+.executive-body { padding: 18px; }
+.executive-title { font-size: clamp(18px,2vw,26px); line-height: 1.45; color: var(--ink); font-weight: 700; }
+.executive-title .good { color: var(--down); }
+.executive-title .bad { color: var(--up); }
+.executive-context { margin-top: 8px; color: var(--muted); font-size: 12px; line-height: 1.7; }
+.executive-stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin-top:18px; }
+.executive-stat { padding:10px 12px; border:1px solid var(--line); border-radius:12px; background:var(--surface); }
+.executive-stat span { display:block; color:var(--muted); font-size:10px; margin-bottom:4px; }
+.executive-stat strong { color:var(--ink); font-size:15px; font-weight:600; }
+.action-list { padding: 6px 10px 10px; }
+.action-item { width: 100%; display: grid; grid-template-columns: 22px 1fr auto; gap: 10px; align-items: center; padding: 10px 8px; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; color: var(--ink); text-align: left; cursor: pointer; }
+.action-item:last-child { border-bottom: 0; }
+.action-item:hover { background: var(--mint); }
+.action-index { color: var(--gold); font-weight: 700; }
+.action-main { font-size: 12px; line-height: 1.5; }
+.action-main small { display: block; color: var(--muted); font-size: 10px; }
+.action-value { color: var(--up); font-size: 12px; font-weight: 700; white-space: nowrap; }
+.overview-secondary { margin-top: 16px; }
+.overview-secondary .kpi-card { min-height: 96px; }
+.overview-secondary .kpi-value { font-size: 23px; }
+.funnel-note { padding: 0 16px 4px; font-size: 10px; line-height: 1.5; color: var(--muted); }
+.comparison-distribution .kpi-card { min-height: 100px; }
+.quadrant-note { padding: 0 18px 12px; color: var(--muted); font-size: 11px; }
+.diagnosis-tag { display:inline-flex; align-items:center; padding:3px 9px; border-radius:999px; background:var(--surface-2); color:var(--muted); font-size:10px; margin:0 6px 6px 0; }
+.diagnosis-tag.bad { background:var(--up-bg); color:var(--up); }
+.diagnosis-tag.good { background:var(--down-bg); color:var(--down); }
+.detail-diagnosis { margin-bottom: 16px; padding: 17px 18px; }
+.detail-diagnosis-title { font-size: 17px; font-weight: 700; color: var(--ink); margin-bottom: 8px; }
+.detail-diagnosis-copy { color: var(--muted); font-size: 12px; line-height: 1.7; margin-bottom: 10px; }
+#detail-kpi details.kpi-section > summary { list-style: none; cursor: pointer; }
+#detail-kpi details.kpi-section > summary::-webkit-details-marker { display: none; }
+#detail-kpi details.kpi-section > summary::after { content: '展开'; font-size: 10px; color: var(--faint); }
+#detail-kpi details.kpi-section[open] > summary::after { content: '收起'; }
+.detail-trend-tabs { display:flex; gap:8px; flex-wrap:wrap; margin: 4px 0 14px; }
+.detail-trend-tab { border:1px solid var(--line); background:var(--surface); color:var(--muted); padding:7px 14px; border-radius:999px; font-size:11px; font-weight:700; cursor:pointer; }
+.detail-trend-tab.active { background:linear-gradient(135deg,var(--jade),var(--cyan)); color:var(--on-accent); border-color:transparent; box-shadow:0 6px 18px var(--glow); }
+.detail-trend-group { display:none; }
+.detail-trend-group.active { display:grid; animation:pageIn .22s ease-out; }
+.table-store-link { cursor:pointer; color:var(--ink); }
+.table-store-link:hover { color:var(--jade); }
+.detail-table td:first-child { color:var(--muted); }
+
 /* 标签页 */
 .tab-content { display: none; }
 .tab-content.active { display: block; animation: pageIn .3s cubic-bezier(.22,.9,.3,1) backwards; }
@@ -743,6 +802,8 @@ body[data-theme="light"] .median-box { border-color: rgba(169,127,69,.30); backg
   .insight-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .compare-summary-grid { grid-template-columns: 1fr; }
   .global-search { width: 220px; }
+  .overview-command-grid { grid-template-columns: 1fr; }
+  .executive-stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .header, .filter-bar { padding-left: 20px; padding-right: 20px; }
 }
 @media (max-width: 620px) {
@@ -769,6 +830,7 @@ body[data-theme="light"] .median-box { border-color: rgba(169,127,69,.30); backg
   .chart { height: 240px; }
   .table-card { overflow-x: auto; }
   .theme-toggle { height: 38px; }
+  .overview-command-grid { grid-template-columns: 1fr; }
 }
 
 </style>
@@ -781,7 +843,7 @@ body[data-theme="light"] .median-box { border-color: rgba(169,127,69,.30); backg
 <div class="header">
   <div class="brand">
     <div class="brand-mark">民</div>
-    <div class="brand-copy"><h1>经营数据看板</h1><small>MINDE OPERATIONS</small></div>
+    <div class="brand-copy"><h1>民德时代日报看板</h1><small>MINDE OPERATIONS</small></div>
   </div>
   <div class="tabs">
     <button class="tab active" data-tab="overview">整体概览</button>
@@ -826,6 +888,11 @@ body[data-theme="light"] .median-box { border-color: rgba(169,127,69,.30); backg
   </div>
 
   <div class="main">
+    <div id="overview-data-health"></div>
+    <div class="overview-command-grid">
+      <div class="executive-card" id="overview-executive"></div>
+      <div class="action-card" id="overview-actions"></div>
+    </div>
     <div class="kpi-grid" id="overview-kpi"></div>
     <div class="chart-card funnel-card">
       <div class="chart-card-title">转化漏斗</div>
@@ -851,6 +918,7 @@ body[data-theme="light"] .median-box { border-color: rgba(169,127,69,.30); backg
         <div class="chart" id="chart-project-pie"></div>
       </div>
     </div>
+    <div class="kpi-grid overview-secondary" id="overview-secondary-kpi"></div>
     <div id="overview-alerts"></div>
   </div>
 </div>
@@ -899,10 +967,15 @@ body[data-theme="light"] .median-box { border-color: rgba(169,127,69,.30); backg
   <div class="main">
     <div id="compare-metric-tags" class="metric-tags"></div>
 
-    <div class="kpi-grid" id="compare-kpi"></div>
+    <div class="kpi-grid comparison-distribution" id="compare-kpi"></div>
     <div class="chart-card" style="margin-bottom:16px;">
       <div class="chart-card-title">门店对比柱状图</div>
       <div class="chart" id="chart-compare-bar"></div>
+    </div>
+    <div class="chart-card" style="margin-bottom:16px;">
+      <div class="chart-card-title">经营象限 · 项目数 × 项目均价</div>
+      <div class="chart" id="chart-compare-quadrant" style="height:420px;"></div>
+      <div class="quadrant-note">虚线为所选门店中位数，气泡大小表示营业额；点击门店可进入单店详情。</div>
     </div>
     <div class="chart-card compare-summary" id="compare-summary"></div>
     <div class="table-card">
@@ -950,27 +1023,40 @@ body[data-theme="light"] .median-box { border-color: rgba(169,127,69,.30); backg
   </div>
 
   <div class="main">
+    <div id="detail-diagnosis"></div>
     <div class="kpi-grid detail-kpi-layout" id="detail-kpi"></div>
 
     <div class="chart-grid">
       <div class="chart-card"><div class="chart-card-title">营业结构</div><div class="chart" id="chart-detail-revenue-pie"></div></div>
       <div class="chart-card"><div class="chart-card-title">项目占比</div><div class="chart" id="chart-detail-project-pie"></div></div>
     </div>
-    <div class="chart-grid">
+    <div class="detail-trend-tabs" id="detail-trend-tabs">
+      <button class="detail-trend-tab active" data-group="revenue" onclick="setDetailTrendGroup('revenue')">营收项目</button>
+      <button class="detail-trend-tab" data-group="traffic" onclick="setDetailTrendGroup('traffic')">流量转化</button>
+      <button class="detail-trend-tab" data-group="reputation" onclick="setDetailTrendGroup('reputation')">评价客群</button>
+      <button class="detail-trend-tab" data-group="card" onclick="setDetailTrendGroup('card')">卡金充值</button>
+    </div>
+    <div class="chart-grid detail-trend-group active" data-trend-group="revenue">
       <div class="chart-card"><div class="chart-card-title">营业额趋势</div><div class="chart" id="chart-detail-revenue-trend"></div></div>
       <div class="chart-card"><div class="chart-card-title">项目数趋势</div><div class="chart" id="chart-detail-project-trend"></div></div>
     </div>
-    <div class="chart-grid">
+    <div class="chart-grid detail-trend-group" data-trend-group="reputation">
       <div class="chart-card"><div class="chart-card-title">评论与差评趋势</div><div class="chart" id="chart-detail-comment-trend"></div></div>
-      <div class="chart-card"><div class="chart-card-title">线上流量趋势</div><div class="chart" id="chart-detail-traffic-trend"></div></div>
-    </div>
-    <div class="chart-grid">
-      <div class="chart-card"><div class="chart-card-title">转化率趋势</div><div class="chart" id="chart-detail-convert-trend"></div></div>
       <div class="chart-card"><div class="chart-card-title">新客占比趋势</div><div class="chart" id="chart-detail-new-customer"></div></div>
     </div>
-    <div class="chart-card">
+    <div class="chart-grid detail-trend-group" data-trend-group="traffic">
+      <div class="chart-card"><div class="chart-card-title">线上流量趋势</div><div class="chart" id="chart-detail-traffic-trend"></div></div>
+      <div class="chart-card"><div class="chart-card-title">转化率趋势</div><div class="chart" id="chart-detail-convert-trend"></div></div>
+    </div>
+    <div class="chart-card detail-trend-group" data-trend-group="card">
       <div class="chart-card-title">卡金消耗 vs 充值</div>
       <div class="chart" id="chart-detail-cardgold"></div>
+    </div>
+    <div class="table-card detail-table" style="margin-top:16px;">
+      <div class="chart-card-title">逐期经营明细</div>
+      <div class="table-scroll" style="max-height:440px;overflow-y:auto;">
+        <table><thead id="detail-table-head"></thead><tbody id="detail-table-body"></tbody></table>
+      </div>
     </div>
   </div>
 </div>
@@ -993,6 +1079,7 @@ const {
   averageMetrics: AVG_METRICS,
   channelRevenueFields: CHANNEL_REVENUE_FIELDS,
   dailySumMetrics: DAILY_SUM_METRICS,
+  metricMeta,
   metricRule,
   percentageMetrics: PCT_METRICS,
   ratioMetrics: RATIO_METRICS,
@@ -2083,6 +2170,27 @@ function calcStoreValue(dates, store, metric) {
   if (isAvgMetric(metric)) return calcStoreAvg(dates, store, metric);
   return calcStoreAgg(dates, store, metric);
 }
+
+function calcStoreRangeValue(range, store, metric) {
+  if (range?.rows) return calcRowsTotal(range.rows.filter(row => row['门店'] === store), metric);
+  return range?.dates?.length ? calcStoreValue(range.dates, store, metric) : 0;
+}
+
+function medianValue(values) {
+  const sorted = values.filter(Number.isFinite).sort((a, b) => a - b);
+  if (!sorted.length) return 0;
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+}
+
+function percentileValue(values, percentile) {
+  const sorted = values.filter(Number.isFinite).sort((a, b) => a - b);
+  if (!sorted.length) return 0;
+  const index = (sorted.length - 1) * percentile;
+  const lower = Math.floor(index);
+  const upper = Math.ceil(index);
+  return sorted[lower] + (sorted[upper] - sorted[lower]) * (index - lower);
+}
 function calcStoreAvg(dates, store, metric) {
   const rows = dates
     .map(date => IDX_BY_DS[`${date}_${store}`] || DAILY_IDX_BY_DS[`${date}_${store}`])
@@ -2132,11 +2240,105 @@ function getStoreMonthlyData(store, metric, dates) {
 function renderOverview() {
   const selection = getOverviewTimeSelection();
   const dates = selection.rangeDates;
+  renderOverviewDataHealth(dates);
+  renderOverviewExecutive(dates);
   renderOverviewKPIs(dates);
   renderOverviewInsights(dates);
   renderTrendChart(selection.trendDates, trendSelectedMetrics);
   renderPieCharts(dates);
   renderOverviewAlerts(dates);
+}
+
+function renderOverviewDataHealth(dates) {
+  const container = document.getElementById('overview-data-health');
+  if (!container) return;
+  const date = [...dates].sort().at(-1);
+  const rows = date ? (IDX_BY_DATE[date] || []) : [];
+  const knownRows = rows.filter(row => STORES.includes(row['门店']));
+  const hasAny = (row, fields) => fields.some(field =>
+    row[field] !== null && row[field] !== undefined && row[field] !== ''
+  );
+  const coverage = [
+    ['微聚集', knownRows.filter(row => hasAny(row, ['总营业额', '项目数'])).length],
+    ['美团', knownRows.filter(row => hasAny(row, ['美团曝光人数', '美团评分', '美团经营分'])).length],
+    ['抖音', knownRows.filter(row => hasAny(row, ['抖音门店页访问人数', '抖音评分'])).length],
+  ];
+  const expected = STORES.length;
+  const complete = knownRows.length === expected && coverage.every(([, count]) => count === expected);
+  container.innerHTML = `<div class="data-health ${complete ? '' : 'warning'}">
+    <span class="health-status">${complete ? '数据完整' : '数据待核验'}</span>
+    <span class="health-item">门店 <strong>${knownRows.length}/${expected}</strong></span>
+    ${coverage.map(([source, count]) => `<span class="health-item">${source} <strong>${count}/${expected}</strong></span>`).join('')}
+    <span class="health-item">最新数据 <strong>${date ? displayDate(date) : '—'}</strong></span>
+    <span class="health-item">平台核销口径 <strong>04:00 - 次日04:00</strong></span>
+  </div>`;
+}
+
+function renderOverviewExecutive(dates) {
+  const executive = document.getElementById('overview-executive');
+  const actions = document.getElementById('overview-actions');
+  if (!executive || !actions || !dates.length) return;
+  const comparison = getOverviewComparison(dates);
+  const baseline = Object.values(comparison)[0] || null;
+  const currentRevenue = calcTotal(dates, '服务营业额') + calcTotal(dates, '商品营业额');
+  const baselineRevenue = baseline
+    ? calcOverviewRangeTotal(baseline, '服务营业额') + calcOverviewRangeTotal(baseline, '商品营业额')
+    : 0;
+  const delta = baselineRevenue ? (currentRevenue - baselineRevenue) / baselineRevenue : null;
+  const rows = STORES.map(store => {
+    const current = calcStoreValue(dates, store, '总营业额');
+    const previous = baseline ? calcStoreRangeValue(baseline, store, '总营业额') : 0;
+    return { store, current, previous, impact: current - previous };
+  });
+  const negative = rows.filter(row => row.previous > 0 && row.impact < 0).sort((a, b) => a.impact - b.impact);
+  const latestDate = [...dates].sort().at(-1);
+  const latestRows = IDX_BY_DATE[latestDate] || [];
+  const riskItems = [];
+  latestRows.forEach(row => {
+    const store = row['门店'];
+    const managementScore = safeNum(row['美团经营分']);
+    const newBad = safeNum(row['综合新增差评']);
+    const free = safeNum(row['免单+减免']);
+    const gap = safeNum(row['卡金']) - safeNum(row['充值']);
+    if (managementScore > 0 && managementScore < 70) riskItems.push({ store, text:'美团经营分低于70', value:managementScore.toFixed(0)+'分', priority:3 });
+    if (newBad > 5) riskItems.push({ store, text:'当期新增差评超过5条', value:newBad+'条', priority:3 });
+    if (free > 2000) riskItems.push({ store, text:'免单金额超过2000元', value:fmtYInt(free), priority:2 });
+    if (gap > 0) riskItems.push({ store, text:'卡金消耗高于充值', value:fmtYInt(gap), priority:2 });
+  });
+  const actionRows = [
+    ...negative.slice(0, 3).map(row => ({
+      store: row.store,
+      text: '营业额较对比期下降',
+      value: fmtYInt(Math.abs(row.impact)),
+      detail: `当前 ${fmtYInt(row.current)} · 对比期 ${fmtYInt(row.previous)}`,
+      priority: 4,
+    })),
+    ...riskItems,
+  ].sort((a, b) => b.priority - a.priority).slice(0, 5);
+  const deltaText = delta === null ? '暂无可比基线' : `${delta >= 0 ? '增长' : '下降'} ${Math.abs(delta * 100).toFixed(1)}%`;
+  const deltaClass = delta === null ? '' : delta >= 0 ? 'good' : 'bad';
+  const causeText = negative.length
+    ? `主要下拉门店为 ${negative.slice(0, 2).map(row => row.store.replace(/店$/, '')).join('、')}。`
+    : '未发现门店营业额明显下拉。';
+  const growthStores = rows.filter(row => row.previous > 0 && row.impact >= 0).length;
+  const affectedRiskStores = new Set(riskItems.map(item => item.store)).size;
+  executive.innerHTML = `<div class="command-head">经营结论</div><div class="executive-body">
+    <div class="executive-title">所选周期营业额 <span class="${deltaClass}">${deltaText}</span></div>
+    <div class="executive-context">${causeText} 当前共识别 ${riskItems.length} 项需要复核的经营异常；判断基准为同期表现和门店中位数。</div>
+    <div class="executive-stats">
+      <div class="executive-stat"><span>当前营业额</span><strong>${fmtYInt(currentRevenue)}</strong></div>
+      <div class="executive-stat"><span>增长门店</span><strong>${growthStores}店</strong></div>
+      <div class="executive-stat"><span>下滑门店</span><strong>${negative.length}店</strong></div>
+      <div class="executive-stat"><span>异常门店</span><strong>${affectedRiskStores}店</strong></div>
+    </div>
+  </div>`;
+  actions.innerHTML = `<div class="command-head">优先处理</div><div class="action-list">${
+    actionRows.length ? actionRows.map((item, index) => `<button class="action-item" onclick="openStoreDetail('${jsString(item.store)}')">
+      <span class="action-index">${index + 1}</span>
+      <span class="action-main">${escapeHtml(item.store)} · ${escapeHtml(item.text)}${item.detail ? `<small>${escapeHtml(item.detail)}</small>` : ''}</span>
+      <span class="action-value">${escapeHtml(item.value)}</span>
+    </button>`).join('') : '<div class="insight-empty">当前没有高优先级事项</div>'
+  }</div>`;
 }
 
 function getOverviewTrendDates() {
@@ -2153,7 +2355,7 @@ const FUNNELS = [
       { label: '曝光', metric: '美团曝光人数' },
       { label: '访问', metric: '美团访问人数' },
       { label: '下单', metric: '美团下单人数' },
-      { label: '核销', metric: '美团核销总数' },
+      { label: '核销', metric: '美团核销总数', referenceOnly: true },
     ],
   },
   {
@@ -2181,7 +2383,7 @@ function renderOverviewFunnel(dates) {
       if (i > 0) {
         const rate = values[i - 1] > 0 ? values[i] / values[i - 1] : 0;
         let deltaHtml = '<span class="funnel-arrow-line">→</span>';
-        if (baseline) {
+        if (baseline && !step.referenceOnly) {
           const prevFrom = calcOverviewRangeTotal(baseline, funnel.steps[i - 1].metric);
           const prevTo = calcOverviewRangeTotal(baseline, funnel.steps[i].metric);
           if (prevFrom > 0) {
@@ -2192,7 +2394,7 @@ function renderOverviewFunnel(dates) {
           }
         }
         cells.push(
-          `<div class="funnel-arrow"><div class="funnel-arrow-rate">${fmtPct(rate)}</div>${deltaHtml}</div>`
+          `<div class="funnel-arrow"><div class="funnel-arrow-rate">${step.referenceOnly ? '参考 ' : ''}${fmtPct(rate)}</div>${deltaHtml}</div>`
         );
       }
       cells.push(
@@ -2206,7 +2408,7 @@ function renderOverviewFunnel(dates) {
   }).filter(Boolean);
 
   container.innerHTML = rows.length
-    ? rows.join('')
+    ? `${rows.join('')}<div class="funnel-note">美团核销与当期下单不是同一批订单，“核销/下单”仅表示当期强度，不视为转化率。</div>`
     : '<div class="funnel-empty">所选周期没有流量数据</div>';
 }
 
@@ -2320,20 +2522,10 @@ function renderOverviewKPIs(dates) {
     { label:'综合新增差评', val:fmtN(totalBad), raw:totalBad, color:'red', m:'综合新增差评' },
     { label:'差评率', val:fmtPct(badRate), raw:badRate, color: badRate>0.05?'red':'', m:null },
     { label:'新客占比', val:fmtPct(newRate), raw:newRate, color:'', m:null },
-    { label:'抖音评分', val:fmtScore(dyScore.value), raw:dyScore.value, sub:latestDate.substring(0,7).replace('-','年')+'月 · 有效'+dyScore.count+'店', color: Number(dyScore.value)>4.5?'green':'', m:null },
-    { label:'美团评分', val:fmtScore(mtScore.value), raw:mtScore.value, sub:latestDate.substring(0,7).replace('-','年')+'月 · 有效'+mtScore.count+'店', color: Number(mtScore.value)>4.5?'green':'', m:null },
+    { label:'抖音评分', val:dyScore.count ? fmtScore(dyScore.value) : '—', raw:dyScore.value, sub:latestDate.substring(0,7).replace('-','年')+'月 · 有效'+dyScore.count+'店', color: Number(dyScore.value)>4.5?'green':'', m:null },
+    { label:'美团评分', val:mtScore.count ? fmtScore(mtScore.value) : '—', raw:mtScore.value, sub:latestDate.substring(0,7).replace('-','年')+'月 · 有效'+mtScore.count+'店', color: Number(mtScore.value)>4.5?'green':'', m:null },
   ];
   renderOverviewFunnel(dates);
-  // 评分从隐藏改为放进「口碑与客群」：平台评分是流量分配的输入，
-  // IM 日报已经在监控评分下降，看板不该只在风险榜里以阈值形式出现。
-  const hiddenOverviewKpis = new Set(['现金流率']);
-  // 12 张卡原来平铺成两行、权重完全一样，读者得自己分组。
-  // 按「结果 → 构成 → 口碑」分层，读的顺序就是归因的顺序。
-  const KPI_SECTIONS = [
-    { name: '经营结果', labels: ['总营业额', '服务营业额', '现金流营业额', '项目均价', '总项目数'] },
-    { name: '渠道与扣减', labels: ['抖音营业额', '美团营业额', '卡金-充值', '免单减免'] },
-    { name: '口碑与客群', labels: ['综合新增评论', '综合新增差评', '差评率', '新客占比', '抖音评分', '美团评分'] },
-  ];
 
   const cardHtml = (it) => `
     <div class="kpi-card">
@@ -2343,25 +2535,15 @@ function renderOverviewKPIs(dates) {
       ${it.sub ? `<div class="kpi-sub">${it.sub}</div>` : ''}
     </div>`;
 
-  const visible = kpis.filter((it) => !hiddenOverviewKpis.has(it.label));
-  const claimed = new Set();
-  const sections = KPI_SECTIONS.map((section) => {
-    const items = section.labels
-      .map((label) => visible.find((it) => it.label === label))
-      .filter(Boolean);
-    items.forEach((it) => claimed.add(it.label));
-    return { name: section.name, items };
-  }).filter((section) => section.items.length);
-  // 任何没被分到组的卡片兜底放最后，避免改指标时静默丢卡
-  const rest = visible.filter((it) => !claimed.has(it.label));
-  if (rest.length) sections.push({ name: '其它', items: rest });
-
-  container.classList.add('kpi-grouped');
-  container.innerHTML = sections.map((section) => `
-    <div class="kpi-section">
-      <div class="kpi-section-header">${escapeHtml(section.name)}</div>
-      <div class="kpi-section-body">${section.items.map(cardHtml).join('')}</div>
-    </div>`).join('');
+  const heroLabels = ['总营业额', '现金流营业额', '总项目数', '项目均价', '抖音营业额', '美团营业额'];
+  const secondaryLabels = ['卡金-充值', '免单减免', '综合新增评论', '综合新增差评', '差评率', '新客占比', '抖音评分', '美团评分'];
+  const byLabel = new Map(kpis.map(item => [item.label, item]));
+  container.classList.remove('kpi-grouped');
+  container.innerHTML = heroLabels.map(label => byLabel.get(label)).filter(Boolean).map(cardHtml).join('');
+  const secondary = document.getElementById('overview-secondary-kpi');
+  if (secondary) {
+    secondary.innerHTML = secondaryLabels.map(label => byLabel.get(label)).filter(Boolean).map(cardHtml).join('');
+  }
 }
 
 function renderOverviewInsights(dates) {
@@ -2624,106 +2806,84 @@ function renderOverviewAlerts(dates) {
   const container = document.getElementById('overview-alerts');
   if (!container) return;
   const date = [...dates].sort().pop();
-  if (!date) {
-    container.innerHTML = '';
-    return;
-  }
-
+  if (!date) { container.innerHTML = ''; return; }
   const records = IDX_BY_DATE[date] || [];
   if (records.length === 0) { container.innerHTML = ''; return; }
-
   const stores = STORE_ORDER.filter(s => records.some(r => r['门店'] === s));
   if (stores.length === 0) { container.innerHTML = ''; return; }
-
-  // 1) 评分低于4.3
   const scoreWarns = [];
+  const managementWarns = [];
+  const badRateWarns = [];
+  const badCountWarns = [];
+  const freeWarns = [];
+  const cardGapWarns = [];
   stores.forEach(s => {
     const r = records.find(rr => rr['门店'] === s);
     if (!r) return;
     const dy = safeNum(r['抖音评分']);
     const mt = safeNum(r['美团评分']);
+    const management = safeNum(r['美团经营分']);
+    const rate = safeNum(r['差评率']);
+    const bad = safeNum(r['综合新增差评']);
+    const free = safeNum(r['免单+减免']);
+    const card = safeNum(r['卡金']);
+    const recharge = safeNum(r['充值']);
     if (dy > 0 && dy < 4.3) scoreWarns.push({ store:s, platform:'抖音', score:dy });
     if (mt > 0 && mt < 4.3) scoreWarns.push({ store:s, platform:'美团', score:mt });
-  });
-
-  // 2) 差评率 > 3%
-  const badRateWarns = [];
-  stores.forEach(s => {
-    const r = records.find(rr => rr['门店'] === s);
-    if (!r) return;
-    const rate = safeNum(r['差评率']);
-    const totalNewBad = safeNum(r['综合新增差评']);
+    if (management > 0 && management < 70) managementWarns.push({ store:s, score:management });
     if (rate > 0.03) badRateWarns.push({
-      store:s, rate, bad:totalNewBad,
+      store:s, rate,
       dyTotal:safeNum(r['抖音总评论数']), dyBad:safeNum(r['抖音总中差评数']),
       mtTotal:safeNum(r['美团总评价数']), mtBad:safeNum(r['美团总差评数'])
     });
-  });
-
-  // 3) 新增差评 > 5
-  const badCountWarns = [];
-  stores.forEach(s => {
-    const r = records.find(rr => rr['门店'] === s);
-    if (!r) return;
-    const bad = safeNum(r['综合新增差评']);
     if (bad > 5) badCountWarns.push({ store:s, bad });
-  });
-
-  // 4) 免单金额 > 2000
-  const freeWarns = [];
-  stores.forEach(s => {
-    const r = records.find(rr => rr['门店'] === s);
-    if (!r) return;
-    const free = safeNum(r['免单+减免']);
     if (free > 2000) freeWarns.push({ store:s, free });
-  });
-
-  // 5) 充值低于卡金消耗
-  const cardGapWarns = [];
-  stores.forEach(s => {
-    const r = records.find(rr => rr['门店'] === s);
-    if (!r) return;
-    const card = safeNum(r['卡金']);
-    const recharge = safeNum(r['充值']);
     if (card > recharge) cardGapWarns.push({ store:s, gap:card - recharge, card, recharge });
   });
 
-  const totalWarns = scoreWarns.length + badRateWarns.length + badCountWarns.length + freeWarns.length + cardGapWarns.length;
+  const totalWarns = scoreWarns.length + managementWarns.length + badRateWarns.length
+    + badCountWarns.length + freeWarns.length + cardGapWarns.length;
+  const affectedStores = new Set([
+    ...scoreWarns, ...managementWarns, ...badRateWarns, ...badCountWarns, ...freeWarns, ...cardGapWarns,
+  ].map(item => item.store)).size;
 
   if (totalWarns === 0) {
     container.innerHTML = `<div class="alert-section" style="border-color:var(--green);background:rgba(69,209,148,.06);">
-      <div class="alert-header" style="background:rgba(69,209,148,.10);color:var(--green);border-color:rgba(69,209,148,.18);">正常 本月无异常警告</div>
+      <div class="alert-header" style="background:rgba(69,209,148,.10);color:var(--green);border-color:rgba(69,209,148,.18);">所选周期最新一期无异常警告</div>
     </div>`;
     return;
   }
 
-  const monthLabel = date.substring(0,7).replace('-','年')+'月';
-  const scopeLabel = dates.length > 1 ? '所选范围最新月 · ' : '';
   let html = `<div class="alert-section">
-    <div class="alert-header">${scopeLabel}${monthLabel} 门店预警 (${totalWarns})</div>
+    <div class="alert-header">${displayDate(date)} 门店预警 · ${totalWarns}项 / ${affectedStores}店</div>
     <div class="alert-body">`;
+  const rowHtml = (warn, value, detail = '') => `<div class="alert-store" onclick="openStoreDetail('${jsString(warn.store)}')" style="cursor:pointer;">
+    <span class="name">${escapeHtml(warn.store)}</span><span class="val">${value}</span>
+    ${detail ? `<span class="detail">${detail}</span>` : ''}
+  </div>`;
 
   if (scoreWarns.length > 0) {
     html += `<div class="alert-group">
-      <div class="alert-group-title">评分低于4.3</div>
-      ${scoreWarns.map(w => `<div class="alert-store">
-        <span class="name">${w.store}</span>
-        <span class="val" style="color:${w.score<4?'var(--red)':'var(--orange)'}">${w.score.toFixed(1)}</span>
-        <span class="detail">${w.platform}评分</span>
-      </div>`).join('')}
+      <div class="alert-group-title">平台评分低于4.3</div>
+      ${scoreWarns.map(w => rowHtml(w, w.score.toFixed(1), `${w.platform}评分`)).join('')}
+    </div>`;
+  }
+  if (managementWarns.length > 0) {
+    html += `<div class="alert-group">
+      <div class="alert-group-title">美团经营分低于70</div>
+      ${managementWarns.map(w => rowHtml(w, `${w.score.toFixed(0)}分`)).join('')}
     </div>`;
   }
 
   if (badRateWarns.length > 0) {
     html += `<div class="alert-group">
-      <div class="alert-group-title">差评率超过3%</div>
-      ${badRateWarns.map(w => `<div class="alert-store" style="flex-wrap:wrap;padding:8px 10px;">
-        <span class="name">${w.store}</span>
+      <div class="alert-group-title">存量口碑风险 · 累计差评率超过3%</div>
+      ${badRateWarns.map(w => `<div class="alert-store" onclick="openStoreDetail('${jsString(w.store)}')" style="flex-wrap:wrap;padding:8px 10px;cursor:pointer;">
+        <span class="name">${escapeHtml(w.store)}</span>
         <span class="val">${(w.rate*100).toFixed(1)}%</span>
-        <span class="detail">差评 ${w.bad} 条</span>
         <div style="width:100%;font-size:11px;color:var(--text2);margin-top:4px;display:flex;gap:16px;">
-          <span>🎵 抖音 ${w.dyTotal}评/${w.dyBad}差</span>
-          <span>🟦 美团 ${w.mtTotal}评/${w.mtBad}差</span>
+          <span>抖音累计 ${w.dyTotal}评/${w.dyBad}差</span>
+          <span>美团累计 ${w.mtTotal}评/${w.mtBad}差</span>
         </div>
       </div>`).join('')}
     </div>`;
@@ -2731,32 +2891,22 @@ function renderOverviewAlerts(dates) {
 
   if (badCountWarns.length > 0) {
     html += `<div class="alert-group">
-      <div class="alert-group-title">新增差评超过5条</div>
-      ${badCountWarns.map(w => `<div class="alert-store">
-        <span class="name">${w.store}</span>
-        <span class="val">${w.bad} 条</span>
-      </div>`).join('')}
+      <div class="alert-group-title">当期新增差评超过5条</div>
+      ${badCountWarns.map(w => rowHtml(w, `${w.bad}条`)).join('')}
     </div>`;
   }
 
   if (freeWarns.length > 0) {
     html += `<div class="alert-group">
       <div class="alert-group-title">免单金额超过2000元</div>
-      ${freeWarns.map(w => `<div class="alert-store">
-        <span class="name">${w.store}</span>
-        <span class="val">${fmtY(w.free)}</span>
-      </div>`).join('')}
+      ${freeWarns.map(w => rowHtml(w, fmtY(w.free))).join('')}
     </div>`;
   }
 
   if (cardGapWarns.length > 0) {
     html += `<div class="alert-group">
       <div class="alert-group-title">卡金消耗高于充值</div>
-      ${cardGapWarns.map(w => `<div class="alert-store" style="flex-wrap:wrap;padding:8px 10px;">
-        <span class="name">${w.store}</span>
-        <span class="val">${fmtY(w.gap)}</span>
-        <span class="detail">卡金 ${fmtY(w.card)} / 充值 ${fmtY(w.recharge)}</span>
-      </div>`).join('')}
+      ${cardGapWarns.map(w => rowHtml(w, fmtY(w.gap), `卡金 ${fmtY(w.card)} / 充值 ${fmtY(w.recharge)}`)).join('')}
     </div>`;
   }
 
@@ -2944,40 +3094,31 @@ function renderCompare() {
   const end = document.getElementById('compare-end').value;
   const dates = DATES.filter(d => d >= start && d <= end);
 
-  // KPI cards: show both total and mean
   const kpiEl = document.getElementById('compare-kpi');
-  if (compareSelectedStores.length === 0) {
+  if (compareSelectedStores.length === 0 || compareSelectedMetrics.length === 0) {
     kpiEl.innerHTML = '<div style="color:var(--text2);padding:20px;">请选择门店</div>';
     return;
   }
-  kpiEl.innerHTML = compareSelectedMetrics.map(m => {
-    const isPctMetric = isPct(m);
-    // Total across all stores for the period (sum of sums)
-    const total = compareSelectedStores.reduce((sum, s) => sum + calcStoreAgg(dates, s, m), 0);
-    // Per-store mean
-    const storeVals = compareSelectedStores.map(s => calcStoreValue(dates, s, m));
-    const mean = storeVals.reduce((a,b)=>a+b,0) / storeVals.length;
-    const storeLabel = `${compareSelectedStores.length}店 × ${dates.length}月`;
-    let mainVal, subText;
-    if (isPctMetric) {
-      mainVal = (mean*100).toFixed(1)+'%';
-      subText = `均值 ${mainVal} | ${storeLabel}`;
-    } else if (isAvgMetric(m)) {
-      mainVal = fmtScore(mean);
-      subText = `均值 ${mainVal} | ${storeLabel}`;
-    } else {
-      mainVal = fmtYInt(total);
-      const meanPerMonth = mean / dates.length;
-      subText = `总值 ${fmtYInt(total)} · 单店月均 ${fmtYInt(meanPerMonth)} | ${storeLabel}`;
-    }
-    return `<div class="kpi-card">
-      <div class="kpi-label">${METRIC_LABELS[m]||m}</div>
-      <div class="kpi-value">${mainVal}</div>
-      <div class="kpi-sub">${subText}</div>
-    </div>`;
-  }).join('');
+  const metric = compareSelectedMetrics[0];
+  const values = compareSelectedStores.map(store => calcStoreValue(dates, store, metric));
+  const median = medianValue(values);
+  const above = values.filter(value => value >= median).length;
+  const below = values.length - above;
+  const spread = Math.max(...values) - Math.min(...values);
+  const cards = [
+    { label:`${METRIC_LABELS[metric] || metric}中位数`, value:fmtCompareValue(median, metric), sub:`${compareSelectedStores.length}家门店` },
+    { label:'高于或等于中位数', value:`${above}店`, sub:`占比 ${fmtPct(above / values.length)}`, color:'green' },
+    { label:'低于中位数', value:`${below}店`, sub:`占比 ${fmtPct(below / values.length)}`, color:below ? 'red' : '' },
+    { label:'头尾差', value:fmtCompareValue(spread, metric), sub:'最高门店 - 最低门店' },
+  ];
+  kpiEl.innerHTML = cards.map(card => `<div class="kpi-card">
+    <div class="kpi-label">${escapeHtml(card.label)}</div>
+    <div class="kpi-value ${card.color || ''}">${card.value}</div>
+    <div class="kpi-sub">${card.sub}</div>
+  </div>`).join('');
 
   renderCompareChart(dates);
+  renderCompareQuadrant(dates);
   renderCompareSummary(dates);
   renderCompareTable(dates);
 }
@@ -2995,6 +3136,21 @@ function getCompareRankRows(dates, metric) {
     .sort((a, b) => b.value - a.value);
 }
 
+function getStoreOperatingDiagnosis(dates, store, stores = compareSelectedStores) {
+  const values = stores.map(candidate => {
+    const revenue = calcStoreValue(dates, candidate, '总营业额');
+    const projects = calcStoreValue(dates, candidate, '项目数');
+    return { store:candidate, revenue, projects, ticket:projects ? revenue / projects : 0 };
+  });
+  const current = values.find(item => item.store === store) || { revenue:0, projects:0, ticket:0 };
+  const projectMedian = medianValue(values.map(item => item.projects));
+  const ticketMedian = medianValue(values.map(item => item.ticket));
+  if (current.projects < projectMedian && current.ticket < ticketMedian) return '项目量、均价均低';
+  if (current.projects < projectMedian) return '项目量偏低';
+  if (current.ticket < ticketMedian) return '项目均价偏低';
+  return '高于经营中位';
+}
+
 function renderCompareSummary(dates) {
   const container = document.getElementById('compare-summary');
   if (!container) return;
@@ -3006,17 +3162,18 @@ function renderCompareSummary(dates) {
   const metric = compareSelectedMetrics[0];
   const rows = getCompareRankRows(dates, metric);
   const values = rows.map(r => r.value).sort((a, b) => a - b);
-  const mid = Math.floor(values.length / 2);
-  const median = values.length % 2 ? values[mid] : (values[mid - 1] + values[mid]) / 2;
+  const median = medianValue(values);
+  const p25 = percentileValue(values, .25);
+  const p75 = percentileValue(values, .75);
   const metricName = METRIC_LABELS[metric] || metric;
-  const topRows = rows.slice(0, 5);
+  const topRows = rows.slice(0, 3);
   const bottomRows = rows.slice(-5).reverse();
   const periodText = `${displayDate(dates[0])} - ${displayDate(dates[dates.length - 1])}`;
 
   function list(title, items, cls) {
     return `<div class="insight-card">
       <div class="insight-title">${title}</div>
-      ${items.map((x, i) => `<div class="insight-row">
+      ${items.map((x, i) => `<div class="insight-row" data-store="${escapeHtml(x.store)}" onclick="openStoreDetail('${jsString(x.store)}')">
         <span class="name">${i + 1}. ${escapeHtml(x.store)}</span>
         <span class="val ${cls || ''}">${fmtCompareValue(x.value, metric)}</span>
       </div>`).join('')}
@@ -3029,11 +3186,12 @@ function renderCompareSummary(dates) {
       <div class="compare-summary-sub">${compareSelectedStores.length}家门店 · ${periodText}</div>
     </div>
     <div class="compare-summary-grid">
-      ${list('前5', topRows, 'rank-top')}
-      ${list('后5', bottomRows, 'rank-bottom')}
+      ${list('领先门店', topRows, 'rank-top')}
+      ${list('重点关注', bottomRows, 'rank-bottom')}
       <div class="median-box">
         <div class="median-label">中位数</div>
         <div class="median-value">${fmtCompareValue(median, metric)}</div>
+        <div class="kpi-sub">P25 ${fmtCompareValue(p25, metric)} · P75 ${fmtCompareValue(p75, metric)}</div>
       </div>
     </div>`;
 }
@@ -3056,52 +3214,120 @@ function renderCompareChart(dates) {
   });
 
   const isP = isPct(chartMetric);
-  const data = sortedStores.map(s => calcStoreValue(dates, s, chartMetric));
+  const rawData = sortedStores.map(s => calcStoreValue(dates, s, chartMetric));
+  const median = medianValue(rawData);
+  const data = rawData.map(value => isP ? Number((value*100).toFixed(1)) : Number(value.toFixed(0)));
+  const chartMedian = isP ? median * 100 : median;
+  const chartEl = document.getElementById('chart-compare-bar');
+  chartEl.style.height = `${Math.max(420, sortedStores.length * 29 + 90)}px`;
+  chart.resize();
   const series = [{
     name: METRIC_LABELS[chartMetric] || chartMetric,
     type:'bar',
-    data: data.map(v => isP ? Number((v*100).toFixed(1)) : Number(v.toFixed(0))),
-    itemStyle:{color:CHART_COLORS[0]},
+    data: data.map((value, index) => ({
+      value,
+      itemStyle:{ color:rawData[index] < median ? T.warn : CHART_COLORS[0] },
+    })),
+    barMaxWidth:14,
+    markLine:{
+      silent:true,
+      symbol:'none',
+      label:{formatter:`中位数 ${fmtCompareValue(median, chartMetric)}`,color:T.gold,fontSize:10},
+      lineStyle:{color:T.gold,type:'dashed',width:1},
+      data:[{xAxis:chartMedian}],
+    },
   }];
-  const pctMax = isP ? Math.max(...data.map(v => v * 100), 1) * 1.2 : null;
+  const pctMax = isP ? Math.max(...data, 1) * 1.2 : null;
   const chartSub = compareSelectedMetrics.length > 1 ? `图表仅展示：${METRIC_LABELS[chartMetric] || chartMetric}；其余指标见下方明细表` : '';
 
   chart.setOption({
     backgroundColor:'transparent',
     title: chartSub ? {show:true,text:chartSub,left:12,top:4,textStyle:{color:T.text,fontSize:11,fontWeight:'normal'}} : {show:false,text:''},
     tooltip:{...T.tip,trigger:'axis', formatter: p => p.map(pt=>`${pt.seriesName}: ${pt.value}${isP?'%':''}`).join('<br>')},
-    legend:{data:[METRIC_LABELS[chartMetric]||chartMetric],textStyle:{color:T.text,fontSize:10},itemWidth:12,itemHeight:8,top:chartSub?24:5},
-    xAxis:{
-      type:'category',
-      data:sortedStores,
+    legend:{show:false},
+    xAxis:{type:'value',max:isP?pctMax:null,axisLine:{show:false},splitLine:{lineStyle:{color:T.split}},axisLabel:{color:T.text,fontSize:10,formatter:v=>isP ? v+'%' : v}},
+    yAxis:{
+      type:'category', inverse:true, data:sortedStores,
       axisLine:{lineStyle:{color:T.axis}},
-      axisLabel:{color:T.text,fontSize:9,interval:0,hideOverlap:false,rotate:45,margin:12,align:'right'},
+      axisLabel:{color:T.text,fontSize:10,interval:0,hideOverlap:false},
       splitLine:{show:false}
     },
-    yAxis:{type:'value',max:isP?pctMax:null,axisLine:{show:false},splitLine:{lineStyle:{color:T.split}},axisLabel:{color:T.text,fontSize:10,formatter:v=>isP ? v+'%' : v}},
     series,
-    grid:{left:50,right:20,top:chartSub?54:30,bottom:16,containLabel:true}
+    grid:{left:12,right:38,top:chartSub?48:22,bottom:24,containLabel:true}
   }, true);
+  chart.off('click');
+  chart.on('click', params => {
+    const store = sortedStores[params.dataIndex];
+    if (store) openStoreDetail(store);
+  });
+}
+
+function renderCompareQuadrant(dates) {
+  const chart = getChart('chart-compare-quadrant');
+  if (!chart) return;
+  const rows = compareSelectedStores.map(store => {
+    const revenue = calcStoreValue(dates, store, '总营业额');
+    const projects = calcStoreValue(dates, store, '项目数');
+    return { store, revenue, projects, ticket:projects ? revenue / projects : 0 };
+  });
+  if (!rows.length) { chart.clear(); return; }
+  const projectMedian = medianValue(rows.map(row => row.projects));
+  const ticketMedian = medianValue(rows.map(row => row.ticket));
+  const maxRevenue = Math.max(...rows.map(row => row.revenue), 1);
+  chart.setOption({
+    backgroundColor:'transparent',
+    tooltip:{...T.tip,formatter:params => {
+      const row = rows[params.dataIndex];
+      return `${escapeHtml(row.store)}<br>项目数 ${fmtN(row.projects)}<br>项目均价 ${fmtYInt(row.ticket)}<br>营业额 ${fmtYInt(row.revenue)}`;
+    }},
+    xAxis:{type:'value',name:'项目数',nameTextStyle:{color:T.text},axisLabel:{color:T.text},splitLine:{lineStyle:{color:T.split}}},
+    yAxis:{type:'value',name:'项目均价',nameTextStyle:{color:T.text},axisLabel:{color:T.text,formatter:value=>`¥${Math.round(value)}`},splitLine:{lineStyle:{color:T.split}}},
+    series:[{
+      type:'scatter',
+      data:rows.map(row => ({
+        name:row.store,
+        value:[row.projects, row.ticket, row.revenue],
+        symbolSize:10 + Math.sqrt(row.revenue / maxRevenue) * 24,
+      })),
+      itemStyle:{color:T.mt,opacity:.82},
+      label:{show:true,position:'right',formatter:params=>params.name.replace(/店$/,''),fontSize:9,color:T.label},
+      labelLayout:{hideOverlap:true},
+      emphasis:{focus:'self',scale:1.25,label:{show:true}},
+      markLine:{
+        silent:true,symbol:'none',lineStyle:{color:T.gold,type:'dashed',width:1},
+        label:{color:T.gold,fontSize:9},
+        data:[{xAxis:projectMedian,name:'项目中位'},{yAxis:ticketMedian,name:'均价中位'}],
+      },
+    }],
+    grid:{left:60,right:90,top:32,bottom:48},
+  }, true);
+  chart.off('click');
+  chart.on('click', params => {
+    const store = rows[params.dataIndex]?.store;
+    if (store) openStoreDetail(store);
+  });
 }
 
 function renderCompareTable(dates) {
-  const cols = ['门店', ...compareSelectedMetrics.map(m => METRIC_LABELS[m]||m)];
   const thead = document.getElementById('compare-table-head');
   const tbody = document.getElementById('compare-table-body');
-  thead.innerHTML = '<tr><th>门店</th>' + compareSelectedMetrics.map(m => `<th>${METRIC_LABELS[m]||m}</th>`).join('') + '</tr>';
+  thead.innerHTML = '<tr><th>门店</th><th>排名</th><th>较中位数</th><th>经营诊断</th>'
+    + compareSelectedMetrics.map(m => `<th>${METRIC_LABELS[m]||m}</th>`).join('') + '</tr>';
 
-  // 同柱状图一致，按第一个指标数值从高到低排序
   const sortMetric = compareSelectedMetrics[0];
-  const sortedStores = [...compareSelectedStores].sort((a, b) => {
-    const va = calcStoreValue(dates, a, sortMetric);
-    const vb = calcStoreValue(dates, b, sortMetric);
-    return vb - va;
-  });
-  const rows = sortedStores.map(store => {
-    return [store, ...compareSelectedMetrics.map(m => {
-      const v = calcStoreValue(dates, store, m);
-      return isPct(m) ? fmtPct(v) : fmtY(v);
-    })];
+  const sortedStores = getCompareRankRows(dates, sortMetric).map(row => row.store);
+  const primaryValues = sortedStores.map(store => calcStoreValue(dates, store, sortMetric));
+  const primaryMedian = medianValue(primaryValues);
+  const rows = sortedStores.map((store, index) => {
+    const primary = calcStoreValue(dates, store, sortMetric);
+    const medianGap = primaryMedian ? (primary - primaryMedian) / Math.abs(primaryMedian) : 0;
+    return {
+      store,
+      rank:index + 1,
+      medianGap,
+      diagnosis:getStoreOperatingDiagnosis(dates, store),
+      values:compareSelectedMetrics.map(metric => fmtCompareValue(calcStoreValue(dates, store, metric), metric)),
+    };
   });
 
   // 合计行：可加指标求和，评分和比例显示门店均值。
@@ -3115,7 +3341,7 @@ function renderCompareTable(dates) {
   })];
 
   // 单店月均行: per-store per-month average
-  const meanRow = ['单店月均', ...compareSelectedMetrics.map(m => {
+  const meanRow = [DATA_GRAIN === 'daily' ? '单店日均' : '单店月均', ...compareSelectedMetrics.map(m => {
     const isP = isPct(m);
     const storeVals = compareSelectedStores.map(s => calcStoreValue(dates, s, m));
     const mean = storeVals.reduce((a,b)=>a+b,0) / storeVals.length;
@@ -3123,9 +3349,15 @@ function renderCompareTable(dates) {
     return isP ? fmtPct(meanPerMonth) : isAvgMetric(m) ? fmtScore(meanPerMonth) : fmtMean(meanPerMonth, m);
   })];
 
-  tbody.innerHTML = rows.map(r => `<tr><td>${r[0]}</td>` + r.slice(1).map(v => `<td class="num">${v}</td>`).join('') + '</tr>').join('')
-    + `<tr class="total-row"><td>${totalRow[0]}</td>` + totalRow.slice(1).map(v => `<td class="num">${v}</td>`).join('') + '</tr>'
-    + `<tr class="total-row"><td>${meanRow[0]}</td>` + meanRow.slice(1).map(v => `<td class="num">${v}</td>`).join('') + '</tr>';
+  tbody.innerHTML = rows.map(row => `<tr>
+    <td class="table-store-link" onclick="openStoreDetail('${jsString(row.store)}')">${escapeHtml(row.store)}</td>
+    <td class="${row.rank <= 3 ? 'red' : row.rank > rows.length - 3 ? 'green' : ''}">${row.rank}</td>
+    <td class="${row.medianGap < 0 ? 'red' : 'green'}">${row.medianGap >= 0 ? '+' : ''}${(row.medianGap * 100).toFixed(1)}%</td>
+    <td>${escapeHtml(row.diagnosis)}</td>
+    ${row.values.map(value => `<td class="num">${value}</td>`).join('')}
+  </tr>`).join('')
+    + `<tr class="total-row"><td colspan="4">${totalRow[0]}</td>` + totalRow.slice(1).map(v => `<td class="num">${v}</td>`).join('') + '</tr>'
+    + `<tr class="total-row"><td colspan="4">${meanRow[0]}</td>` + meanRow.slice(1).map(v => `<td class="num">${v}</td>`).join('') + '</tr>';
 }
 
 function exportCSV() {
@@ -3216,10 +3448,57 @@ function renderDetail() {
   const dates = selection.rangeDates;
   const trendDates = selection.trendDates;
 
+  renderDetailDiagnosis(store, dates);
   renderDetailKPIs(store, dates);
   renderDetailPieCharts(store, dates);
   renderDetailTrendCharts(store, trendDates);
   renderCardGold(store, trendDates);
+  renderDetailTable(store, trendDates);
+}
+
+function setDetailTrendGroup(group) {
+  document.querySelectorAll('.detail-trend-tab').forEach(button =>
+    button.classList.toggle('active', button.dataset.group === group)
+  );
+  document.querySelectorAll('[data-trend-group]').forEach(container =>
+    container.classList.toggle('active', container.dataset.trendGroup === group)
+  );
+  requestAnimationFrame(() => {
+    document.querySelectorAll(`[data-trend-group="${group}"] .chart`).forEach(element => {
+      const chart = echarts.getInstanceByDom(element);
+      if (chart) chart.resize();
+    });
+  });
+}
+
+function renderDetailDiagnosis(store, dates) {
+  const container = document.getElementById('detail-diagnosis');
+  if (!container) return;
+  if (!dates.length) { container.innerHTML = ''; return; }
+  const peers = STORES.map(candidate => ({
+    store:candidate,
+    revenue:calcStoreValue(dates, candidate, '总营业额'),
+  })).sort((a, b) => b.revenue - a.revenue);
+  const current = peers.find(item => item.store === store) || { revenue:0 };
+  const rank = peers.findIndex(item => item.store === store) + 1;
+  const median = medianValue(peers.map(item => item.revenue));
+  const gap = median ? (current.revenue - median) / median : 0;
+  const diagnosis = getStoreOperatingDiagnosis(dates, store, STORES);
+  const latestDate = [...dates].sort().at(-1);
+  const latest = IDX_BY_DS[`${latestDate}_${store}`] || DAILY_IDX_BY_DS[`${latestDate}_${store}`] || {};
+  const warnings = [];
+  const management = safeNum(latest['美团经营分']);
+  const bad = safeNum(latest['综合新增差评']);
+  if (management > 0 && management < 70) warnings.push(`美团经营分 ${management.toFixed(0)}`);
+  if (bad > 5) warnings.push(`新增差评 ${bad}条`);
+  const gapText = `${gap >= 0 ? '高于' : '低于'}门店中位数 ${Math.abs(gap * 100).toFixed(1)}%`;
+  container.innerHTML = `<div class="detail-diagnosis">
+    <div class="detail-diagnosis-title">${escapeHtml(store)} · 营业额排名 ${rank}/${peers.length}</div>
+    <div class="detail-diagnosis-copy">所选周期营业额 ${fmtYInt(current.revenue)}，${gapText}；当前主要判断为“${diagnosis}”。</div>
+    <span class="diagnosis-tag ${gap >= 0 ? 'good' : 'bad'}">${gapText}</span>
+    <span class="diagnosis-tag">${escapeHtml(diagnosis)}</span>
+    ${warnings.map(warning => `<span class="diagnosis-tag bad">${escapeHtml(warning)}</span>`).join('')}
+  </div>`;
 }
 
 function getDailyStoreDates(store) {
@@ -3311,13 +3590,13 @@ function renderDetailKPIs(store, dates) {
       ]
     },
     {
-      key: 'rating', title: '评分', open: true, items: [
-        { label:'评分', val:noData ? '—' : `抖音 ${fmtScore(getVal('抖音评分'))}<br>美团 ${fmtScore(getVal('美团评分'))}<br>大众点评 ${fmtScore(getVal('大众点评'))}`, color:'', m:'抖音评分', merged:true },
-        { label:'美团经营分', val:noData ? '—' : fmtScore(getVal('美团经营分')), color:'', m:'美团经营分' },
+      key: 'rating', title: '评分', open: false, items: [
+        { label:'评分', val:noData ? '—' : `抖音 ${getVal('抖音评分') > 0 ? fmtScore(getVal('抖音评分')) : '—'}<br>美团 ${getVal('美团评分') > 0 ? fmtScore(getVal('美团评分')) : '—'}<br>大众点评 ${getVal('大众点评') > 0 ? fmtScore(getVal('大众点评')) : '—'}`, color:'', m:'抖音评分', merged:true },
+        { label:'美团经营分', val:noData || getVal('美团经营分') <= 0 ? '—' : fmtScore(getVal('美团经营分')), color:'', m:'美团经营分' },
       ]
     },
     {
-      key: 'reviews', title: '评价', open: true, items: [
+      key: 'reviews', title: '评价', open: false, items: [
         { label:'新增评论', val:fmtN(getSum('综合新增评论')), sub:'条', color:'green', m:'综合新增评论', isSum:true },
         { label:'差评数', val:fmtN(getSum('综合新增差评')), sub:'条', color: getSum('综合新增差评')>0?'red':'', m:'综合新增差评', isSum:true },
         { label:'差评率', val:fmtPct(getVal('差评率')), sub:'', color: getVal('差评率')>0.05?'red':'', m:'差评率' },
@@ -3332,13 +3611,13 @@ function renderDetailKPIs(store, dates) {
       ]
     },
     {
-      key: 'scans', title: '扫码', open: true, items: [
+      key: 'scans', title: '扫码', open: false, items: [
         { label:'抖音扫码', val:fmtN(getSum('抖音扫码')), sub:'次', color:'', m:'抖音扫码', isSum:true },
         { label:'美团扫码', val:fmtN(getSum('美团扫码')), sub:'次', color:'', m:'美团扫码', isSum:true },
       ]
     },
     {
-      key: 'redemption', title: '核销', open: true, items: [
+      key: 'redemption', title: '核销', open: false, items: [
         { label:'抖音平台核销', val:fmtYInt(douyinNetVerification), sub:douyinVerificationSub, color:'', m:'抖音-平台', isSum:true },
         { label:'美团平台核销', val:fmtYInt(meituanNetVerification), sub:meituanVerificationSub, color:'', m:'美团-平台', isSum:true },
         { label:'新客占比', val:fmtPct(getVal('新客占比')), sub:'', color:'', m:'新客占比' },
@@ -3348,11 +3627,11 @@ function renderDetailKPIs(store, dates) {
 
   const container = document.getElementById('detail-kpi');
   const noDataBanner = noData ? `<div class="data-missing">该门店在 ${singleDate.substring(0,7)} 无数据记录</div>` : '';
-  container.innerHTML = noDataBanner + sections.map((sec, si) => `
-    <div class="kpi-section kpi-section-${sec.key}">
-      <div class="kpi-section-header">
+  container.innerHTML = noDataBanner + sections.map((sec) => `
+    <details class="kpi-section kpi-section-${sec.key}" ${sec.open ? 'open' : ''}>
+      <summary class="kpi-section-header">
         <span class="title">${sec.title}</span>
-      </div>
+      </summary>
       <div class="kpi-section-body">
         ${sec.items.map(it => {
           const isPMetric = isPct(it.m);
@@ -3368,50 +3647,57 @@ function renderDetailKPIs(store, dates) {
           </div>`;
         }).join('')}
       </div>
-    </div>`).join('');
+    </details>`).join('');
 }
 
 function renderDetailPieCharts(store, dates) {
   const revenueTotal = calcStoreAgg(dates, store, '总营业额');
-  const dy = calcStoreAgg(dates, store, '抖音营业额');
+  const douyinPlatform = calcStoreAgg(dates, store, '抖音营业额');
+  const douyinFraudAmount = calcStoreAgg(dates, store, '抖音刷单金额');
+  const dy = Math.max(0, douyinPlatform - douyinFraudAmount);
   const meituanPlatform = calcStoreAgg(dates, store, '美团营业额');
   const fraudRechargeAmount = calcStoreAgg(dates, store, '美团刷单金额');
   const mt = Math.max(0, meituanPlatform - fraudRechargeAmount);
   const other = Math.max(0, revenueTotal - dy - mt);
-  const pieTotal = dy + mt + other;
-
-  const pie = getChart('chart-detail-revenue-pie');
-  if (!pie) return;
-  pie.setOption({
-    backgroundColor:'transparent',
-    tooltip:{...T.tip,formatter:p=>`${p.name}: ${p.value.toLocaleString('zh-CN')} (${p.percent.toFixed(1)}%) · 占营业结构 ${(p.value/(pieTotal || 1)*100).toFixed(1)}%`},
-    legend:{orient:'vertical',right:5,top:'center',textStyle:{color:T.text,fontSize:10},itemWidth:8,itemHeight:8},
-    series:[{
-      type:'pie',radius:['35%','65%'],center:['40%','50%'],
-      data:[
-        {value:dy,name:'抖音',itemStyle:{color:T.dy}},
-        {value:mt,name:'美团',itemStyle:{color:T.mt}},
-        {value:other,name:'其它',itemStyle:{color:T.gold}},
-      ],
-      label:{show:true,formatter:'{b}\n{d}%',fontSize:10,color:T.label},labelLine:{lineStyle:{color:T.axis}}
-    }]
-  });
-
   const p168 = calcStoreAgg(dates, store, '168项目数');
   const p298 = calcStoreAgg(dates, store, '298项目数');
   const p358 = calcStoreAgg(dates, store, '358项目数');
-  const projPie = getChart('chart-detail-project-pie');
-  if (!projPie) return;
-  projPie.setOption({
-    backgroundColor:'transparent',
-    tooltip:{...T.tip,formatter:p=>`${p.name}: ${p.value.toLocaleString('zh-CN')} (${p.percent.toFixed(1)}%)`},
-    legend:{orient:'vertical',right:5,top:'center',textStyle:{color:T.text,fontSize:10},itemWidth:8,itemHeight:8},
-    series:[{
-      type:'pie',radius:['35%','65%'],center:['40%','50%'],
-      data:[{value:p168,name:'168元',itemStyle:{color:T.mt}},{value:p298,name:'298元',itemStyle:{color:T.dy}},{value:p358,name:'358元',itemStyle:{color:T.gold}}],
-      label:{show:true,formatter:'{b}\n{d}%',fontSize:10,color:T.label},labelLine:{lineStyle:{color:T.axis}}
-    }]
-  });
+
+  function renderStructureBar(chartId, parts, valueFormatter) {
+    const chart = getChart(chartId);
+    if (!chart) return;
+    const total = parts.reduce((sum, part) => sum + part.value, 0);
+    chart.setOption({
+      backgroundColor:'transparent',
+      tooltip:{...T.tip,trigger:'item',formatter:params => {
+        const part = parts[params.seriesIndex];
+        const share = total ? part.value / total : 0;
+        return `${part.name}: ${valueFormatter(part.value)} (${(share * 100).toFixed(1)}%)`;
+      }},
+      legend:{top:10,textStyle:{color:T.text,fontSize:10},itemWidth:9,itemHeight:9},
+      xAxis:{type:'value',max:100,axisLabel:{color:T.text,formatter:'{value}%'},splitLine:{lineStyle:{color:T.split}}},
+      yAxis:{type:'category',data:['结构'],axisLabel:{show:false},axisLine:{show:false},axisTick:{show:false}},
+      series:parts.map(part => ({
+        name:part.name,type:'bar',stack:'total',barWidth:42,
+        data:[total ? +(part.value / total * 100).toFixed(2) : 0],
+        itemStyle:{color:part.color},
+        label:{show:total > 0 && part.value / total >= .08,position:'inside',formatter:params=>`${part.name}\n${params.value.toFixed(1)}%`,color:'#fff',fontSize:10},
+        emphasis:{focus:'series'},
+      })),
+      grid:{left:28,right:28,top:58,bottom:36},
+    }, true);
+  }
+
+  renderStructureBar('chart-detail-revenue-pie', [
+    {value:dy,name:'抖音',color:T.dy},
+    {value:mt,name:'美团',color:T.mt},
+    {value:other,name:'其它',color:T.gold},
+  ], fmtYInt);
+  renderStructureBar('chart-detail-project-pie', [
+    {value:p168,name:'168元',color:T.mt},
+    {value:p298,name:'298元',color:T.dy},
+    {value:p358,name:'358元',color:T.gold},
+  ], value => `${fmtN(value)}个`);
 }
 
 function renderDetailTrendCharts(store, dates) {
@@ -3543,6 +3829,49 @@ function renderDetailTrendCharts(store, dates) {
     series:[{data:pointData(newLabels.map(d=>newRate[d]), fmtPct),type:'line',smooth:true,symbol:'circle',symbolSize:3,areaStyle:{color:{type:'linear',x:0,y:0,x2:0,y2:1,colorStops:[{offset:0,color:T.mt+'1F'},{offset:1,color:T.mt+'00'}]}},lineStyle:{color:T.mt,width:2},itemStyle:{color:T.mt},label:pointLabelStyle,labelLayout:pointLabelLayout}],
     grid:{left:50,right:15,top:10,bottom:25}
   });
+}
+
+function renderDetailTable(store, dates) {
+  const thead = document.getElementById('detail-table-head');
+  const tbody = document.getElementById('detail-table-body');
+  if (!thead || !tbody) return;
+  const columns = [
+    { metric:'总营业额', label:'总营业额' },
+    { metric:'现金流营业额', label:'现金流' },
+    { metric:'项目数', label:'项目数' },
+    { metric:'项目均价', label:'项目均价' },
+    { metric:'抖音营业额', label:'抖音净营业额' },
+    { metric:'美团营业额', label:'美团净营业额' },
+    { metric:'美团访问人数', label:'美团访问' },
+    { metric:'抖音访问人数', label:'抖音访问' },
+    { metric:'综合新增评论', label:'新增评论' },
+    { metric:'综合新增差评', label:'新增差评' },
+  ];
+  thead.innerHTML = `<tr><th>日期</th>${columns.map(column => {
+    const meta = metricMeta(column.metric === '项目均价' ? '总营业额' : column.metric);
+    return `<th title="来源：${escapeHtml(meta.source)}">${escapeHtml(column.label)}</th>`;
+  }).join('')}</tr>`;
+  const rows = [...dates].sort().reverse().map(date => {
+    const row = IDX_BY_DS[`${date}_${store}`] || DAILY_IDX_BY_DS[`${date}_${store}`];
+    if (!row) return null;
+    const revenue = totalRevenueValue(row);
+    const projects = safeNum(row['项目数']);
+    const values = columns.map(column => {
+      let value;
+      if (column.metric === '总营业额') value = revenue;
+      else if (column.metric === '项目均价') value = projects ? revenue / projects : 0;
+      else if (column.metric === '抖音营业额') value = Math.max(0, channelRevenueValue(row, '抖音营业额') - safeNum(row['抖音刷单金额']));
+      else if (column.metric === '美团营业额') value = Math.max(0, channelRevenueValue(row, '美团营业额') - safeNum(row['美团刷单金额']));
+      else value = row[metricField(column.metric)];
+      if (value === null || value === undefined || value === '') return '—';
+      if (['总营业额','现金流营业额','项目均价','抖音营业额','美团营业额'].includes(column.metric)) return fmtYInt(safeNum(value));
+      return fmtN(safeNum(value));
+    });
+    return { date, values };
+  }).filter(Boolean);
+  tbody.innerHTML = rows.length
+    ? rows.map(row => `<tr><td>${escapeHtml(displayDate(row.date))}</td>${row.values.map(value => `<td>${value}</td>`).join('')}</tr>`).join('')
+    : '<tr><td colspan="11" style="text-align:center;color:var(--muted);">所选周期无明细</td></tr>';
 }
 
 function renderCardGold(store, dates) {

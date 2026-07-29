@@ -30,6 +30,16 @@
     '抖音评分', '美团评分', '大众点评', '美团经营分',
     '美团平均回复时长（秒）',
   ]);
+  const moneyMetrics = new Set([
+    '总营业额', '服务营业额', '商品营业额', '现金流', '卡金消耗', '充值金额',
+    '免单金额', '抖音营业额', '美团营业额', '抖音-平台', '美团-平台',
+    '抖音-可聚集', '美团-可聚集', '抖音成交金额', '抖音刷单金额', '美团刷单金额',
+  ]);
+  const scoreMetrics = new Set(['抖音评分', '美团评分', '大众点评', '美团经营分']);
+  const lowerIsBetterMetrics = new Set([
+    '差评率', '总差评', '抖音新增中差评数', '美团新增中评数', '美团新增差评数',
+    '免单金额', '抖音刷单金额', '美团刷单金额', '美团平均回复时长（秒）',
+  ]);
 
   function averageMetricValues(values, metric) {
     const valid = values
@@ -48,11 +58,34 @@
     return { kind: 'sum', field: metric };
   }
 
+  function metricMeta(metric) {
+    let source = '微聚集';
+    if (metric.startsWith('抖音')) source = '抖音来客';
+    else if (metric.startsWith('美团') || metric === '大众点评') source = '美团经营宝';
+    else if (['差评率', '新客占比'].includes(metric)) source = '跨来源计算';
+
+    let format = 'count';
+    if (percentageMetrics.has(metric)) format = 'percent';
+    else if (moneyMetrics.has(metric)) format = 'money';
+    else if (scoreMetrics.has(metric)) format = 'score';
+    else if (metric.includes('时长')) format = 'duration';
+
+    return Object.freeze({
+      metric,
+      rule: metricRule(metric),
+      source,
+      format,
+      missing: nonZeroAverageMetrics.has(metric) ? 'zero-is-missing' : 'null-is-missing',
+      direction: lowerIsBetterMetrics.has(metric) ? 'lower-is-better' : 'higher-is-better',
+    });
+  }
+
   return Object.freeze({
     averageMetricValues,
     averageMetrics,
     channelRevenueFields,
     dailySumMetrics,
+    metricMeta,
     metricRule,
     nonZeroAverageMetrics,
     percentageMetrics,
