@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>民德搓澡堂 · 经营数据看板</title>
 <script src="assets/echarts.min.js"></script>
-<script src="dashboard-metric-rules.js"></script>
+<script src="dashboard-metric-rules.js?v=20260729-average-trend"></script>
 <script src="dashboard-time-rules.js"></script>
 <style>
 /* ============================================================
@@ -989,10 +989,12 @@ let DATA_VERSION = '';
 let DATA_MANIFEST = null;
 const DAILY_YEAR_LOADS = new Map();
 const {
+  averageMetricValues,
   averageMetrics: AVG_METRICS,
   channelRevenueFields: CHANNEL_REVENUE_FIELDS,
   dailySumMetrics: DAILY_SUM_METRICS,
   metricRule,
+  percentageMetrics: PCT_METRICS,
   ratioMetrics: RATIO_METRICS,
 } = window.DashboardMetricRules;
 const { resolveTimeSelection } = window.DashboardTimeRules;
@@ -1127,7 +1129,7 @@ function keepAvailableSelectedMetrics() {
 const TREND_PRESETS = [
   { name: '营收', metrics: ['总营业额', '抖音-平台', '美团-平台'] },
   { name: '流量', metrics: ['美团曝光人数', '美团访问人数', '抖音门店页访问人数'] },
-  { name: '转化', metrics: ['美团曝光-访问转化率', '美团意向转化率', '抖音转化率'] },
+  { name: '转化', metrics: ['曝光-访问转化率', '意向转化率', '抖音转化率'] },
   { name: '口碑', metrics: ['美团评分', '抖音评分', '差评率'] },
   { name: '项目结构', metrics: ['168项目数', '298项目数', '358项目数'] },
 ];
@@ -1232,10 +1234,7 @@ function aggregateDailyMonthMetric(rows, metric) {
     const denominator = numerator + rows.reduce((sum, row) => sum + safeNum(row['核销老客数']), 0);
     return denominator ? numerator / denominator : 0;
   }
-  if (rule.kind === 'average') {
-    const valid = rows.map(row => safeNum(row[metricField(metric)])).filter(value => value > 0);
-    return valid.length ? valid.reduce((sum, value) => sum + value, 0) / valid.length : 0;
-  }
+  if (rule.kind === 'average') return calcRowsAverage(rows, metric);
   const field = metricField(metric);
   return rows.reduce((sum, row) => sum + safeNum(row[field]), 0);
 }
@@ -1486,9 +1485,11 @@ function csvCell(value) {
   return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
-// 百分比指标判定
-const PCT_METRICS = new Set(['差评率','新客占比','曝光-访问转化率','意向转化率','美团转化率','抖音转化率','抖音核销率','大钟占比']);
 function isPct(m) { return PCT_METRICS.has(m); }
+function calcRowsAverage(rows, metric) {
+  const field = metricField(metric);
+  return averageMetricValues(rows.map(row => row?.[field]), metric);
+}
 
 // ============================================================
 // 曜石翡翠 · 主题系统（暗色默认，localStorage 记忆，图表配色随主题切换）
@@ -1912,6 +1913,9 @@ function calcTotal(dates, metric) {
     const denominator = calcTotal(dates, parts[1]);
     return denominator ? numerator / denominator : 0;
   }
+  if (rule.kind === 'average') {
+    return calcRowsAverage(dates.flatMap(date => IDX_BY_DATE[date] || []), metric);
+  }
   const f = metricField(metric);
   let sum = 0;
   dates.forEach(d => {
@@ -1930,6 +1934,7 @@ function calcRowsTotal(rows, metric) {
     const denominator = calcRowsTotal(rows, parts[1]);
     return denominator ? numerator / denominator : 0;
   }
+  if (rule.kind === 'average') return calcRowsAverage(rows, metric);
   const f = metricField(metric);
   return rows.reduce((sum, row) => sum + safeNum(row[f]), 0);
 }
@@ -2078,28 +2083,15 @@ function calcStoreValue(dates, store, metric) {
   if (isAvgMetric(metric)) return calcStoreAvg(dates, store, metric);
   return calcStoreAgg(dates, store, metric);
 }
-function getStoreDataDates(dates, store) {
-  return dates.filter(d => IDX_BY_DS[d + '_' + store]);
-}
 function calcStoreAvg(dates, store, metric) {
-  const dataDates = getStoreDataDates(dates, store);
-  if (dataDates.length === 0) return 0;
-  return calcStoreAgg(dataDates, store, metric) / dataDates.length;
+  const rows = dates
+    .map(date => IDX_BY_DS[`${date}_${store}`] || DAILY_IDX_BY_DS[`${date}_${store}`])
+    .filter(Boolean);
+  return calcRowsAverage(rows, metric);
 }
 
 function getMonthlyData(dates, metric) {
-  const kind = metricRule(metric).kind;
-  if (kind === 'ratio' || kind === 'channel' || kind === 'daily-sum') {
-    return Object.fromEntries(dates.map(d => [d, calcTotal([d], metric)]));
-  }
-  const f = metricField(metric);
-  const monthly = {};
-  dates.forEach(d => {
-    let sum = 0;
-    (IDX_BY_DATE[d] || []).forEach(r => sum += safeNum(r[f]));
-    monthly[d] = sum;
-  });
-  return monthly;
+  return Object.fromEntries(dates.map(date => [date, calcTotal([date], metric)]));
 }
 
 function getStoreMonthlyData(store, metric, dates) {
@@ -2445,9 +2437,15 @@ function renderTrendChart(dates, metrics) {
   if (!chart) return;
   const labels = dates.map(axisDate);
   const showAllPointLabels = dates.length <= 14;
+  const hasPct = metrics.some(isPct);
+  const hasNonPct = metrics.some(metric => !isPct(metric));
+  const useDualAxes = hasPct && hasNonPct;
+  const leftMetrics = metrics.filter(metric => !isPct(metric));
+  const leftUsesAverageScale = leftMetrics.length > 0 && leftMetrics.every(isAvgMetric);
   const formatTrendValue = (value, metric) => {
     const number = safeNum(value);
     if (isPct(metric)) return `${(number * 100).toFixed(1)}%`;
+    if (isAvgMetric(metric)) return number.toFixed(2);
     return number.toLocaleString('zh-CN', { maximumFractionDigits: 1 });
   };
 
@@ -2462,7 +2460,7 @@ function renderTrendChart(dates, metrics) {
         label: { show: showAllPointLabels || index === values.length - 1 },
       })),
       type:'line', smooth:true,
-      yAxisIndex: pctFlag ? 1 : 0,
+      yAxisIndex: useDualAxes && pctFlag ? 1 : 0,
       symbol: 'circle',
       symbolSize: 4,
       lineStyle:{color:CHART_COLORS[i % CHART_COLORS.length], width:2},
@@ -2482,18 +2480,43 @@ function renderTrendChart(dates, metrics) {
     };
   });
 
-  const hasPct = metrics.some(m=>isPct(m));
   chart.setOption({
     backgroundColor:'transparent',
-    tooltip:{...T.tip,trigger:'axis',formatter:p=>p.map(x=>`${x.seriesName}: ${x.value.toLocaleString('zh-CN')}`).join('<br>')},
+    tooltip:{
+      ...T.tip,
+      trigger:'axis',
+      formatter:params => params
+        .map(item => `${item.seriesName}: ${formatTrendValue(item.value, metrics[item.seriesIndex])}`)
+        .join('<br>'),
+    },
     legend:{data:metrics.map(m=>METRIC_LABELS[m]||m),textStyle:{color:T.text,fontSize:10},itemWidth:12,itemHeight:8,top:0},
     xAxis:{type:'category',data:labels,axisLine:{lineStyle:{color:T.axis}},axisLabel:{color:T.text,fontSize:10},splitLine:{show:false}},
     yAxis:[
-      {type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:T.split}},axisLabel:{color:T.text,fontSize:10},name:'',nameTextStyle:{show:false}},
-      hasPct ? {type:'value',axisLine:{show:false},splitLine:{show:false},axisLabel:{color:T.text,fontSize:10,formatter:v=>(v*100).toFixed(0)+'%'},position:'right',offset:0} : null
+      {
+        type:'value',
+        scale:leftUsesAverageScale,
+        axisLine:{show:false},
+        splitLine:{lineStyle:{color:T.split}},
+        axisLabel:{
+          color:T.text,
+          fontSize:10,
+          formatter:hasPct && !hasNonPct ? value => `${(value * 100).toFixed(1)}%` : undefined,
+        },
+        name:useDualAxes ? '评分 / 数值' : '',
+        nameTextStyle:{color:T.text,fontSize:10},
+      },
+      useDualAxes ? {
+        type:'value',
+        axisLine:{show:false},
+        splitLine:{show:false},
+        axisLabel:{color:T.text,fontSize:10,formatter:value => `${(value * 100).toFixed(1)}%`},
+        name:'比例',
+        nameTextStyle:{color:T.text,fontSize:10},
+        position:'right',
+      } : null
     ].filter(y=>y!==null),
     series,
-    grid:{left:60,right:hasPct?60:30,top:30,bottom:40}
+    grid:{left:60,right:useDualAxes?60:30,top:30,bottom:40}
   }, true);
 }
 
@@ -3027,8 +3050,8 @@ function renderCompareChart(dates) {
   const sortMetric = compareSelectedMetrics[0];
   const chartMetric = compareSelectedMetrics[0];
   const sortedStores = [...compareSelectedStores].sort((a, b) => {
-    const va = calcStoreAgg(dates, a, sortMetric);
-    const vb = calcStoreAgg(dates, b, sortMetric);
+    const va = calcStoreValue(dates, a, sortMetric);
+    const vb = calcStoreValue(dates, b, sortMetric);
     return vb - va;
   });
 
@@ -3070,8 +3093,8 @@ function renderCompareTable(dates) {
   // 同柱状图一致，按第一个指标数值从高到低排序
   const sortMetric = compareSelectedMetrics[0];
   const sortedStores = [...compareSelectedStores].sort((a, b) => {
-    const va = calcStoreAgg(dates, a, sortMetric);
-    const vb = calcStoreAgg(dates, b, sortMetric);
+    const va = calcStoreValue(dates, a, sortMetric);
+    const vb = calcStoreValue(dates, b, sortMetric);
     return vb - va;
   });
   const rows = sortedStores.map(store => {
@@ -3081,15 +3104,14 @@ function renderCompareTable(dates) {
     })];
   });
 
-  // 合计行: sum of calcStoreAgg across all stores for each metric
+  // 合计行：可加指标求和，评分和比例显示门店均值。
   const totalRow = ['合计', ...compareSelectedMetrics.map(m => {
-    const rawTotal = compareSelectedStores.reduce((sum, s) => sum + calcStoreAgg(dates, s, m), 0);
-    if (isPct(m)) {
-      const avgVals = compareSelectedStores.map(s => calcStoreValue(dates, s, m));
-      const mean = avgVals.reduce((a,b)=>a+b,0) / avgVals.length;
-      return fmtPct(mean);
-    }
-    return isAvgMetric(m) ? fmtScore(rawTotal / compareSelectedStores.length) : fmtY(rawTotal);
+    const storeValues = compareSelectedStores.map(store => calcStoreValue(dates, store, m));
+    const mean = storeValues.reduce((sum, value) => sum + value, 0) / storeValues.length;
+    if (isPct(m)) return fmtPct(mean);
+    if (isAvgMetric(m)) return fmtScore(mean);
+    const rawTotal = compareSelectedStores.reduce((sum, store) => sum + calcStoreAgg(dates, store, m), 0);
+    return fmtY(rawTotal);
   })];
 
   // 单店月均行: per-store per-month average
@@ -3115,8 +3137,8 @@ function exportCSV() {
   const headers = ['门店', ...compareSelectedMetrics.map(m => METRIC_LABELS[m]||m)];
   const sortMetric = compareSelectedMetrics[0];
   const sortedStores = [...compareSelectedStores].sort((a, b) => {
-    const va = calcStoreAgg(dates, a, sortMetric);
-    const vb = calcStoreAgg(dates, b, sortMetric);
+    const va = calcStoreValue(dates, a, sortMetric);
+    const vb = calcStoreValue(dates, b, sortMetric);
     return vb - va;
   });
   const storeRows = sortedStores.map(store => {
@@ -3126,15 +3148,14 @@ function exportCSV() {
     })];
   });
 
-  // 合计行
+  // 合计行：可加指标求和，评分和比例显示门店均值。
   const totalRow = ['合计', ...compareSelectedMetrics.map(m => {
-    const rawTotal = compareSelectedStores.reduce((sum, s) => sum + calcStoreAgg(dates, s, m), 0);
-    if (isPct(m)) {
-      const avgVals = compareSelectedStores.map(s => calcStoreValue(dates, s, m));
-      const mean = avgVals.reduce((a,b)=>a+b,0) / avgVals.length;
-      return (mean*100).toFixed(1)+'%';
-    }
-    return isAvgMetric(m) ? (rawTotal / compareSelectedStores.length).toFixed(2) : rawTotal.toFixed(1);
+    const storeValues = compareSelectedStores.map(store => calcStoreValue(dates, store, m));
+    const mean = storeValues.reduce((sum, value) => sum + value, 0) / storeValues.length;
+    if (isPct(m)) return (mean*100).toFixed(1)+'%';
+    if (isAvgMetric(m)) return mean.toFixed(2);
+    const rawTotal = compareSelectedStores.reduce((sum, store) => sum + calcStoreAgg(dates, store, m), 0);
+    return rawTotal.toFixed(1);
   })];
 
   // 单店月均行
@@ -3689,6 +3710,10 @@ setInterval(async () => {
   try {
     const manifest = await fetchDashboardManifest();
     if (!manifest?.version || manifest.version === DATA_VERSION) return;
+    if (manifest.codeVersion && manifest.codeVersion !== DATA_MANIFEST?.codeVersion) {
+      location.reload();
+      return;
+    }
     DATA_MANIFEST = manifest;
     DAILY_YEAR_LOADS.clear();
     const data = await fetchDashboardData(manifest);
