@@ -1119,9 +1119,9 @@ const METRIC_LABELS = {
   '抖音营业额':'抖音营业额','美团营业额':'美团营业额','抖音-可聚集':'抖音-客聚集','美团-可聚集':'美团-客聚集','卡金':'卡金','充值':'充值','商品营业额':'商品营业额','商品销售数量':'商品销售数量',
   '开卡':'开卡','续充':'续充','免单减免':'免单减免',
   '项目数':'总项目数','168项目数':'168项目数','298项目数':'298项目数','358项目数':'358项目数','大钟占比':'大钟占比',
-  '抖音新增评论':'新增评论(抖音)','抖音总评论':'总评论(抖音)','抖音新增差评':'新增差评(抖音)','抖音总中差评':'总中差评(抖音)','抖音评价回复率':'评价回复率(抖音)',
-  '美团新增评论':'新增评论(美团)','美团总评价':'总评价(美团)','美团新增差评':'新增差评(美团)','美团总差评':'总差评(美团)',
-  '综合新增评论':'综合新增评论','综合新增差评':'综合新增差评','总评论数':'总评论数','总差评数':'总差评数','差评率':'差评率',
+  '抖音新增评论':DATA_GRAIN==='monthly'?'新增好评(抖音)':'新增评论(抖音)','抖音总评论':'总评论(抖音)','抖音新增差评':'新增差评(抖音)','抖音总中差评':'总中差评(抖音)','抖音评价回复率':'评价回复率(抖音)',
+  '美团新增评论':DATA_GRAIN==='monthly'?'新增好评(美团)':'新增评论(美团)','美团总评价':'总评价(美团)','美团新增差评':'新增差评(美团)','美团总差评':'总差评(美团)',
+  '综合新增评论':DATA_GRAIN==='monthly'?'综合新增好评':'综合新增评论','综合新增差评':'综合新增差评','总评论数':'总评论数','总差评数':'总差评数','差评率':'差评率',
   '抖音评分':'抖音评分','美团评分':'美团评分','大众点评':'大众点评','美团经营分':'美团经营分','美团平均回复时长（秒）':'平均响应时长',
   '美团曝光人数':'美团曝光人数','美团访问人数':'美团访问人数','美团下单人数':'美团下单人数',
   '抖音访问人数':'抖音访问人数','抖音成交人数':'抖音成交人数','美团成交人数':'美团成交人数',
@@ -1329,6 +1329,10 @@ function prepareMonthlyViewData(data) {
   const rows = dailyMonthRows(data, latestMonth);
   if (!rows.length) return monthly;
   const storeNames = data.stores || [...new Set(rows.map(row => row['门店']))];
+  const monthlyStores = new Set(monthly.data
+    .filter(row => row['日期'] === monthDate)
+    .map(row => row['门店']));
+  if (storeNames.length && storeNames.every(store => monthlyStores.has(store))) return monthly;
   const partialRows = storeNames.map(store => {
     const storeRows = rows.filter(row => row['门店'] === store);
     const record = { 日期: monthDate, 门店: store };
@@ -2510,7 +2514,7 @@ function renderOverviewKPIs(dates) {
       sub: mtFraud > 0 ? `已扣刷单 ${fmtYInt(mtFraud)} 元 · 平台核销 ${fmtYInt(mtAmt)}` : undefined },
     { label:'卡金-充值', val:overviewMoney(cardRechargeGap), raw:cardRechargeGap, color: cardRechargeGap<0?'red':'green', sub:cardRechargeGap<0?'充值少于卡金':'充值覆盖卡金', m:null },
     { label:'免单减免', val:overviewMoney(totalFree), raw:totalFree, color: totalFree>0?'red':'', m:'免单减免' },
-    { label:'综合新增评论', val:fmtN(totalComments), raw:totalComments, color:'green', m:'综合新增评论' },
+    { label:DATA_GRAIN==='monthly'?'综合新增好评':'综合新增评论', val:fmtN(totalComments), raw:totalComments, color:'green', m:'综合新增评论' },
     { label:'综合新增差评', val:fmtN(totalBad), raw:totalBad, color:'red', m:'综合新增差评' },
     { label:'差评率', val:fmtPct(badRate), raw:badRate, color: badRate>0.05?'red':'', m:null },
     { label:'新客占比', val:fmtPct(newRate), raw:newRate, color:'', m:null },
@@ -3618,7 +3622,7 @@ function renderDetailKPIs(store, dates) {
     },
     {
       key: 'reviews', title: '评价', open: true, items: [
-        { label:'新增评论', val:fmtN(getSum('综合新增评论')), sub:'条', color:'green', m:'综合新增评论', isSum:true },
+        { label:DATA_GRAIN==='monthly'?'新增好评':'新增评论', val:fmtN(getSum('综合新增评论')), sub:'条', color:'green', m:'综合新增评论', isSum:true },
         { label:'差评数', val:fmtN(getSum('综合新增差评')), sub:'条', color: getSum('综合新增差评')>0?'red':'', m:'综合新增差评', isSum:true },
         { label:'差评率', val:fmtPct(getVal('差评率')), sub:'', color: getVal('差评率')>0.05?'red':'', m:'差评率' },
       ]
